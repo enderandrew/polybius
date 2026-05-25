@@ -212,7 +212,7 @@ export default class Canvas3d extends Mesh {
     this.clearCanvas();
 
     let color = `rgb(${randomRange(0, 256)}, ${randomRange(0, 256)}, ${randomRange(0, 256)})`;
-    this.drawText('TEMPEST', randomRange(256, 500), randomRange(500, 600), color);
+    this.drawText('POLYBIUS', randomRange(256, 500), randomRange(500, 600), color);
   }
 
   queueTextureUpdate () {
