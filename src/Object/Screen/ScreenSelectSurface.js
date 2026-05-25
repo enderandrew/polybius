@@ -95,7 +95,7 @@ export default class ScreenSelectSurface extends Canvas3d {
     this.clearCanvas();
 
     this.setFontSizePx(20);
-    this.drawText('© ROMAN DABAL & PIOTR KLOSEK ©', 282, 60, Canvas3d.COLOR_BLUE);
+    this.drawText('© MEN IN BLACK & NEW WORLD ORDER ©', 282, 60, Canvas3d.COLOR_BLUE);
 
     this.setFontSizePx(30);
     this.drawText('rate yourself', 371, 480, Canvas3d.COLOR_GREEN);
@@ -132,7 +132,7 @@ export default class ScreenSelectSurface extends Canvas3d {
     }
 
     this.setFontSizePx(75);
-    this.drawText('TEMPEST 2021', 160, 300, Canvas3d.COLOR_WHITE);
+    this.drawText('POLYBIUS', 160, 300, Canvas3d.COLOR_WHITE);
 
     this.drawRect(
       140 + xStep * this.screenContentManager.get(ScreenContentManager.KEY_SELECT_ACTIVE),
