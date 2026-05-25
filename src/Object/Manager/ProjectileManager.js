@@ -1,25 +1,16 @@
 import Projectile from '@/Object/Projectiles/Projectile';
-import readonly from '@/utils/readonly';
 import FIFOManager from '@/Object/Manager/FIFOManager';
 
 export default class ProjectileManager extends FIFOManager {
-  @readonly
+  // Removed legacy @readonly decorators
   static MAX_AMOUNT_OF_SHOOTER_PROJECTILES = 6;
-  @readonly
   static MAX_AMOUNT_OF_ENEMY_PROJECTILES = 32;
 
-  /** @var {SurfaceObjectsManager} */
+  // Modern ES class fields replacing JSDoc @var comments
   surfaceObjectsManager;
-
-  /** @var {Projectile[]} */
   shooterProjectiles = [];
-  /** @var {Projectile[]} */
   enemyProjectiles = [];
-
-  /** {array} */
   enemyProjectilesMap;
-
-  /** @var {number[]} */
   rendererHelperNewProjectilesIds = [];
 
   /**
@@ -85,10 +76,9 @@ export default class ProjectileManager extends FIFOManager {
       if (collectedEnemyProjectiles) {
         this.forceMapsUpdate = true;
       }
-
       // if (collectedShooterProjectiles) console.log(`Collected ${collectedShooterProjectiles} shooter projectiles.`);
       // if (collectedEnemyProjectiles) console.log(`Collected ${collectedEnemyProjectiles} enemy projectiles`);
-    }
+	  }
   }
 
   updateObjectsMap () {

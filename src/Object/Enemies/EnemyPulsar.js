@@ -1,53 +1,33 @@
 import Enemy from '@/Object/Enemies/Enemy';
 import SurfaceObject from '@/Object/Surface/SurfaceObject';
 import randomRange from '@/utils/randomRange';
-import readonly from '@/utils/readonly';
 import State from '@/Object/State';
 
 export default class EnemyPulsar extends Enemy {
-  @readonly
+  // Removed all legacy @readonly decorators
   static MIN_Z_POSITION = 0.1;
-  @readonly
   static MAX_Z_POSITION = 0.9;
 
-  @readonly
   static STATE_MOVING_ALONG_LINE = new State(1500, 0.8, 'moving_along_line');
-  @readonly
   static STATE_ROTATING_BEGIN = new State(200, 1, 'rotate_begin');
-  @readonly
   static STATE_ROTATING_END = new State(200, 1, 'rotate_end');
-  @readonly
   static STATE_WARNING = new State(1000, 1, 'warning');
-  @readonly
   static STATE_PULSATING = new State(2000, 1, 'pulsating');
-  @readonly
   static STATE_DISAPPEARING = new State(1000, 1, 'disappearing');
-  @readonly
   static STATE_EXPLODING = new State(1000, 1, 'exploding');
-  @readonly
   static STATE_DEAD = new State(0, 1, 'dead');
 
-  @readonly
   static FLAG_LANE_CHANGED = 0x1;
-  @readonly
   static FLAG_ROTATION_CW = 0x2;
-  @readonly
   static FLAG_ROTATION_CCW = 0x4;
-  @readonly
   static FLAG_ROTATION_DIR_CHOSEN = 0x8;
-  @readonly
   static FLAG_IMMUNE_ROTATION = 0x10;
-  @readonly
   static FLAG_MOVING_TARGET_CHOSEN = 0x20;
-  @readonly
   static FLAG_NO_WARNING = 0x40;
 
-  /** {number} */
+  // Modern ES class fields replacing JSDoc comments
   zBase = 0;
-  /** {number} */
   zTarget = 0;
-
-  /** {number} */
   rendererHelperLaneChangesAmount = 0;
 
   /**

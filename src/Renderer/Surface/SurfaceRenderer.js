@@ -1,42 +1,24 @@
 import { BufferGeometry, Group, Line, LineBasicMaterial, MeshBasicMaterial, Vector3 } from 'three';
-import readonly from '@/utils/readonly';
 import Surface from '@/Object/Surface/Surface';
 import Angle from '@/utils/Angle';
 
 export default class SurfaceRenderer extends Group {
-  @readonly
+  // Removed legacy @readonly decorators
   static WIREFRAME_LINE_WIDTH = 2;
-  @readonly
   static ACTIVE_LANE_COLOR = 0xffff00;
-  @readonly
   static DEFAULT_LANE_COLOR = [0x0000ff, 0xff0000, 0x00ff00];
-  @readonly
   static SHORTED_LANE_COLOR = 0xffffff;
 
-  /** @var {string} **/
+  // Modern ES class fields replacing JSDoc @var comments
   type = 'Group';
-
-  /** @var {Surface} surface */
   surface;
-
-  /** @var {number} level */
   level;
-
-  /** @var {number} */
   connectorFrontDepth = 0;
-  /** @var {number} */
   connectorBackDepth = 0;
-
-  /** @var {Line[]} **/
   lanesLines = [];
-  /** @var {Line[]} **/
   lanesConnectors = [];
-
-  /** @var {LineBasicMaterial} */
   laneActiveMaterial;
-  /** @var {LineBasicMaterial} */
   laneDefaultMaterial;
-  /** @var {LineBasicMaterial} */
   laneShortedMaterial;
 
   /**
@@ -146,7 +128,6 @@ export default class SurfaceRenderer extends Group {
 
     this.lanesLines.forEach(line => this.add(line));
     this.lanesConnectors.forEach(connector => this.add(connector));
-
     // this.createCenterIndicators();
   }
 

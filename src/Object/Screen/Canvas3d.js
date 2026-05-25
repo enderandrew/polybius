@@ -1,48 +1,28 @@
 import * as THREE from 'three';
 import { DoubleSide, Mesh, MeshBasicMaterial, PlaneGeometry } from 'three';
 import randomRange from '@/utils/randomRange';
-import readonly from '@/utils/readonly';
 
 export default class Canvas3d extends Mesh {
-  @readonly
+  // Modern ES static fields (no @readonly decorators needed)
   static KEY_INPUT_DELAY = 200;
 
-  @readonly
   static COLOR_RED = 'rgba(255, 0, 0, 1)';
-  @readonly
   static COLOR_BLUE = 'rgb(20,20,255)';
-  @readonly
   static COLOR_GREEN = 'rgb(13,194,13)';
-  @readonly
   static COLOR_WHITE = 'rgb(255,255,255)';
-  @readonly
   static COLOR_YELLOW = 'rgb(255,255,0)';
-  @readonly
   static COLOR_CYAN = 'rgb(100,255,200)';
 
-  /** @var {CanvasRenderingContext2D} */
+  // Modern ES class fields
   context;
-  /** @var {CanvasTexture} */
   texture;
-
-  /** @var {string} */
   fontName = 'VectorBattle';
-  /** @var {FontFace} */
   vectorBattleFont;
-  /** @var {boolean} */
   fontReady = false;
-
-  /** @var {number} */
   canvasResX;
-  /** @var {number} */
   canvasResY;
-
-  /** @var {ScreenContentManager} */
   screenContentManager;
-  /** @var {number} */
   lastKeyInputTimestamp = 0;
-
-  /** @var {boolean} */
   debug = false;
 
   /**

@@ -1,4 +1,4 @@
-import { AudioListener, Group, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
+import { AudioListener, Group, PerspectiveCamera, Scene, WebGLRenderer, Vector2 } from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
@@ -14,78 +14,50 @@ import ScreenContentManager from '@/Object/Screen/ScreenContentManager';
 import keyboardInput from '@/utils/KeyboardInput';
 import surfaces from '@/Assets/Surfaces';
 import levels from '@/Assets/Levels';
-import readonly from '@/utils/readonly';
 import AudioManager from '@/Object/Manager/AudioManager';
 
 export default class Game {
-  @readonly
+  // Removed legacy @readonly decorators
   static BONUS_EVERY = 20000;
 
-  @readonly
   static HIGH_SCORES_STORAGE_KEY = 'high_scores';
-  @readonly
   static HIGHEST_LEVEL = 'highest_level';
 
-  @readonly
   static STATE_SELECT_SURFACE = new State(0, 0, 'select_surface');
-  @readonly
   static STATE_PLAY = new State(0, 0, 'play');
-  @readonly
   static STATE_HIGH_SCORES = new State(0, 0, 'high_scores');
 
-  @readonly
   static FLAG_LOAD_NEXT_LEVEL = 0x1;
 
-  /** @var {State} */
+  // Modern ES class fields replacing JSDoc comments
   state;
-  /** @var {State} */
   prevState;
-  /** @var {boolean} */
   screenStateUpdated = false;
-  /** @var {number} */
   flags;
-
-  /** @var {number} */
+  
   level = 1;
-  /** @var {number} */
   highestLevel = 99;
-  /** @var {{id: number, selectable: boolean, scoreBonus: number, targetScore: number}} */
   levelData;
-  /** @var {boolean} */
   firstLevel = true;
-  /** @var {number} */
   score = 0;
-  /** @var {{name: string, score: number}[]} */
   highScores;
-  /** @var {number} */
   lives = 5;
-  /** @var {number} */
   credits = 1;
 
-  /** @var {Scene} */
   scene;
-  /** @var {PerspectiveCamera} */
   camera;
-  /** @var {WebGLRenderer} */
   renderer;
-  /** @var {EffectComposer} */
   composer;
-  /** @var {Level} */
   levelObject = null;
-  /** @var {LevelRenderer} */
   levelRenderer = null;
 
-  /** @var {AudioListener} */
   audioListener;
-  /** @var {AudioManager} */
   audioManager;
 
-  /** @var {Group} */
   screenGroup;
-  /** @var {Canvas3d} */
   screenObject = null;
-  /** @var {ScreenContentManager} */
   screenContentManager;
+  surfacesCollection;
 
   constructor () {
     this.setState(Game.STATE_SELECT_SURFACE);
@@ -125,19 +97,12 @@ export default class Game {
     this.screenStateUpdated = true;
   }
 
-  /**
-   * @param {State} state
-   */
   setState (state) {
     this.prevState = this.state;
     this.state = state;
     this.screenStateUpdated = false;
   }
 
-  /**
-   * @param {number} level
-   * @param {boolean} firstLevel
-   */
   startLevel (level, firstLevel = false) {
     if (this.levelObject !== null) {
       throw new Error('Can\'t start level while another one is active!');
@@ -148,9 +113,6 @@ export default class Game {
     this.setState(Game.STATE_PLAY);
   }
 
-  /**
-   * @param {number} level
-   */
   loadLevel (level) {
     let surfaceId = ((level - 1) % 16) + 1;
     let surface = this.surfacesCollection.find(surface => surface.id === surfaceId);
@@ -160,7 +122,6 @@ export default class Game {
       throw new Error(`Can't find surface level with id === ${surfaceId} !`);
     }
 
-    // noinspection JSValidateTypes
     this.levelData = levels.find(levelData => levelData.id === level);
 
     if (this.levelData === undefined) {
@@ -183,9 +144,7 @@ export default class Game {
     );
 
     this.levelObject.registerKeys();
-
     this.levelRenderer.bindLevel(this.levelObject);
-
     this.populateScreenContentManager();
   }
 
@@ -196,11 +155,9 @@ export default class Game {
 
     this.levelObject.release();
     this.levelObject = null;
-
     this.levelRenderer.releaseLevel();
   }
 
-  /** @param {Canvas3d} screen */
   loadScreen (screen) {
     if (this.screenObject !== null) {
       this.screenObject.release();
@@ -221,7 +178,6 @@ export default class Game {
     this.loadGameState();
     this.populateScreenContentManager();
 
-    // noinspection JSCheckFunctionSignatures
     this.surfacesCollection = Surface.fromDataset(surfaces);
   }
 
@@ -282,6 +238,8 @@ export default class Game {
     this.audioManager = new AudioManager(this.audioListener);
 
     this.renderer = new WebGLRenderer({ antialias: true });
+    // Added pixel ratio for much sharper canvas text on modern screens
+    this.renderer.setPixelRatio(window.devicePixelRatio); 
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
 
@@ -289,7 +247,13 @@ export default class Game {
     this.composer.addPass(new RenderPass(this.scene, this.camera));
 
     if (highQuality) {
-      this.composer.addPass(new UnrealBloomPass({ x: 256, y: 256 }, 2.2, 1.3, 0));
+      // Modernized: Use window resolution and significantly lower strength/radius
+      this.composer.addPass(new UnrealBloomPass(
+        new Vector2(window.innerWidth, window.innerHeight), 
+        0.6, // Strength (Lowered from 2.2)
+        0.4, // Radius (Lowered from 1.3)
+        0    // Threshold
+      ));
       this.composer.addPass(new SMAAPass(window.innerWidth, window.innerHeight));
     }
 
@@ -351,9 +315,6 @@ export default class Game {
     this.startLevel(this.level + 1);
   }
 
-  /**
-   * @return {boolean} true if game can be continued, false otherwise
-   */
   shooterKilledCallback () {
     this.lives--;
 
@@ -371,10 +332,6 @@ export default class Game {
     return true;
   }
 
-  /**
-   * @param {number} score
-   * @param {string} name
-   */
   pushScoreToHighScores (score, name) {
     let index = this.highScores.findIndex(row => row.score <= score);
 
@@ -386,9 +343,6 @@ export default class Game {
     this.highScores.pop();
   }
 
-  /**
-   * @return {number}
-   */
   getCurrentScore () {
     return this.score;
   }

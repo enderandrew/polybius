@@ -1,28 +1,21 @@
 import * as Three from 'three';
 import { Group, MeshBasicMaterial } from 'three';
 import objLoader from '@/utils/objLoader';
-import readonly from '@/utils/readonly';
 import compareVectors from '@/utils/compareVectors';
 import SurfaceObjectWrapper from '@/Renderer/Surface/SurfaceObjectWrapper';
 import Shooter from '@/Object/Shooters/Shooter';
 
 export default class ShooterRenderer extends SurfaceObjectWrapper {
-  @readonly
+  // Removed legacy @readonly decorators
   static MODEL_PATH = '../models/player.obj';
-  @readonly
   static MODEL_SCALE = 0.15;
-  @readonly
   static MODEL_ROTATION = -Math.PI / 2;
-  @readonly
   static MODEL_Z_OFFSET = -0.3;
-  @readonly
   static SHOOTER_WIREFRAME_COLOR = 0xffff00;
-  @readonly
   static EXPLOSION_ROTATION_SPEED = 0.03;
 
-  /** @var {number} */
+  // Modern ES class fields replacing JSDoc comments
   positionChangeSpeed = 0.3;
-  /** @var {number} */
   rotationChangeSpeed = 0.2;
 
   constructor (shooter, surface) {

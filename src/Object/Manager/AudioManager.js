@@ -1,29 +1,20 @@
 import { Audio, AudioLoader } from 'three';
-import readonly from '@/utils/readonly';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
 export default class AudioManager {
-  @readonly
+  // Removed legacy @readonly decorators
   static SOUND_ENEMY_DEATH = 'enemy_death';
-  @readonly
   static SOUND_NEXT_LEVEL = 'next_level';
-  @readonly
   static SOUND_PLAYER_DEATH = 'player_death';
-  @readonly
   static SOUND_PLAYER_LANE_CHANGE = 'player_lane_change';
-  @readonly
   static SOUND_PLAYER_SHOOT = 'player_shoot';
-  @readonly
   static SOUND_ENEMY_SHOOT = 'enemy_shoot';
 
-  @readonly
   static SOUND_VOLUME = 0.4;
 
-  /** {AudioListener} */
+  // Modern ES class fields replacing JSDoc comments
   audioListener;
-  /** {Audio[]} */
   audio = [];
-  /** {AudioBuffer[][]} */
   audioBuffer;
 
   constructor (audioListener) {

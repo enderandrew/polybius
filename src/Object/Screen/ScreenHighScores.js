@@ -4,16 +4,15 @@ import ScreenContentManager from '@/Object/Screen/ScreenContentManager';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
 export default class ScreenHighScores extends Canvas3d {
-  /** @var {string[]} */
+  // Cleaned up for modern ES class fields (no JSDoc variable comments needed)
   playerName = ['A', 'A', 'A'];
-  /** @var {number} */
   place = 8;
-  /** @var {number} */
   score = 0;
-  /** @var {{name: string, score: number}[]} */
-  highScores;
-  /** @var {number} */
+  highScores = [];
   currentStep = 0;
+  
+  // Parody timing variable
+  glitchTimer = 0;
 
   constructor (screenContentManager, width = 8, height = 8, canvasResX = 1024, canvasResY = 1024) {
     super(screenContentManager, width, height, canvasResX, canvasResY);
@@ -49,90 +48,84 @@ export default class ScreenHighScores extends Canvas3d {
   }
 
   nextChar () {
-    if (this.currentStep >= 3 || !this.keyInputDelay()) {
-      return;
-    }
+    if (this.currentStep >= 3 || !this.keyInputDelay()) return;
 
     let char = this.playerName[this.currentStep].charCodeAt(0);
-
-    if (char < 90) {
-      char++;
-    }
+    if (char < 90) char++;
 
     this.playerName[this.currentStep] = String.fromCharCode(char);
     this.highScores[this.place].name = this.playerName.join('');
-
     messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_MENU_CHANGE);
   }
 
   prevChar () {
-    if (this.currentStep >= 3 || !this.keyInputDelay()) {
-      return;
-    }
+    if (this.currentStep >= 3 || !this.keyInputDelay()) return;
 
     let char = this.playerName[this.currentStep].charCodeAt(0);
-
-    if (char > 65) {
-      char--;
-    }
+    if (char > 65) char--;
 
     this.playerName[this.currentStep] = String.fromCharCode(char);
     this.highScores[this.place].name = this.playerName.join('');
-
     messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_MENU_CHANGE);
   }
 
   step () {
-    if (!this.keyInputDelay()) {
-      return;
-    }
+    if (!this.keyInputDelay()) return;
 
     if (this.currentStep >= 3) {
       this.screenContentManager.get(ScreenContentManager.KEY_PUSH_HIGH_SCORE_CALLBACK)(
         this.score,
         this.playerName.join('')
       );
-
       this.screenContentManager.get(ScreenContentManager.KEY_CLOSE_HIGH_SCORES_SCREEN_CALLBACK)();
     }
 
     this.currentStep++;
-
     messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_MENU_SELECT);
   }
 
   draw () {
     this.clearCanvas();
+    this.glitchTimer++;
 
     this.setFontSizePx(30);
-
     this.drawText(this.alignNumberToRight(this.score), 372, 90, Canvas3d.COLOR_BLUE);
-
     this.drawText(this.playerName.join(''), 548, 90, Canvas3d.COLOR_BLUE);
-
     this.drawText('game over', 423, 140, Canvas3d.COLOR_BLUE);
 
     for (let i = 0; i < this.highScores.length; i++) {
-      this.drawText(this.alignNumberToRight(this.highScores[i].score), 550, 340 + (i * 50), Canvas3d.COLOR_GREEN);
-      this.drawText(this.highScores[i].name, 400, 340 + (i * 50), Canvas3d.COLOR_GREEN);
-      this.drawText(this.alignNumberToRight(i + 1), 200, 340 + (i * 50), Canvas3d.COLOR_GREEN);
+      // Polybius Parody: Occasionally replace random high score names with government agency initials
+      let displayName = this.highScores[i].name;
+      let displayColor = Canvas3d.COLOR_GREEN;
+
+      if (Math.random() > 0.995) {
+        const spookyNames = ['FBI', 'CIA', 'MKU', 'NSA', 'NWO', '???'];
+        displayName = spookyNames[Math.floor(Math.random() * spookyNames.length)];
+        displayColor = Canvas3d.COLOR_RED; // Flash red when glitched
+      }
+
+      this.drawText(this.alignNumberToRight(this.highScores[i].score), 550, 340 + (i * 50), displayColor);
+      this.drawText(displayName, 400, 340 + (i * 50), displayColor);
+      this.drawText(this.alignNumberToRight(i + 1), 200, 340 + (i * 50), displayColor);
     }
 
-    // this.drawText('Ranking from 1 to 99', 280, 760, Canvas3d.COLOR_YELLOW);
-    // this.drawText(
-    //   this.alignNumberToRight(this.place === -1 ? 99 : this.place + 1) + '.',
-    //   260, 810,
-    //   Canvas3d.COLOR_YELLOW
-    // );
-    // this.drawText('player 1', 450, 810, Canvas3d.COLOR_WHITE);
-
-    // this.drawText('© Peterkowic', 355, 950, Canvas3d.COLOR_GREEN);
-    this.drawText('Bonus every 20000', 325, 1000, Canvas3d.COLOR_CYAN);
+    // Polybius Parody: The fictional company from the urban legend replacing the old copyright
+    this.drawText('© 1981 SINNESLÖSCHEN INC.', 315, 950, Canvas3d.COLOR_RED);
+    
+    // Parody subliminal flash replacing normal text for 1 frame every ~60 frames
+    if (this.glitchTimer % 60 === 0) {
+      this.drawText('DATA TRANSMITTED', 325, 1000, Canvas3d.COLOR_WHITE);
+    } else {
+      this.drawText('Bonus every 20000', 325, 1000, Canvas3d.COLOR_CYAN);
+    }
 
     this.drawText('Use A and D change', 310, 800, Canvas3d.COLOR_CYAN);
     this.drawText('Press fire to confirm', 274, 850, Canvas3d.COLOR_YELLOW);
 
     this.setFontSizePx(60);
-    this.drawText('HIGH SCORES', 260, 260, Canvas3d.COLOR_YELLOW);
+    
+    // Slight jitter effect on the main title text
+    let titleOffset = Math.random() > 0.95 ? (Math.random() * 4 - 2) : 0;
+    this.drawText('HIGH SCORES', 260 + titleOffset, 260, Canvas3d.COLOR_YELLOW);
   }
 }

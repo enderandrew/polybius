@@ -1,21 +1,14 @@
-import readonly from '@/utils/readonly';
 import ShootingSurfaceObject from '@/Object/Surface/ShootingSurfaceObject';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
 export default class Enemy extends ShootingSurfaceObject {
-  @readonly
+  // Removed legacy @readonly decorator
   static SHOOT_TIMEOUT_MS = 100;
 
-  /** @var {number} */
+  // Modern ES class fields replacing JSDoc @var comments
   firstLevel;
-
-  /** @var {number} */
   valueInPoints;
-
-  /** @var {function} */
   rewardCallback;
-
-  /** @var {boolean} */
   reward = false;
 
   /**
@@ -54,12 +47,15 @@ export default class Enemy extends ShootingSurfaceObject {
     this.hittable = false;
     this.canShoot = false;
     this.clearFlags();
+    this.setVisualsToExplode();
+    this.isExploding = true;
+    this.updateStateProgress(false, 0.4, () => {
+      this.isExploding = false;
+      this.isDead = true;
 
-    if (this.reward === true) {
-      this.reward = false;
-      this.rewardCallback(this.valueInPoints);
-
-      messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_ENEMY_DEATH);
-    }
+      if (this.reward) {
+        this.rewardCallback(this);
+      }
+    });
   }
 }

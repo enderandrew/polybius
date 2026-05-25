@@ -2,20 +2,16 @@ import EnemyRenderer from '@/Renderer/Enemies/EnemyRenderer';
 import EnemyPulsar from '@/Object/Enemies/EnemyPulsar';
 import { MeshBasicMaterial, Vector2 } from 'three';
 import Enemy from '@/Object/Enemies/Enemy';
-import readonly from '@/utils/readonly';
 
 export default class EnemyPulsarRenderer extends EnemyRenderer {
-  @readonly
+  // Removed legacy @readonly decorators
   static NEUTRAL_COLOR = 0x00ffff;
-  @readonly
   static PULSE_COLOR = 0xffffff;
 
-  @readonly
   static BASE_Y_SCALE = 0.2;
-  @readonly
   static PULSE_Y_SCALE = 0.8;
 
-  /** @var {number} */
+  // Modern ES class fields replacing JSDoc @var comments
   colorHelperPrevState = -1;
 
   /**
@@ -93,7 +89,7 @@ export default class EnemyPulsarRenderer extends EnemyRenderer {
   }
 
   setScale () {
-    // noinspection JSUnresolvedVariable
+	// noinspection JSUnresolvedVariable									
     let scale = EnemyPulsarRenderer.BASE_Y_SCALE;
 
     if (this.object.inState(EnemyPulsar.STATE_WARNING)) {
@@ -108,7 +104,7 @@ export default class EnemyPulsarRenderer extends EnemyRenderer {
       scale *= -1;
     }
 
-    // noinspection JSUnresolvedVariable
+	// noinspection JSUnresolvedVariable									
     if (this.object.rendererHelperLaneChangesAmount % 2 === 1) {
       scale *= -1;
     }

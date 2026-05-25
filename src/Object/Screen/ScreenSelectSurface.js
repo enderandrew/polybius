@@ -2,20 +2,23 @@ import Canvas3d from '@/Object/Screen/Canvas3d';
 import ScreenContentManager from '@/Object/Screen/ScreenContentManager';
 import keyboardInput from '@/utils/KeyboardInput';
 import surfaces from '@/Assets/Surfaces';
-import BoundingBox2 from '@/Helpers/BoundingBox2';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
-import readonly from '@/utils/readonly';
+
+// Import native math primitives directly from the updated Three.js library
+import { Box2, Vector2 } from 'three';
+
+// Instantiate a reusable allocation target vector to keep the draw loop garbage-collection clean
+const centerTarget = new Vector2();
 
 export default class ScreenSelectSurface extends Canvas3d {
-  @readonly
+  // Removed legacy @readonly decorator
   static SURFACE_COLORS = ['rgba(0, 0, 255, 1)', 'rgba(255, 0, 0, 1)', 'rgba(0, 255, 0, 1)'];
 
-  /** @var {number} */
+  // Modern ES class field
   selectedLevel = 1;
 
   constructor (screenContentManager, width = 8, height = 8, canvasResX = 1024, canvasResY = 1024) {
     super(screenContentManager, width, height, canvasResX, canvasResY);
-
     this.registerKeys();
   }
 
@@ -59,7 +62,6 @@ export default class ScreenSelectSurface extends Canvas3d {
   moveSelection (direction) {
     let currentActive = this.screenContentManager.get(ScreenContentManager.KEY_SELECT_ACTIVE);
     let currentOffset = this.screenContentManager.get(ScreenContentManager.KEY_SELECT_OFFSET);
-
     let desiredSelection = currentActive + currentOffset + direction;
 
     if (desiredSelection < 0) {
@@ -95,7 +97,7 @@ export default class ScreenSelectSurface extends Canvas3d {
     this.clearCanvas();
 
     this.setFontSizePx(20);
-    this.drawText('© MEN IN BLACK & NEW WORLD ORDER ©', 282, 60, Canvas3d.COLOR_BLUE);
+    this.drawText('© Sinneslöschen Inc. ©', 282, 60, Canvas3d.COLOR_BLUE);
 
     this.setFontSizePx(30);
     this.drawText('rate yourself', 371, 480, Canvas3d.COLOR_GREEN);
@@ -155,13 +157,18 @@ export default class ScreenSelectSurface extends Canvas3d {
       return;
     }
 
-    let boundingBox2 = new BoundingBox2.create(surface.coords);
+    // Modern Three.js Box2 implementation replacing BoundingBox2
+    let boundingBox2 = new Box2().setFromPoints(surface.coords);
 
     this.context.beginPath();
 
     for (let i = 0; i < surface.coords.length + (surface.isOpen ? 0 : 1); i++) {
-      let cx = x + (boundingBox2.getCenter().x - surface.coords[i % 16].x) * unit;
-      let cy = y + (boundingBox2.getCenter().y - surface.coords[i % 16].y) * unit;
+      
+      // Extract center using the reusable target vector
+      boundingBox2.getCenter(centerTarget);
+
+      let cx = x + (centerTarget.x - surface.coords[i % 16].x) * unit;
+      let cy = y + (centerTarget.y - surface.coords[i % 16].y) * unit;
 
       if (i !== 0) {
         this.context.lineTo(cx, cy);

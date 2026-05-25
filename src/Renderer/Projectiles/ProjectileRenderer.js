@@ -1,16 +1,12 @@
 import { BoxGeometry, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, WireframeGeometry } from 'three';
 import SurfaceObjectWrapper from '@/Renderer/Surface/SurfaceObjectWrapper';
-import readonly from '@/utils/readonly';
 import Projectile from '@/Object/Projectiles/Projectile';
 
 export default class ProjectileRenderer extends SurfaceObjectWrapper {
-  @readonly
+  // Removed legacy @readonly decorators
   static PROJECTILE_SIZE = 0.1;
-  @readonly
   static PROJECTILE_SHOOTER_COLOR = 0xffff00;
-  @readonly
   static PROJECTILE_ENEMY_COLOR = 0xff00ff;
-  @readonly
   static ROTATION_SPEED = 0.1;
 
   /**

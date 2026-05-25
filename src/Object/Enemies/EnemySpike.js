@@ -1,23 +1,18 @@
 import Enemy from '@/Object/Enemies/Enemy';
-import readonly from '@/utils/readonly';
 import State from '@/Object/State';
 import SurfaceObject from '@/Object/Surface/SurfaceObject';
 import EnemySpiker from '@/Object/Enemies/EnemySpiker';
 
 export default class EnemySpike extends Enemy {
-  @readonly
+  // Removed all legacy @readonly decorators
   static HEIGHT_LIMIT = 0.9;
-  @readonly
   static HUNK_LENGTH = 0.02;
-  @readonly
   static HIT_DESTROYED_LENGTH = 0.1;
 
-  @readonly
   static STATE_ALIVE = new State(500, 1, 'alive');
-  @readonly
   static STATE_DEAD = new State(0, 1, 'dead');
 
-  /** {number} */
+  // Modern ES class fields replacing JSDoc comments
   rendererHelperZPositionChanged = false;
 
   /**

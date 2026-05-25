@@ -1,43 +1,23 @@
-import { Vector2 } from 'three';
-import BoundingBox2 from '@/Helpers/BoundingBox2';
-import readonly from '@/utils/readonly';
+import { Vector2, Box2 } from 'three';
 
 export default class Surface {
-  @readonly
+  // Removed legacy @readonly decorator for Vite compatibility
   static LINES_AMOUNT = 16;
 
-  /** @var {number} id */
+  // Modern ES class fields replacing JSDoc @var
   id;
-  /** @var {string} name */
   name;
-  /** @var {boolean} isOpen */
   isOpen;
-  /** @var {number} lanesAmount */
   lanesAmount;
-  /** @var {number} activeLaneId */
   activeLaneId;
-  /** @var {number} depth */
   depth;
-
-  /** @var {Vector2[]} rawLanesCoords */
   rawLanesCoords;
-  /** @var {Vector2[]} rawLanesCoords */
   lanesCoords;
-  /** @var {Vector2[]} lanesMiddleCoords */
   lanesMiddleCoords;
-  /** @var {number[]} lanesCenterDirectionRadians */
   lanesCenterDirectionRadians;
-
-  /** @var {number[]} shortedLanes */
   shortedLanes;
+  zOffset;
 
-  /**
-   * @param {number} id
-   * @param {string} name
-   * @param {boolean} isOpen
-   * @param {Vector2[]} lanesCoords
-   * @param {number} zOffset
-   */
   constructor (id, name, isOpen, lanesCoords, zOffset = 0) {
     this.id = id;
     this.name = name;
@@ -56,19 +36,27 @@ export default class Surface {
   }
 
   calculateCenteredLanesCoords () {
-    let boundingBox2 = BoundingBox2.create(this.rawLanesCoords);
-    this.lanesCoords = this.rawLanesCoords.map(vector2 => vector2.sub(boundingBox2.getCenter()));
+    // Replaced BoundingBox2 with native Three.js Box2
+    let box = new Box2().setFromPoints(this.rawLanesCoords);
+    let center = new Vector2();
+    box.getCenter(center);
+
+    // .clone() ensures we don't accidentally mutate the original raw coordinates
+    this.lanesCoords = this.rawLanesCoords.map(vector2 => vector2.clone().sub(center));
   }
 
   calculateLanesCenterCoords () {
     this.lanesMiddleCoords = [];
 
     for (let i = 0; i < this.lanesAmount; i++) {
-      let boundingBox2 = BoundingBox2.create([
-        this.lanesCoords[i],
-        this.lanesCoords[(i + 1) % Surface.LINES_AMOUNT]
-      ]);
-      this.lanesMiddleCoords.push(boundingBox2.center);
+      let p1 = this.lanesCoords[i];
+      let p2 = this.lanesCoords[(i + 1) % Surface.LINES_AMOUNT];
+      
+      // The center between two points is simply their average (midpoint).
+      // This entirely removes the need to construct a BoundingBox just to find a center.
+      let center = new Vector2().addVectors(p1, p2).multiplyScalar(0.5);
+      
+      this.lanesMiddleCoords.push(center);
     }
   }
 
@@ -85,10 +73,6 @@ export default class Surface {
     });
   }
 
-  /**
-   * @param {number} projectedLaneId
-   * @return {number}
-   */
   getActualLaneIdFromProjectedMovement (projectedLaneId) {
     if (this.isOpen) {
       if (projectedLaneId < 0) {
@@ -108,11 +92,6 @@ export default class Surface {
     }
   }
 
-  /**
-   * @param {number} fromLaneId
-   * @param {number} toLaneId
-   * @return {number}
-   */
   getShortestPathDirection (fromLaneId, toLaneId) {
     if (fromLaneId === toLaneId) {
       return 0;
@@ -137,9 +116,6 @@ export default class Surface {
     }
   }
 
-  /**
-   * @param {number} desiredActiveLane
-   */
   setActiveLane (desiredActiveLane) {
     this.activeLaneId = this.getActualLaneIdFromProjectedMovement(desiredActiveLane);
   }
@@ -152,18 +128,10 @@ export default class Surface {
     this.shortedLanes[laneId]--;
   }
 
-  /**
-   * @param {number} laneId
-   * @return {boolean}
-   */
   isLaneShorted (laneId) {
     return this.shortedLanes[laneId] > 0;
   }
 
-  /**
-   * @param {{id: number, name:string, isOpen: boolean, coords:{x: number, y: number}[], zOffset: number}[]} dataset
-   * @return {Surface[]}
-   */
   static fromDataset (dataset) {
     return dataset.map(data =>
       new Surface(

@@ -1,10 +1,9 @@
 import EnemyRenderer from '@/Renderer/Enemies/EnemyRenderer';
 import Enemy from '@/Object/Enemies/Enemy';
-import readonly from '@/utils/readonly';
 import EnemySpiker from '@/Object/Enemies/EnemySpiker';
 
 export default class EnemySpikerRenderer extends EnemyRenderer {
-  @readonly
+  // Removed legacy @readonly decorator
   static ROTATION_SPEED = 0.1;
 
   /**

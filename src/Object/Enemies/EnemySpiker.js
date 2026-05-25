@@ -1,28 +1,23 @@
 import Enemy from '@/Object/Enemies/Enemy';
-import readonly from '@/utils/readonly';
 import State from '@/Object/State';
 import SurfaceObject from '@/Object/Surface/SurfaceObject';
 import randomRange from '@/utils/randomRange';
 
 export default class EnemySpiker extends Enemy {
-  @readonly
+  // Removed legacy @readonly decorators
   static TURNAROUND_HEIGHT = 0.1;
 
-  @readonly
   static STATE_IDLE = new State(100, 1, 'idle');
-  @readonly
   static STATE_SHOOTING = new State(200, 0.05, 'shooting');
-  @readonly
   static STATE_DISAPPEARING = new State(1000, 1, 'disappearing');
-  @readonly
   static STATE_EXPLODING = new State(1000, 1, 'exploding');
-  @readonly
   static STATE_DEAD = new State(0, 1, 'dead');
 
-  @readonly
   static FLAG_REACHED_TOP = 0x1;
-  @readonly
   static FLAG_SHOOTS_FIRED = 0x2;
+
+  // Modern ES class fields
+  zSpeed;
 
   /**
    * @param {Surface} surface

@@ -1,38 +1,19 @@
-import { BufferGeometry, Group, Line, MeshBasicMaterial, Vector2, Vector3 } from 'three';
+import { BufferGeometry, Group, Line, MeshBasicMaterial, Vector2, Vector3, Box2 } from 'three';
 import SurfaceObjectWrapper from '@/Renderer/Surface/SurfaceObjectWrapper';
 import enemies from '@/Assets/Enemies';
-import BoundingBox2 from '@/Helpers/BoundingBox2';
-import readonly from '@/utils/readonly';
 
 export default class EnemyRenderer extends SurfaceObjectWrapper {
-  @readonly
+  // Removed legacy @readonly decorator
   static EXPLOSION_ROTATION_SPEED = 0.03;
 
-  /** @var {BufferGeometry[]} */
+  // Modern ES class fields replacing JSDoc @var comments
   geometry;
-  /** @var {MeshBasicMaterial[]} */
   materials;
-
-  /** @var {Vector2} */
   positionBase = new Vector2();
-  /** @var {Vector2} */
   positionOffset = new Vector2();
-
-  /** @var {number} */
   zRotationBase = 0;
-  /** @var {number} */
   zRotationOffset = 0;
 
-  /**
-   * @var {{
-   *  valid: boolean,
-   *  continuousRotationUpdate: boolean,
-   *  relativeHalfStep: number,
-   *  sourceLaneId: number,
-   *  targetLaneId: number,
-   *  rotationDirection: number
-   * }}
-   */
   rotatingStateCache = {
     valid: false,
     continuousRotationUpdate: false,
@@ -42,14 +23,8 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     rotationDirection: 0
   };
 
-  /**
-   * @param {Enemy} enemy
-   * @param {Surface} surface
-   * @param {string} enemyType
-   */
   constructor (enemy, surface, enemyType) {
     super(enemy, surface, enemyType);
-
     this.setLaneOffset();
   }
 
@@ -120,9 +95,6 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     this.positionOffset = laneCenterCoords;
   }
 
-  /**
-   * @param {number} rotationDirection 1 for CCW, -1 for CW
-   */
   calculateRotationStateCacheVariables (rotationDirection) {
     this.rotatingStateCache.rotationDirection = rotationDirection;
 
@@ -170,7 +142,16 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
       throw new Error('Unknown object: ' + this.object.type);
     }
 
-    let boundingBox2 = BoundingBox2.create([].concat(...enemyDataset.coords));
+    // 1. Flatten the raw coordinate objects
+    let flatCoords = [].concat(...enemyDataset.coords);
+    
+    // 2. Convert raw points into Three.js Vector2 instances so Box2 can parse them
+    let vectorPoints = flatCoords.map(p => new Vector2(p.x, p.y));
+
+    // 3. Replaced BoundingBox2 with native Three.js Box2 and zero-allocation target vector extraction
+    let boundingBox = new Box2().setFromPoints(vectorPoints);
+    let center = new Vector2();
+    boundingBox.getCenter(center);
 
     enemyDataset.coords.forEach((xyArray, i) => {
       let material = new MeshBasicMaterial({
@@ -181,7 +162,7 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
       let geometry = new BufferGeometry().setFromPoints(
         xyArray
           .map(xyArray => new Vector2(xyArray.x, xyArray.y))
-          .map(vector2 => vector2.sub(boundingBox2.getCenter()))
+          .map(vector2 => vector2.sub(center)) // Subtracted against the natively extracted center
           .map(vector2 => new Vector3(vector2.x, vector2.y, 0))
       );
 

@@ -1,10 +1,9 @@
 import EnemyRenderer from '@/Renderer/Enemies/EnemyRenderer';
 import Enemy from '@/Object/Enemies/Enemy';
-import readonly from '@/utils/readonly';
 import { BufferGeometry, Line, MeshBasicMaterial, Vector3 } from 'three';
 
 export default class EnemySpikeRenderer extends EnemyRenderer {
-  @readonly
+  // Removed legacy @readonly decorator
   static SPIKE_COLOR = 0x00ff00;
 
   /**
@@ -16,7 +15,7 @@ export default class EnemySpikeRenderer extends EnemyRenderer {
   }
 
   updateState () {
-    // noinspection JSUnresolvedFunction
+	// noinspection JSUnresolvedFunction									
     if (this.object.shouldRerenderSpikeDueToSpikeLengthChange()) {
       this.updateModel();
     }

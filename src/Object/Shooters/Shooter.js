@@ -1,4 +1,3 @@
-import readonly from '@/utils/readonly';
 import SurfaceObject from '@/Object/Surface/SurfaceObject';
 import ShootingSurfaceObject from '@/Object/Surface/ShootingSurfaceObject';
 import State from '@/Object/State';
@@ -8,56 +7,33 @@ import EnemyFuseball from '@/Object/Enemies/EnemyFuseball';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
 export default class Shooter extends ShootingSurfaceObject {
-  @readonly
+  // Removed legacy @readonly decorators
   static LANE_CHANGE_TIMEOUT_MS = 50;
-  @readonly
   static SHOOT_TIMEOUT_MS = 80;
-  @readonly
   static BURST_PENALTY_MS = 500;
 
-  @readonly
   static TUBE_DESCENDING_LENGTH_MULTIPLIER = 2;
-  @readonly
   static TUBE_APPROACHING_LENGTH_MULTIPLIER = 4;
-  @readonly
   static COLLISION_RADIUS_FORWARD = 0;
-  @readonly
   static COLLISION_RADIUS_BACKWARD = 0.08;
 
-  /** @var {number} */
-  penaltyTimestamp = 0;
-
-  @readonly
   static STATE_ALIVE = new State(1000, 1, 'alive');
-  @readonly
   static STATE_EXPLODING = new State(1000, 1, 'exploding');
-  @readonly
   static STATE_DISAPPEARING = new State(1000, 1, 'disappearing');
-  @readonly
   static STATE_RENOVATING = new State(1000, 1, 'renovating');
-  @readonly
   static STATE_APPROACHING_TUBE = new State(2000, 1, 'approaching_tube');
-  @readonly
   static STATE_GOING_DOWN_THE_TUBE = new State(4000, 1, 'going_down_the_tube');
-  @readonly
   static STATE_REACHED_TUBE_BOTTOM = new State(0, 1, 'reached_tube_bottom');
-  @readonly
   static STATE_DEAD = new State(0, 1, 'dead');
 
-  @readonly
   static FLAG_ITS_ALREADY_TOO_LATE = 0x1;
-  @readonly
   static FLAG_SUPERZAPPER_USED = 0x2;
 
-  /** @var {number} */
+  // Modern ES class fields replacing JSDoc @var comments
+  penaltyTimestamp = 0;
   lastLaneChangeTimestamp;
-  /** @var {number} */
   laneChangeTimeoutMs;
-
-  /** {SurfaceObjectsManager} */
   surfaceObjectsManager;
-
-  /** @var {function} */
   killedCallback;
 
   /**

@@ -3,27 +3,19 @@ import SurfaceRenderer from '@/Renderer/Surface/SurfaceRenderer';
 import ShooterRenderer from '@/Renderer/Shooters/ShooterRenderer';
 import ProjectileRendererManager from '@/Renderer/Surface/ProjectileRendererManager';
 import EnemyRendererManager from '@/Renderer/Surface/EnemyRendererManager';
-import readonly from '@/utils/readonly';
 
 export default class LevelRenderer extends Group {
-  @readonly
+  // Removed legacy @readonly decorator
   static CAMERA_TO_SHOOTER_DISTANCE = 6;
 
-  /** @var {?Level} */
+  // Modern ES class fields replacing JSDoc @var comments
   level = null;
-
-  /** @var {PerspectiveCamera} */
   camera;
-  /** @var {SurfaceRenderer} */
   surfaceRenderer;
-  /** @var {ShooterRenderer} */
   shooterRenderer;
-  /** @var {ProjectileRendererManager} */
   projectileRendererManager;
-  /** @var {EnemyRendererManager} */
   enemyRendererManager;
 
-  // noinspection JSValidateJSDoc
   /**
    * @param {PerspectiveCamera} camera
    */

@@ -1,10 +1,9 @@
 import EnemyRenderer from '@/Renderer/Enemies/EnemyRenderer';
 import Enemy from '@/Object/Enemies/Enemy';
-import readonly from '@/utils/readonly';
 import EnemyFuseball from '@/Object/Enemies/EnemyFuseball';
 
 export default class EnemyFuseballRenderer extends EnemyRenderer {
-  @readonly
+  // Removed legacy @readonly decorator
   static ROTATION_SPEED = 0.02;
 
   /**
@@ -16,8 +15,6 @@ export default class EnemyFuseballRenderer extends EnemyRenderer {
   }
 
   updateState () {
-    // noinspection JSValidateTypes
-    /** @var {EnemyFuseball} */
     let fuseball = this.object;
 
     this.positionBase = this.surface.lanesMiddleCoords[fuseball.laneId].clone();

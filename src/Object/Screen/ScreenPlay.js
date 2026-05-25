@@ -3,18 +3,17 @@ import ScreenContentManager from '@/Object/Screen/ScreenContentManager';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
 export default class ScreenPlay extends Canvas3d {
-  /** @var {number} */
+  // Modern ES class fields (no need for @var comments in Vite/ES2022)
   score = 0;
-  /** @var {number} */
   targetScore = 0;
-  /** @var {number} */
   scoreRisingSpeed = 10;
-  /** @var {boolean} */
   displaySuperzapperHint = true;
+  
+  // Polybius Parody: Sanity Meter mechanic
+  sanityLevel = 100;
 
   constructor (screenContentManager, width = 8, height = 8, canvasResX = 1024, canvasResY = 1024) {
     super(screenContentManager, width, height, canvasResX, canvasResY);
-
     this.score = this.screenContentManager.get(ScreenContentManager.KEY_SCORE);
   }
 
@@ -29,8 +28,12 @@ export default class ScreenPlay extends Canvas3d {
       }
     }
 
-    this.messageBrokerScreenTopicConsumer();
+    // Gradually drain sanity to trigger parody visual glitches
+    if (this.sanityLevel > 0 && Math.random() > 0.98) {
+      this.sanityLevel -= 1;
+    }
 
+    this.messageBrokerScreenTopicConsumer();
     super.update();
   }
 
@@ -49,11 +52,15 @@ export default class ScreenPlay extends Canvas3d {
   draw () {
     this.clearCanvas();
 
+    // Determine if graphics should alter based on player status
+    const isLosingSanity = this.sanityLevel < 50;
+    const scoreColor = isLosingSanity && Math.random() > 0.8 ? Canvas3d.COLOR_RED : Canvas3d.COLOR_BLUE;
+
     this.setFontSizePx(60);
     this.drawText(
       this.alignNumberToRight(this.score),
       50, 120,
-      Canvas3d.COLOR_BLUE
+      scoreColor
     );
 
     for (let i = 0; i < this.screenContentManager.get(ScreenContentManager.KEY_LIVES); i++) {
@@ -64,8 +71,11 @@ export default class ScreenPlay extends Canvas3d {
 
     if (this.displaySuperzapperHint) {
       if (this.screenContentManager.get(ScreenContentManager.KEY_SUPERZAPPER_USED) === false) {
+        // Subliminal parody messaging replaces the hint when sanity is low
+        const hintText = isLosingSanity && Math.random() > 0.9 ? 'OBEY' : 'Press E to use SuperZapper';
+        
         this.drawText(
-          'Press E to use SuperZapper',
+          hintText,
           240, 1000,
           Canvas3d.COLOR_BLUE
         );

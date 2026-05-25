@@ -1,4 +1,3 @@
-import readonly from '@/utils/readonly';
 import Enemy from '@/Object/Enemies/Enemy';
 import EnemyFlipper from '@/Object/Enemies/EnemyFlipper';
 import EnemySpiker from '@/Object/Enemies/EnemySpiker';
@@ -10,7 +9,7 @@ import EnemyPulsarTanker from '@/Object/Enemies/EnemyPulsarTanker';
 import randomRange from '@/utils/randomRange';
 
 export default class EnemySpawner {
-  @readonly
+  // Removed legacy @readonly decorators
   static SPAWN_MAP = [
     { type: Enemy.TYPE_FLIPPER, level: 1, chanceOfSpawning: 1 },
     { type: Enemy.TYPE_FLIPPER_TANKER, level: 3, chanceOfSpawning: 0.5 },
@@ -21,25 +20,16 @@ export default class EnemySpawner {
     { type: Enemy.TYPE_PULSAR_TANKER, level: 41, chanceOfSpawning: 0.5 },
   ];
 
-  @readonly
   static MIN_ENEMIES = 4;
-  @readonly
   static MAX_ENEMIES = 16;
-  @readonly
   static MAX_LEVEL = 99;
 
-  /** @var {SurfaceObjectsManager} */
+  // Modern ES class fields replacing JSDoc @var comments
   surfaceObjectsManager;
-  /** @var {ProjectileManager} */
   projectileManager;
-  /** @var {function} */
   rewardCallback;
-
-  /** @var {number} */
   currentLevel;
-  /** @var {number} */
   currentScore;
-  /** @var {number} */
   targetScore;
 
   /**
@@ -93,7 +83,6 @@ export default class EnemySpawner {
     let enemyToSpawn = this.drawEnemy(enemiesThatCanBeSpawned);
     let lane = randomRange(0, 15);
 
-    /** @var {?Enemy} */
     let enemy;
     switch (enemyToSpawn.type) {
       case Enemy.TYPE_FLIPPER:
@@ -122,8 +111,7 @@ export default class EnemySpawner {
     }
 
     this.currentScore += enemy.valueInPoints;
-
-    // console.log(`Spawning ${enemyToSpawn.type} on lane ${lane}. Score on surface: ${this.currentScore}`);
+	// console.log(`Spawning ${enemyToSpawn.type} on lane ${lane}. Score on surface: ${this.currentScore}`);																										
   }
 
   /** @param {{level: number, type: string, chanceOfSpawning: number}[]} enemies */
@@ -147,7 +135,6 @@ export default class EnemySpawner {
    * @param {number} zPosition
    */
   spawnFlipper (lane, zPosition = 1) {
-    /** @var {EnemyFlipper} */
     let flipper = this.surfaceObjectsManager.addEnemy(
       new EnemyFlipper(
         this.surfaceObjectsManager.surface,

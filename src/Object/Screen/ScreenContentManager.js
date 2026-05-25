@@ -1,36 +1,21 @@
 import ContentManager from '@/Helpers/ContentManager';
-import readonly from '@/utils/readonly';
 
 export default class ScreenContentManager extends ContentManager {
-  @readonly
+  // Removed legacy @readonly decorators
   static KEY_PLAYER_ID = 'player_id';
-  @readonly
   static KEY_SCORE = 'score';
-  @readonly
   static KEY_HIGHEST_SCORE = 'highest_score';
-  @readonly
   static KEY_HIGH_SCORES = 'high_scores';
-  @readonly
   static KEY_LIVES = 'lives';
-  @readonly
   static KEY_LEVEL = 'level';
-  @readonly
   static KEY_SELECT_OFFSET = 'select_offset';
-  @readonly
   static KEY_SELECT_ACTIVE = 'select_active';
-  @readonly
   static KEY_LEVELS = 'levels';
-  @readonly
   static KEY_CREDITS = 'credits';
-  @readonly
   static KEY_SUPERZAPPER_USED = 'superzapper_used';
-  @readonly
   static KEY_RANK_POSITION = 'rank_position';
-  @readonly
   static KEY_LEVEL_SELECTED_CALLBACK = 'level_selected_callback';
-  @readonly
   static KEY_PUSH_HIGH_SCORE_CALLBACK = 'push_high_score_callback';
-  @readonly
   static KEY_CLOSE_HIGH_SCORES_SCREEN_CALLBACK = 'close_high_scores_screen_callback';
 
   /**

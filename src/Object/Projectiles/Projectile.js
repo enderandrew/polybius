@@ -1,23 +1,16 @@
-import readonly from '@/utils/readonly';
 import SurfaceObject from '@/Object/Surface/SurfaceObject';
 
 export default class Projectile extends SurfaceObject {
-  @readonly
+  // Removed legacy @readonly decorators
   static PROJECTILE_SPEED = 0.028;
-  @readonly
   static PROJECTILE_KILL_RADIUS_FORWARD = 0.02;
-  @readonly
   static PROJECTILE_KILL_RADIUS_BACKWARD = 0.08;
 
-  @readonly
   static SOURCE_SHOOTER = 1;
-  @readonly
   static SOURCE_ENEMY = -1;
 
-  /** @bar {boolean} */
+  // Modern ES class fields replacing JSDoc comments
   canExplode = false;
-
-  /** @var {number} */
   source;
 
   /**
@@ -80,7 +73,7 @@ export default class Projectile extends SurfaceObject {
   }
 
   hitByProjectile () {
-    // console.log('Projectile collision detected');
+	// console.log('Projectile collision detected');												
     this.alive = false;
   }
 

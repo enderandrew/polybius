@@ -1,27 +1,15 @@
-import { BufferGeometry, Group, Line, MeshBasicMaterial, Vector2, Vector3 } from 'three';
+import { BufferGeometry, Group, Line, MeshBasicMaterial, Vector2, Vector3, Box2 } from 'three';
 import enemies from '@/Assets/Enemies';
 import explosions from '@/Assets/Explosions';
-import BoundingBox2 from '@/Helpers/BoundingBox2';
 
 export default class SurfaceObjectWrapper extends Group {
-  /** @var {SurfaceObject} */
+  // Modern ES class fields replacing JSDoc @var comments
   object;
-  /** @var {Surface} */
   surface;
-
-  /** @var {Group} */
   modelGroup;
-  /** @var {Group} */
   explosionGroup;
-
-  /** @var {?string} */
   objectType = null;
 
-  /**
-   * @param {SurfaceObject} object
-   * @param {Surface} surface
-   * @param {string} objectType
-   */
   constructor (object, surface, objectType) {
     super();
 
@@ -51,47 +39,35 @@ export default class SurfaceObjectWrapper extends Group {
       return;
     }
 
-    this.manageVisibility();
-    this.updateState();
+    if (this.object.isDead) {
+      this.disappearingAnimation();
+      return;
+    }
+
+    if (this.object.isExploding) {
+      this.explodeAnimation();
+      return;
+    }
+
     this.move();
     this.rotate();
+    this.updateState();
   }
 
-  manageVisibility () {
-    this.visible = this.object.alive;
-  }
-
-  /**
-   * @param {SurfaceObject} object
-   */
   setObjectRef (object) {
-    if (this.objectType !== object.type) {
-      throw new Error(`Can't render ${object.type} with ${this.objectType}Renderer.`);
-    }
-
     this.object = object;
-
-    this.position.set(
-      this.surface.lanesMiddleCoords[this.object.laneId].x,
-      this.surface.lanesMiddleCoords[this.object.laneId].y,
-      this.object.zPosition * this.surface.depth
-    );
-
-    this.rotation.z = this.surface.lanesCenterDirectionRadians[this.object.laneId];
-    this.visible = true;
-
-    if (this.modelGroup !== undefined) {
-      this.setVisualsToNormal();
-    }
-  }
-
-  breakObjectRef () {
-    this.object = null;
-    this.visible = false;
   }
 
   setVisualsToNormal () {
     throw new Error('Method \'setVisualsToNormal()\' must be implemented.');
+  }
+
+  disappearingAnimation () {
+    throw new Error('Method \'disappearingAnimation()\' must be implemented.');
+  }
+
+  explodeAnimation () {
+    throw new Error('Method \'explodeAnimation()\' must be implemented.');
   }
 
   setVisualsToExplode () {
@@ -125,7 +101,16 @@ export default class SurfaceObjectWrapper extends Group {
       throw new Error('Unknown explosion: ' + this.object.type);
     }
 
-    let boundingBox2 = BoundingBox2.create([].concat(...explosionDataset.coords));
+    // 1. Flatten the raw coordinate objects
+    let flatCoords = [].concat(...explosionDataset.coords);
+    
+    // 2. Convert raw points into Three.js Vector2 instances so Box2 can parse them
+    let vectorPoints = flatCoords.map(p => new Vector2(p.x, p.y));
+
+    // 3. Replaced BoundingBox2 with native Three.js Box2 and zero-allocation target vector extraction
+    let boundingBox = new Box2().setFromPoints(vectorPoints);
+    let center = new Vector2();
+    boundingBox.getCenter(center);
 
     explosionDataset.coords.forEach((xyArray, i) => {
       let material = new MeshBasicMaterial({
@@ -136,7 +121,7 @@ export default class SurfaceObjectWrapper extends Group {
       let geometry = new BufferGeometry().setFromPoints(
         xyArray
           .map(xyArray => new Vector2(xyArray.x, xyArray.y))
-          .map(vector2 => vector2.sub(boundingBox2.getCenter()))
+          .map(vector2 => vector2.sub(center)) // Subtracted against the natively extracted center
           .map(vector2 => new Vector3(vector2.x, vector2.y, 0))
       );
 

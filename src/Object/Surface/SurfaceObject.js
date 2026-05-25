@@ -1,64 +1,34 @@
-import readonly from '@/utils/readonly';
 import ObjectIdManager from '@/Helpers/UniqueIdFactory';
 import State from '@/Object/State';
 
 export default class SurfaceObject {
-  @readonly
+  // Removed legacy @readonly decorators
   static TYPE_SHOOTER = 'shooter';
-  @readonly
   static TYPE_PULSAR = 'pulsar';
-  @readonly
   static TYPE_SPIKER = 'spiker';
-  @readonly
   static TYPE_SPIKE = 'spike';
-  @readonly
   static TYPE_FLIPPER_TANKER = 'flipperTanker';
-  @readonly
   static TYPE_FUSEBALL_TANKER = 'fuseballTanker';
-  @readonly
   static TYPE_PULSAR_TANKER = 'pulsarTanker';
-  @readonly
   static TYPE_FLIPPER = 'flipper';
-  @readonly
   static TYPE_FUSEBALL = 'fuseball';
-  @readonly
   static TYPE_PROJECTILE = 'projectile';
 
-  /** @var {Surface} */
+  // Modern ES class fields replacing JSDoc @var comments
   surface;
-
-  /** @var {number} */
   objectId;
-
-  /** @var {number} */
   laneId = 0;
-  /** @var {number} */
   prevLaneId = -1;
-  /** @var {boolean} */
   laneChangeMapsNeedUpdate = true;
-
-  /** @var {string} */
   type;
-  /** @var {boolean} */
   alive = true;
-  /** @var {boolean} */
   hittable = true;
-  /** @var {boolean} */
   canExplode = true;
-
-  /** @var {number} */
   zPosition = 0;
-  /** @var {number} */
   zSpeed = 0;
-
-  /** @var {State} */
   state = new State(0);
-  /** @var {State} */
   prevState = new State(0);
-  /** @var {number} */
   lastStateChange;
-
-  /** @var {number} */
   flags = 0;
 
   /**

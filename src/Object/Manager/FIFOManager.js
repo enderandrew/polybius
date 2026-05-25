@@ -1,12 +1,9 @@
-import readonly from '@/utils/readonly';
-
 export default class FIFOManager {
-  @readonly
+  // Removed legacy @readonly decorator
   static GARBAGE_COLLECTION_TIMEOUT_MS = 200;
 
-  /** @var {number} */
+  // Modern ES class fields replacing JSDoc @var comments
   lastGarbageCollectorExecutionTimestamp = 0;
-  /** {boolean} */
   forceMapsUpdate = false;
 
   /**
