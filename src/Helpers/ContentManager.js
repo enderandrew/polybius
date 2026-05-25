@@ -1,5 +1,6 @@
 export default class ContentManager {
-  content = [];
+  // Swapped from an array [] to an object {} to properly act as a key-value dictionary map
+  content = {};
   updateFlag = false;
 
   /**
