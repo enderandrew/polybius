@@ -1,10 +1,10 @@
-module.exports = {
-    presets: [
-        ['@babel/preset-env', { targets: { esmodules: true } }],
-		'@vue/cli-plugin-babel/preset'
-    ],
-	plugins: [
-		['@babel/plugin-proposal-decorators', { version: '2023-11' }],
-		'@babel/plugin-transform-class-properties'
-	]
-}
+export default {
+  presets: [
+    ['@babel/preset-env', { targets: { esmodules: true } }]
+  ],
+  plugins: [
+    // Force legacy Stage 1 decorators to match Tempest 2021 code semantics
+    ['@babel/plugin-proposal-decorators', { legacy: true }],
+    '@babel/plugin-transform-class-properties'
+  ]
+};

@@ -22,8 +22,11 @@ Project is available to play online thanks to GitHub Pages.
 
 # About Polybius
 ## Technical stuff
-Project uses three.js as a rendering library. It was written purely in JavaScript.
+Project uses Three.js as a rendering library. It was written purely in JavaScript. I updated this fork to use a newer Vite system and update to the newest Three.js from five year old code.
 It's based on vue webpack config, so it can be developed, served and built without any hustle.
+
+## New Features
+Added in a sanity system and glitches.
 
 ## Licensing
 All sounds used in Polybius comes from freesound.org and are published on free-to-use licences.

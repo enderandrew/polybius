@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "strict": false,                  
+    "experimentalDecorators": true,   // Crucial: Tells the engine to support legacy decorators
+    "useDefineForClassFields": false, // Crucial: Ensures legacy decorator compatibility with class fields
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]                // Aligns your editor autocomplete with your Vite path aliases
+    }
+  },
+  "include": ["src/**/*"]
+}
