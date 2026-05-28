@@ -30,6 +30,7 @@ export default class SurfaceObject {
   prevState = new State(0);
   lastStateChange;
   flags = 0;
+  hitPoints = 1;
 
   /**
    * @param {Surface} surface

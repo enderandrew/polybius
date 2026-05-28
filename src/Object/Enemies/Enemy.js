@@ -32,9 +32,12 @@ export default class Enemy extends ShootingSurfaceObject {
     }
   }
 
-  hitByProjectile () {
-    this.reward = true;
-    this.die();
+  hitByProjectile (damage = 1) {
+    this.hitPoints -= damage;
+    if (this.hitPoints <= 0) {
+      this.reward = true;
+      this.die();
+    }
   }
 
   fire () {
@@ -47,15 +50,17 @@ export default class Enemy extends ShootingSurfaceObject {
     this.hittable = false;
     this.canShoot = false;
     this.clearFlags();
-    this.setVisualsToExplode();
-    this.isExploding = true;
-    this.updateStateProgress(false, 0.4, () => {
-      this.isExploding = false;
-      this.isDead = true;
 
-      if (this.reward) {
-        this.rewardCallback(this);
+    if (this.reward === true) {
+      this.reward = false;
+      this.rewardCallback(this.valueInPoints);
+
+      messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_ENEMY_DEATH);
+  
+      // Power-up drop — runs for any enemy that grants a reward
+      if (this.game?.powerUpSpawner) {
+        this.game.powerUpSpawner.tryDrop(this);
       }
-    });
+    }
   }
 }

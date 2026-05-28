@@ -11,6 +11,7 @@ export default class Projectile extends SurfaceObject {
 
   // Modern ES class fields replacing JSDoc comments
   canExplode = false;
+  damage = 1;
   source;
 
   /**
@@ -19,10 +20,11 @@ export default class Projectile extends SurfaceObject {
    * @param {number} source
    * @param {?number} zPosition
    */
-  constructor (surface, laneId, source, zPosition = null) {
+  constructor (surface, laneId, source, zPosition = null, damage = 1) {
     super(surface, laneId, SurfaceObject.TYPE_PROJECTILE);
 
     this.source = source;
+	this.damage = damage;
 
     if (this.source === Projectile.SOURCE_SHOOTER) {
       this.zPosition = zPosition ?? 0;
@@ -65,7 +67,7 @@ export default class Projectile extends SurfaceObject {
 
     if (collision >= 0) {
       // console.log(`Hit ${laneObjects[collision].type}.`);
-      laneObjects[collision].hitByProjectile();
+      laneObjects[collision].hitByProjectile(this.damage);
       this.alive = false;
     }
 

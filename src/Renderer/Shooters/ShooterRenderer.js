@@ -7,7 +7,7 @@ import Shooter from '@/Object/Shooters/Shooter';
 
 export default class ShooterRenderer extends SurfaceObjectWrapper {
   // Removed legacy @readonly decorators
-  static MODEL_PATH = '../models/player.obj';
+  static MODEL_PATH = './models/player.obj';
   static MODEL_SCALE = 0.15;
   static MODEL_ROTATION = -Math.PI / 2;
   static MODEL_Z_OFFSET = -0.3;

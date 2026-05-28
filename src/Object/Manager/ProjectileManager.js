@@ -28,14 +28,14 @@ export default class ProjectileManager extends FIFOManager {
    * @param {number} source
    * @param {?number} zPosition
    */
-  fire (laneId, source, zPosition = null) {
+  fire (laneId, source, zPosition = null, damage = 1) {
     if (source === Projectile.SOURCE_SHOOTER) {
       if (this.shooterProjectiles.length >= ProjectileManager.MAX_AMOUNT_OF_SHOOTER_PROJECTILES) {
         console.log('Too much shooter projectiles!');
         return false;
       }
 
-      this.shooterProjectiles.push(new Projectile(this.surfaceObjectsManager.surface, laneId, source, zPosition));
+      this.shooterProjectiles.push(new Projectile(this.surfaceObjectsManager.surface, laneId, source, zPosition, damage));
       this.rendererHelperNewProjectilesIds.push(this.shooterProjectiles[this.shooterProjectiles.length - 1].objectId);
     } else {
       if (this.enemyProjectiles.length >= ProjectileManager.MAX_AMOUNT_OF_ENEMY_PROJECTILES) {

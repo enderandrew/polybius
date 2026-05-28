@@ -56,6 +56,12 @@ export default class SurfaceObjectWrapper extends Group {
 
   setObjectRef (object) {
     this.object = object;
+	this.visible = true;
+  }
+
+  breakObjectRef () {
+    this.object = null;
+    this.visible = false;
   }
 
   setVisualsToNormal () {

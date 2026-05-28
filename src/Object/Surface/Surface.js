@@ -1,4 +1,4 @@
-import { Vector2, Box2 } from 'three';
+import { Vector2, Vector3, Box2 } from 'three';
 
 export default class Surface {
   // Removed legacy @readonly decorator for Vite compatibility
@@ -33,6 +33,19 @@ export default class Surface {
     this.calculateCenteredLanesCoords();
     this.calculateLanesCenterCoords();
     this.calculateLanesCenterDirection();
+  }
+
+  /**
+   * Returns the 3D world position for a given lane and depth.
+   * Mirrors the positioning logic used by SurfaceObjectWrapper.
+   * @param {number} laneId
+   * @param {number} depth  - 0 (rim) to 1 (back of tube)
+   * @returns {THREE.Vector3|null}
+   */
+  lanePositionAt (laneId, depth) {
+    if (laneId < 0 || laneId >= this.lanesAmount) return null;
+    const mid = this.lanesMiddleCoords[laneId];
+    return new Vector3(mid.x, mid.y, depth * this.depth);
   }
 
   calculateCenteredLanesCoords () {

@@ -74,10 +74,10 @@ export default class EnemySpike extends Enemy {
     }
   }
 
-  hitByProjectile () {
-    this.zPosition += EnemySpike.HIT_DESTROYED_LENGTH;
+  hitByProjectile (damage = 1) {
+    this.zPosition += EnemySpike.HIT_DESTROYED_LENGTH * damage;
     this.rendererHelperZPositionChanged = true;
-
+  
     if (this.zPosition + EnemySpike.HIT_DESTROYED_LENGTH >= 1) {
       this.reward = true;
       this.die();

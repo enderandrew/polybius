@@ -15,6 +15,9 @@ import keyboardInput from '@/utils/KeyboardInput';
 import surfaces from '@/Assets/Surfaces';
 import levels from '@/Assets/Levels';
 import AudioManager from '@/Object/Manager/AudioManager';
+import ScreenParodySurface from '@/Object/Screen/ScreenParodySurface';
+import { PowerUpManager } from '@/PowerUp/PowerUpManager';
+import { PowerUpSpawner  } from '@/PowerUp/PowerUpSpawner';
 
 export default class Game {
   // Removed legacy @readonly decorators
@@ -103,14 +106,39 @@ export default class Game {
     this.screenStateUpdated = false;
   }
 
-  startLevel (level, firstLevel = false) {
-    if (this.levelObject !== null) {
-      throw new Error('Can\'t start level while another one is active!');
-    }
+startLevel (levelId, firstLevel = false) {
+    // Prevent double-triggering! If we are already loading, ignore input.
+    if (this.isLoadingLevel) return;
+    this.isLoadingLevel = true;
 
-    this.level = level;
     this.firstLevel = firstLevel;
-    this.setState(Game.STATE_PLAY);
+    this.level = levelId;
+    this.screenContentManager.setLevel(this.level);
+
+    // Clear out whatever screen is currently active (Menu or previous Play UI)
+    this.releaseScreen();
+    
+    // Clear out the previous level geometry if we are between levels
+    this.releaseLevel();
+
+    // Reset the camera back to the world origin! Without this, the camera is left stranded at the end of the previous level.	
+	this.camera.position.set(0, 0, -6);
+    this.camera.lookAt(0, 0, 10);
+
+    // Load the Parody Screen using your native screen manager
+    this.loadScreen(new ScreenParodySurface(this.screenContentManager));
+    
+    // Nudge it slightly closer to the camera to prevent Z-fighting
+    this.screenObject.position.z = 0.1;
+
+    // Wait 3 seconds, then trigger the native play state
+    setTimeout(() => {
+      this.isLoadingLevel = false;
+      
+      // This single line tells your game loop's handleState() to automatically 
+      // destroy the parody screen, load the ScreenPlay UI, and instantiate the level!
+      this.setState(Game.STATE_PLAY);
+    }, 3000);
   }
 
   loadLevel (level) {
@@ -140,12 +168,14 @@ export default class Game {
       this.rewardCallback.bind(this),
       this.levelWonCallback.bind(this),
       this.shooterKilledCallback.bind(this),
-      this.getCurrentScore.bind(this)
+      this.getCurrentScore.bind(this),
+	  this
     );
 
     this.levelObject.registerKeys();
     this.levelRenderer.bindLevel(this.levelObject);
     this.populateScreenContentManager();
+	this.powerUpSpawner.webGeometry = this.levelObject.surface;
   }
 
   releaseLevel () {
@@ -153,6 +183,8 @@ export default class Game {
       return;
     }
 
+    this.powerUpSpawner.webGeometry = null;
+    this.powerUpSpawner.clearAll();    
     this.levelObject.release();
     this.levelObject = null;
     this.levelRenderer.releaseLevel();
@@ -228,7 +260,13 @@ export default class Game {
   setupRenderer (highQuality = true) {
     this.scene = new Scene();
 
-    this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    // Get the actual pixel dimensions of the CRT screen interior
+    const screenElement = document.getElementById('screen');
+    const width = screenElement.clientWidth;
+    const height = screenElement.clientHeight;
+
+    // Pass the interior dimensions to the Camera
+    this.camera = new PerspectiveCamera(75, width / height, 0.1, 1000);
     this.camera.position.set(0, 0, -6);
     this.camera.lookAt(0, 0, 10);
 
@@ -238,23 +276,28 @@ export default class Game {
     this.audioManager = new AudioManager(this.audioListener);
 
     this.renderer = new WebGLRenderer({ antialias: true });
-    // Added pixel ratio for much sharper canvas text on modern screens
     this.renderer.setPixelRatio(window.devicePixelRatio); 
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(this.renderer.domElement);
+    
+    // Size the Canvas to the bezel, not the whole browser window!
+    this.renderer.setSize(width, height);
+    
+    // Prevent weird scrollbars from inline canvas rendering
+    this.renderer.domElement.style.display = 'block'; 
+    
+    document.getElementById('display').appendChild(this.renderer.domElement);
 
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
 
     if (highQuality) {
-      // Modernized: Use window resolution and significantly lower strength/radius
+      // 4. Pass the interior dimensions to the post-processing effects
       this.composer.addPass(new UnrealBloomPass(
-        new Vector2(window.innerWidth, window.innerHeight), 
-        0.6, // Strength (Lowered from 2.2)
-        0.4, // Radius (Lowered from 1.3)
-        0    // Threshold
+        new Vector2(width, height), 
+        0.8,
+        0.9,
+        0
       ));
-      this.composer.addPass(new SMAAPass(window.innerWidth, window.innerHeight));
+      this.composer.addPass(new SMAAPass(width, height));
     }
 
     this.levelRenderer = new LevelRenderer(this.camera);
@@ -263,23 +306,40 @@ export default class Game {
     this.screenGroup = new Group();
     this.screenGroup.rotation.y = Math.PI;
     this.scene.add(this.screenGroup);
+    this.powerUpManager = new PowerUpManager();
+    this.powerUpSpawner = new PowerUpSpawner(this.scene, null);
   }
 
   update () {
     requestAnimationFrame(this.update.bind(this));
-
+  
+    // Track delta time (seconds since last frame) for physics/movement
+    const now = performance.now();
+    const delta = this._lastTime ? (now - this._lastTime) / 1000 : 0;
+    this._lastTime = now;
+  
     this.handleState();
     keyboardInput.dispatchActions();
-
+  
     if (this.screenObject !== null) {
       this.screenObject.update();
     }
-
+  
     if (this.levelObject !== null && this.levelRenderer !== null) {
       this.levelObject.update();
       this.levelRenderer.update();
+  
+      // Power-up tick
+      this.powerUpSpawner.update(delta);
+      this.powerUpManager.update(delta);
+  
+      const collected = this.powerUpSpawner.checkPlayerCollision(
+        this.levelObject.shooterLane,
+        1.2
+      );
+      if (collected) this.powerUpManager.collect(collected, this);
     }
-
+  
     this.audioManager.update();
     this.composer.render();
   }
@@ -345,5 +405,9 @@ export default class Game {
 
   getCurrentScore () {
     return this.score;
+  }
+  
+  requestWarp () {
+    this.levelWonCallback();
   }
 }

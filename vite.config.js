@@ -8,7 +8,7 @@ export default defineConfig({
     babel() // Automatically loads your root babel.config.js settings
   ],
   
-  base: process.env.NODE_ENV === 'production' ? '/polybius/' : '/',
+  base: process.env.NODE_ENV === 'production' ? './' : '/',
   
   resolve: {
     alias: {
@@ -22,8 +22,7 @@ export default defineConfig({
   
   build: {
     // Increase limit to prevent warnings
-    chunkSizeWarningLimit: 1600,
-    
+    chunkSizeWarningLimit: 1600, 
     rollupOptions: {
       output: {
         // Tell Rollup to separate 'three' into its own chunk

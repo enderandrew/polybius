@@ -4,6 +4,7 @@
     <meta charset="utf-8">
 	<title>Polybius</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" type="text/css" href="style-crt.min.css" media="screen" title="Default" />
 	<link rel="icon" type="image/png" href="./favicon-96x96.png" sizes="96x96" />
 	<link rel="icon" type="image/svg+xml" href="./favicon.svg" />
 	<link rel="shortcut icon" href="./favicon.ico" />
@@ -20,7 +21,6 @@
 		
 		gtag('config', 'G-C7FZLTKS4Q');
 	</script>
-	<script type="module" src="/src/main.js"></script>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
 
@@ -30,6 +30,7 @@
             padding: 0;
         }
     </style>
+	<script type="module" src="/src/main.js"></script>
 </head>
 <body>
 	<noscript>
@@ -38,7 +39,29 @@
 			Please enable it to continue.
 		</strong>
 	</noscript>
-	<div id="container"></div>
+	
+	<div class="frame" id="container">
+		<div class="piece output crt crt-boot-sequence" id="screen">
+			<div id="display" class="scanllines"></div> 
+		</div>
+		
+		<div class="piece scanlines noclick"></div>
+		<div class="piece glow noclick"></div>
+		
+		<div id="monitor-controls">
+			<div class="led"></div>
+			<div class="switch" title="Power"></div>
+			<div class="knob" title="Brightness">
+				<span class="knob-label">BRT</span>
+			</div>
+			<div class="knob" style="transform: rotate(45deg);" title="Contrast">
+				<span class="knob-label">CON</span>
+			</div>
+		</div>
+	</div>
 	<!-- built files will be auto injected -->
+	<script>
+		document.addEventListener("DOMContentLoaded",()=>{const t=document.getElementById("screen"),e=document.querySelector(".led"),s=document.querySelector(".switch"),o=document.querySelector('.knob[title="Brightness"]'),n=document.querySelector('.knob[title="Contrast"]');let c=!0;s.addEventListener("click",()=>{c?(e.classList.add("off"),t.classList.remove("crt-turn-on"),t.classList.add("turn-off"),c=!1):(e.classList.remove("off"),t.classList.remove("turn-off"),t.offsetWidth,t.classList.add("crt-turn-on"),c=!0)});let r=0;const l=["","brt-high","brt-low"],d=[0,45,-45];o.addEventListener("click",()=>{r=(r+1)%l.length,o.style.transform=`rotate(${d[r]}deg)`,t.classList.remove("brt-high","brt-low"),l[r]&&t.classList.add(l[r])});let i=1;const a=["","con-high","con-low"],L=[0,45,-45];n.addEventListener("click",()=>{i=(i+1)%a.length,n.style.transform=`rotate(${L[i]}deg)`,t.classList.remove("con-high","con-low"),a[i]&&t.classList.add(a[i])})});
+	</script>
 </body>
 </html>

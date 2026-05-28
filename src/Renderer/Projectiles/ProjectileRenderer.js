@@ -27,9 +27,17 @@ export default class ProjectileRenderer extends SurfaceObjectWrapper {
     }
   }
 
-  updateState () {}
+  updateState () {
+    this.positionBase = this.surface.lanesMiddleCoords[this.object.laneId].clone();
+    this.zRotationBase = this.surface.lanesCenterDirectionRadians[this.object.laneId];
+  }
 
   move () {
+    // Snap to the correct X/Y position of the current lane
+    this.position.x = this.surface.lanesMiddleCoords[this.object.laneId].x;
+    this.position.y = this.surface.lanesMiddleCoords[this.object.laneId].y;
+
+    // Move forward/backward along the Z depth
     this.position.z = this.object.zPosition * this.surface.depth;
   }
 

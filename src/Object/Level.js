@@ -52,7 +52,8 @@ export default class Level {
     rewardCallback,
     levelWonCallback,
     shooterKilledCallback,
-    getCurrentScore
+    getCurrentScore,
+	game
   ) {
     this.surface = surface;
 
@@ -73,7 +74,8 @@ export default class Level {
       this.rewardCallback,
       this.currentLevel,
       this.levelInitScore,
-      this.targetScore
+      this.targetScore,
+	  this.game
     );
 
     this.shooter = new Shooter(
@@ -83,6 +85,7 @@ export default class Level {
       this.shooterKilled.bind(this),
       7
     );
+	this.shooter.game = this.game;
 
     this.surfaceObjectsManager.addShooter(this.shooter);
   }

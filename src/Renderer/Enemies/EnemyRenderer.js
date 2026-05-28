@@ -34,16 +34,23 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     }
 
     super.setObjectRef(object);
+	this.setVisualsToNormal();
   }
 
   setVisualsToNormal () {
-    this.modelGroup.visible = true;
-    this.modelGroup.scale.set(1, 1, 1);
-    this.explosionGroup.visible = false;
+    // Only toggle visibility if the meshes have actually been loaded!
+    if (this.explosionGroup && this.modelGroup) {
+      this.explosionGroup.visible = false;
+      this.modelGroup.visible = true;
+	  this.modelGroup.scale.set(1, 1, 1);
+    }
   }
 
   setVisualsToExplode () {
-    this.explosionGroup.visible = true;
+    if (this.explosionGroup && this.modelGroup) {
+      this.explosionGroup.visible = true;
+      this.modelGroup.visible = false;
+    }
   }
 
   explodeAnimation () {

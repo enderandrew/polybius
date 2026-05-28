@@ -11,11 +11,13 @@ import { Box2, Vector2 } from 'three';
 const centerTarget = new Vector2();
 
 export default class ScreenSelectSurface extends Canvas3d {
-  // Removed legacy @readonly decorator
   static SURFACE_COLORS = ['rgba(0, 0, 255, 1)', 'rgba(255, 0, 0, 1)', 'rgba(0, 255, 0, 1)'];
 
   // Modern ES class field
   selectedLevel = 1;
+  
+  // Add the glitch timer property to track frames
+  glitchTimer = 0;
 
   constructor (screenContentManager, width = 8, height = 8, canvasResX = 1024, canvasResY = 1024) {
     super(screenContentManager, width, height, canvasResX, canvasResY);
@@ -95,12 +97,24 @@ export default class ScreenSelectSurface extends Canvas3d {
 
   draw () {
     this.clearCanvas();
+    this.glitchTimer++; // Increment timer every frame
 
     this.setFontSizePx(20);
-    this.drawText('© Sinneslöschen Inc. ©', 282, 60, Canvas3d.COLOR_BLUE);
+    // Glitch 1: Occasional copyright replacement
+    if (Math.random() > 0.995) {
+      this.drawText('© PROJECT MK-ULTRA ©', 370, 60, Canvas3d.COLOR_RED);
+    } else {
+      this.drawText('© Sinneslöschen Inc. ©', 352, 60, Canvas3d.COLOR_BLUE);
+    }
 
     this.setFontSizePx(30);
-    this.drawText('rate yourself', 371, 480, Canvas3d.COLOR_GREEN);
+    // Glitch 2: Frame-based subliminal instruction flash
+    if (this.glitchTimer % 180 === 0) { 
+      this.drawText('SUBMIT YOUR WILL', 350, 480, Canvas3d.COLOR_RED);
+    } else {
+      this.drawText('rate yourself', 371, 480, Canvas3d.COLOR_GREEN);
+    }
+    
     this.drawText('Use A and D to change', 270, 530, Canvas3d.COLOR_CYAN);
     this.drawText('Press fire to select', 284, 580, Canvas3d.COLOR_YELLOW);
     this.drawText('novice', 140, 750, Canvas3d.COLOR_RED);
@@ -134,7 +148,20 @@ export default class ScreenSelectSurface extends Canvas3d {
     }
 
     this.setFontSizePx(75);
-    this.drawText('POLYBIUS', 160, 300, Canvas3d.COLOR_WHITE);
+    // Glitch 3: Title text jitter and color flash
+    let titleOffset = Math.random() > 0.995 ? (Math.random() * 8 - 4) : 0;
+    let titleColor = Math.random() > 0.997 ? Canvas3d.COLOR_RED : Canvas3d.COLOR_WHITE;
+    this.drawText('POLYBIUS', 275 + titleOffset, 300, titleColor);
+
+    // --- Satire Disclaimer ---
+    this.setFontSizePx(14);
+    this.context.textAlign = 'center';
+    this.drawText(
+      'DISCLAIMER: THIS GAME IS A SATIRICAL PARODY. NO BRAINWAVES WILL BE HARVESTED.', 
+      512, 1000, 
+      'rgba(100, 100, 100, 1)' 
+    );
+    this.context.textAlign = 'left'; // Reset alignment
 
     this.drawRect(
       140 + xStep * this.screenContentManager.get(ScreenContentManager.KEY_SELECT_ACTIVE),
@@ -157,14 +184,10 @@ export default class ScreenSelectSurface extends Canvas3d {
       return;
     }
 
-    // Modern Three.js Box2 implementation replacing BoundingBox2
     let boundingBox2 = new Box2().setFromPoints(surface.coords);
-
     this.context.beginPath();
 
     for (let i = 0; i < surface.coords.length + (surface.isOpen ? 0 : 1); i++) {
-      
-      // Extract center using the reusable target vector
       boundingBox2.getCenter(centerTarget);
 
       let cx = x + (centerTarget.x - surface.coords[i % 16].x) * unit;

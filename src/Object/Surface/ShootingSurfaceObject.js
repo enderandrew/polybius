@@ -53,14 +53,47 @@ export default class ShootingSurfaceObject extends SurfaceObject {
     if (!this.canShoot) {
       return;
     }
-
+  
     let now = Date.now();
-
-    if (now - this.lastShootTimestamp < this.shootTimeoutMs) {
+  
+    // Apply power-up cooldown modifier for player shots only
+    const cooldown = (this.projectileSource === Projectile.SOURCE_SHOOTER && this.game?.powerUpManager)
+      ? this.game.powerUpManager.getShotCooldown(this.shootTimeoutMs)
+      : this.shootTimeoutMs;
+  
+    if (now - this.lastShootTimestamp < cooldown) {
       return;
     }
-
+  
     this.lastShootTimestamp = now;
-    return this.projectileManager.fire(this.laneId, this.projectileSource, this.zPosition);
+  
+    // Determine damage for this shot
+    const damage = (this.projectileSource === Projectile.SOURCE_SHOOTER && this.game?.powerUpManager)
+      ? this.game.powerUpManager.getBulletDamage(1)
+      : 1;
+  
+    // Spread Gun
+    if (this.projectileSource === Projectile.SOURCE_SHOOTER && this.game?.powerUpManager?.hasSpreadGun) {
+      const angles = this.game.powerUpManager.getShotAngles();
+      let fired = false;
+      angles.forEach(angle => {
+        const targetLane = this._spreadLane(angle);
+        if (this.projectileManager.fire(targetLane, this.projectileSource, this.zPosition, damage)) {
+          fired = true;
+        }
+      });
+      return fired;
+    }
+  
+    return this.projectileManager.fire(this.laneId, this.projectileSource, this.zPosition, damage);
+  }
+  
+  // Helper — converts a spread angle offset into a neighbouring lane index
+  _spreadLane (angleOffset) {
+    if (angleOffset === 0) return this.laneId;
+    const surface = this.projectileManager.surfaceObjectsManager.surface;
+    const laneCount = surface.lanesAmount;
+    const offset = angleOffset > 0 ? 1 : -1;
+    return (this.laneId + offset + laneCount) % laneCount;
   }
 }
