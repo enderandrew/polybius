@@ -46,8 +46,8 @@ export class PowerUpRenderer {
   static _drawGlow (ctx, cx, cy, r, glowColor) {
     const grad = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r * 1.6);
     grad.addColorStop(0,   glowColor);
-    grad.addColorStop(0.5, glowColor.replace(/[\d.]+\)$/, '0.2)'));
-    grad.addColorStop(1,   'rgba(0,0,0,0)');
+    grad.addColorStop(0.15, glowColor.replace(/[\d.]+\)$/, '0.2)'));
+    grad.addColorStop(0.3,   'rgba(0,0,0,0)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   }

@@ -66,12 +66,9 @@ export class PowerUpManager {
     }
 
     // --- Timed weapon effects ---
-    if (type.isWeapon && type.duration) {
+    if (type.duration) {
       const remaining = type.duration / 1000;
-
-      // Replace any existing instance of the same weapon power-up (resets timer)
       this._active.set(type.id, { type, remaining });
-
       this._emit('powerup:collected', { type, remaining });
     }
   }
@@ -194,6 +191,10 @@ export class PowerUpManager {
     if (this.hasParticleBlaster) return 0xff0000; // Red for Particle Blaster
     if (this.hasLaser)         return 0x00ff00; // Bright Green for Laser!
     return baseColor;
+  }
+
+  get hasJump () {
+    return this.isActive(PowerUpType.JUMP.id);
   }
 
   // ---------------------------------------------------------------------------

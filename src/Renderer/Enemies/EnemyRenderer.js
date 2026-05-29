@@ -1,4 +1,4 @@
-import { BufferGeometry, Group, Line, MeshBasicMaterial, Vector2, Vector3, Box2 } from 'three';
+import { BufferGeometry, Group, IcosahedronGeometry, Line, MeshBasicMaterial, Mesh, Vector2, Vector3, Box2, AdditiveBlending } from 'three';
 import SurfaceObjectWrapper from '@/Renderer/Surface/SurfaceObjectWrapper';
 import enemies from '@/Assets/Enemies';
 
@@ -34,7 +34,22 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     }
 
     super.setObjectRef(object);
-	this.setVisualsToNormal();
+    
+    if (this.modelGroup) {
+        // Change the enemy's color to Red-Orange if they are strong
+        const isStrong = this.object.isStrong;
+        
+        this.modelGroup.children.forEach(child => {
+            if (isStrong) {
+                child.material.color.setHex(0xff4400); 
+            } else {
+                // Safely revert to normal color using the data we stashed during loadModel()
+                child.material.color.setHex(child.material.userData.originalColor);
+            }
+        });
+    }
+    
+    this.setVisualsToNormal();
   }
 
   setVisualsToNormal () {
@@ -90,6 +105,16 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
 
   rotate () {
     this.rotation.z = this.zRotationBase + this.zRotationOffset;
+    if (this.shieldMesh && this.object) {
+        // Toggle visibility based on health state
+        this.shieldMesh.visible = this.object.hasShield;
+        
+        if (this.shieldMesh.visible) {
+            this.shieldMesh.rotation.x -= 0.05;
+            this.shieldMesh.rotation.y += 0.02;
+            this.shieldMesh.rotation.z -= 0.01;
+        }
+    }
   }
 
   setLaneOffset (offset = 0.5) {
@@ -149,33 +174,51 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
       throw new Error('Unknown object: ' + this.object.type);
     }
 
-    // 1. Flatten the raw coordinate objects
     let flatCoords = [].concat(...enemyDataset.coords);
-    
-    // 2. Convert raw points into Three.js Vector2 instances so Box2 can parse them
     let vectorPoints = flatCoords.map(p => new Vector2(p.x, p.y));
 
-    // 3. Replaced BoundingBox2 with native Three.js Box2 and zero-allocation target vector extraction
     let boundingBox = new Box2().setFromPoints(vectorPoints);
     let center = new Vector2();
     boundingBox.getCenter(center);
+    
+    // Calculate the size of the enemy to properly scale the shield
+    let size = new Vector2();
+    boundingBox.getSize(size);
+    let shieldRadius = Math.max(size.x, size.y) * 0.75; // 75% larger than the widest dimension
 
     enemyDataset.coords.forEach((xyArray, i) => {
+      let originalColor = Array.isArray(enemyDataset.color) ? enemyDataset.color[i] : enemyDataset.color;
       let material = new MeshBasicMaterial({
-          color: Array.isArray(enemyDataset.color) ? enemyDataset.color[i] : enemyDataset.color,
+          color: originalColor,
         }
       );
+      // Save the original color so we can reset it when the enemy is pooled
+      material.userData.originalColor = originalColor; 
 
       let geometry = new BufferGeometry().setFromPoints(
         xyArray
           .map(xyArray => new Vector2(xyArray.x, xyArray.y))
-          .map(vector2 => vector2.sub(center)) // Subtracted against the natively extracted center
+          .map(vector2 => vector2.sub(center))
           .map(vector2 => new Vector3(vector2.x, vector2.y, 0))
       );
 
       this.modelGroup.add(new Line(geometry, material));
     });
 
+    // Create the dynamically sized, glowing shield
+    const shieldGeo = new IcosahedronGeometry(shieldRadius, 0); 
+    const shieldMat = new MeshBasicMaterial({
+        color: 0x00ffff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.15,                 // Softer transparency
+        blending: AdditiveBlending,    // Creates a glowing "energy" effect
+        depthWrite: false              // Prevents weird clipping with the enemy lines
+    });
+    
+    this.shieldMesh = new Mesh(shieldGeo, shieldMat);
+    
     this.add(this.modelGroup);
+    this.add(this.shieldMesh);
   }
 }

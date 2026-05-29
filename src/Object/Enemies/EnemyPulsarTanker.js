@@ -17,11 +17,13 @@ export default class EnemyPulsarTanker extends EnemyTanker {
     enemySpawnFunction,
     rewardCallback,
     laneId = 0,
-    zPosition = 1
+    zPosition = 1,
+	game
   ) {
-    super(surface, projectileManager, enemySpawnFunction, rewardCallback, Enemy.TYPE_PULSAR_TANKER, laneId, zPosition);
+    super(surface, projectileManager, enemySpawnFunction, rewardCallback, Enemy.TYPE_PULSAR_TANKER, laneId, zPosition, game);
 
     this.firstLevel = 41;
+	this.game = game;
   }
 
   createEnemies () {

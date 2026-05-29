@@ -21,8 +21,8 @@ export default class EnemySpike extends Enemy {
    * @param {function} rewardCallback
    * @param {number} laneId
    */
-  constructor (surface, projectileManager, rewardCallback, laneId = 0) {
-    super(surface, projectileManager, rewardCallback, laneId, 1, SurfaceObject.TYPE_SPIKE);
+  constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
+    super(surface, projectileManager, rewardCallback, laneId, 1, SurfaceObject.TYPE_SPIKE, game);
 
     this.firstLevel = 1;
     this.valueInPoints = 1;
@@ -31,6 +31,7 @@ export default class EnemySpike extends Enemy {
     this.canExplode = false;
 
     this.setState(EnemySpike.STATE_ALIVE);
+	this.game = game;
   }
 
   updateState () {

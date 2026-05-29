@@ -17,7 +17,8 @@ export default class EnemyFuseballTanker extends EnemyTanker {
     enemySpawnFunction,
     rewardCallback,
     laneId = 0,
-    zPosition = 1
+    zPosition = 1,
+	game
   ) {
     super(
       surface,
@@ -26,10 +27,12 @@ export default class EnemyFuseballTanker extends EnemyTanker {
       rewardCallback,
       Enemy.TYPE_FUSEBALL_TANKER,
       laneId,
-      zPosition
+      zPosition,
+	  game
     );
 
     this.firstLevel = 33;
+	this.game = game;
   }
 
   createEnemies () {

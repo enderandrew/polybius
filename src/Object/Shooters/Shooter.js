@@ -25,12 +25,15 @@ export default class Shooter extends ShootingSurfaceObject {
   static STATE_GOING_DOWN_THE_TUBE = new State(4000, 1, 'going_down_the_tube');
   static STATE_REACHED_TUBE_BOTTOM = new State(0, 1, 'reached_tube_bottom');
   static STATE_DEAD = new State(0, 1, 'dead');
+  static STATE_JUMPING = new State(600, 1, 'jumping');
+  static JUMP_HEIGHT = -0.3;   // Negative Z = above the rim
 
   static FLAG_ITS_ALREADY_TOO_LATE = 0x1;
   static FLAG_SUPERZAPPER_USED = 0x2;
 
   // Modern ES class fields replacing JSDoc @var comments
   penaltyTimestamp = 0;
+  jumpTimestamp = 0;
   lastLaneChangeTimestamp;
   laneChangeTimeoutMs;
   surfaceObjectsManager;
@@ -91,13 +94,16 @@ export default class Shooter extends ShootingSurfaceObject {
     } else if (this.inState(Shooter.STATE_APPROACHING_TUBE)) {
       this.hittable = true;
       this.canShoot = true;
-
       this.setState(Shooter.STATE_ALIVE);
+
+    } else if (this.inState(Shooter.STATE_JUMPING)) {
+      this.setState(Shooter.STATE_ALIVE);
+      this.zPosition = 0;
     }
   }
 
   updateEntity () {
-    if (this.isFlagNotSet(Shooter.FLAG_ITS_ALREADY_TOO_LATE)) {
+    if (this.isFlagNotSet(Shooter.FLAG_ITS_ALREADY_TOO_LATE) && !this.inState(Shooter.STATE_JUMPING)) {
       this.handleShortedLanes();
 
       if (!this.inState(Shooter.STATE_GOING_DOWN_THE_TUBE)) {
@@ -116,6 +122,10 @@ export default class Shooter extends ShootingSurfaceObject {
       this.zPosition = -1 * (1 - this.stateProgressInTime()) * Shooter.TUBE_APPROACHING_LENGTH_MULTIPLIER;
     } else if (this.inState(Shooter.STATE_ALIVE) || this.inState(Shooter.STATE_RENOVATING)) {
       this.zPosition = 0;
+    } else if (this.inState(Shooter.STATE_JUMPING)) {
+      // Sine arc: launches up, hangs at peak, comes back down
+      const arc      = Math.sin(this.stateProgressInTime() * Math.PI);
+      this.zPosition = Shooter.JUMP_HEIGHT * arc;
     }
   }
 
@@ -226,6 +236,18 @@ export default class Shooter extends ShootingSurfaceObject {
     } else {
       messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_SHOOT);
     }
+  }
+
+  jump () {
+    if (
+      !this.game?.powerUpManager?.hasJump
+      || !this.inState(Shooter.STATE_ALIVE)
+      || !this.canShoot
+    ) {
+      return;
+    }
+    this.jumpTimestamp = Date.now();
+    this.setState(Shooter.STATE_JUMPING);
   }
 
   hitByProjectile () {

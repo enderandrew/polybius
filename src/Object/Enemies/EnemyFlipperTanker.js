@@ -17,11 +17,13 @@ export default class EnemyFlipperTanker extends EnemyTanker {
     enemySpawnFunction,
     rewardCallback,
     laneId = 0,
-    zPosition = 1
+    zPosition = 1,
+	game
   ) {
-    super(surface, projectileManager, enemySpawnFunction, rewardCallback, Enemy.TYPE_FLIPPER_TANKER, laneId, zPosition);
+    super(surface, projectileManager, enemySpawnFunction, rewardCallback, Enemy.TYPE_FLIPPER_TANKER, laneId, zPosition, game);
 
     this.firstLevel = 3;
+	this.game = game;
   }
 
   createEnemies () {

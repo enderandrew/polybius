@@ -59,6 +59,21 @@ export const PowerUpType = Object.freeze({
     dropWeight:  5,
     description: 'Long beam, double damage — slow rate of fire',
   },
+  
+  // --- HELPERS ---
+
+  JUMP: {
+    id:          'JUMP',
+    label:       'JUMP',
+    color:       '#88ffff',
+    glowColor:   'rgba(136,255,255,0.6)',
+    shape:       'star',
+    duration:    20000,
+    isWeapon:    false,
+    grantsJump:  true,
+    dropWeight:  10,
+    description: 'Press W to jump over enemies',
+  },
 
   // --- SCORE BONUSES ---
 

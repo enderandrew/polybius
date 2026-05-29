@@ -25,6 +25,9 @@ export default class Enemy extends ShootingSurfaceObject {
     this.rewardCallback = rewardCallback;
     this.shootTimeoutMs = Enemy.SHOOT_TIMEOUT_MS;
 	this.game = game;
+	this.isStrong = Math.random() < 0.10;
+    this.hitPoints = this.isStrong ? 2 : 1;
+    this.hasShield = this.isStrong;
 
     if (this.constructor === Enemy) {
       throw new Error('Abstract classes can\'t be instantiated.');
@@ -35,8 +38,11 @@ export default class Enemy extends ShootingSurfaceObject {
   hitByProjectile (damage = 1) {
     this.hitPoints -= damage;
     if (this.hitPoints <= 0) {
+      this.alive = false;
       this.reward = true;
       this.die();
+    } else {
+      this.hasShield = false; 
     }
   }
 
