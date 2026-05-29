@@ -65,18 +65,23 @@ export class PowerUpSpawner {
    * @returns {PowerUp|null}
    */
   tryDrop (enemy) {
-    const tier   = enemy.tier ?? 'normal';
+    //console.log("SPAWNER: Attempting drop. Current webGeometry is:", this._webGeometry);
+	const tier   = enemy.tier ?? 'normal';
     const chance = this._dropChance[tier] ?? this._dropChance.normal;
 
     if (Math.random() > chance) return null;
 
-    // Bosses only drop weapon power-ups (more interesting)
-    const filterFn = tier === 'boss'
-      ? (t) => t.isWeapon
-      : null;
+    if (!this._webGeometry || typeof this._webGeometry.lanePositionAt !== 'function') {
+        console.error("PowerUpSpawner: Cannot spawn - webGeometry is invalid or missing.");
+        return null;
+    }
 
+    const filterFn = tier === 'boss' ? (t) => t.isWeapon : null;
     const type    = pickWeightedRandom(filterFn);
-    const powerUp = new PowerUp(type, enemy.lane, enemy.depth, this._webGeometry);
+    
+    const powerUp = new PowerUp(type, enemy.laneId, enemy.zPosition, this._webGeometry);
+    
+	//console.log("SPAWNER: PowerUp created with:", powerUp.webGeometry);
 
     this._scene.add(powerUp.sprite);
     this._activePowerUps.push(powerUp);
@@ -92,9 +97,10 @@ export class PowerUpSpawner {
     if (!this._webGeometry) return;
 	for (let i = this._activePowerUps.length - 1; i >= 0; i--) {
       const pu = this._activePowerUps[i];
-      pu.update(delta);
+      if (!pu.webGeometry) continue;
+	  pu.update(delta);
 
-      if (pu.isCollected || pu.isExpired) {
+      if (pu.isExpired) {
         pu.dispose(this._scene);
         this._activePowerUps.splice(i, 1);
       }
@@ -132,6 +138,7 @@ export class PowerUpSpawner {
       pu.dispose(this._scene);
     }
     this._activePowerUps = [];
+	this._webGeometry = null;
   }
 
   /** Read-only count of live power-ups (useful for debug HUD). */

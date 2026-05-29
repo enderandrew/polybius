@@ -25,6 +25,8 @@ export default class Projectile extends SurfaceObject {
 
     this.source = source;
 	this.damage = damage;
+	this.killRadiusForward = Projectile.PROJECTILE_KILL_RADIUS_FORWARD;
+    this.killRadiusBackward = Projectile.PROJECTILE_KILL_RADIUS_BACKWARD;
 
     if (this.source === Projectile.SOURCE_SHOOTER) {
       this.zPosition = zPosition ?? 0;
@@ -60,8 +62,9 @@ export default class Projectile extends SurfaceObject {
     let collision = laneObjects.findIndex(object => (
       object.hittable
       && object.alive
-      && object.zPosition >= this.zPosition - Projectile.PROJECTILE_KILL_RADIUS_BACKWARD
-      && object.zPosition <= this.zPosition + Projectile.PROJECTILE_KILL_RADIUS_FORWARD
+      // Need variable hitbox collision for longer lasers
+      && object.zPosition >= this.zPosition - this.killRadiusBackward
+      && object.zPosition <= this.zPosition + this.killRadiusForward
       )
     );
 

@@ -19,17 +19,17 @@ export default class Enemy extends ShootingSurfaceObject {
    * @param {number} zPosition
    * @param {string} type
    */
-  constructor (surface, projectileManager, rewardCallback, laneId, zPosition, type) {
+  constructor (surface, projectileManager, rewardCallback, laneId, zPosition, type, game) {
     super(surface, projectileManager, laneId, type);
-
     this.zPosition = zPosition;
-
     this.rewardCallback = rewardCallback;
     this.shootTimeoutMs = Enemy.SHOOT_TIMEOUT_MS;
+	this.game = game;
 
     if (this.constructor === Enemy) {
       throw new Error('Abstract classes can\'t be instantiated.');
     }
+	//console.log("Enemy spawned with game:", this.game);
   }
 
   hitByProjectile (damage = 1) {
@@ -47,6 +47,8 @@ export default class Enemy extends ShootingSurfaceObject {
   }
 
   die () {
+    //console.log("DEBUG: Current Enemy Instance:", this);
+    //console.log("DEBUG: Enemy's 'game' reference:", this.game);
     this.hittable = false;
     this.canShoot = false;
     this.clearFlags();
@@ -58,8 +60,8 @@ export default class Enemy extends ShootingSurfaceObject {
       messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_ENEMY_DEATH);
   
       // Power-up drop — runs for any enemy that grants a reward
-      if (this.game?.powerUpSpawner) {
-        this.game.powerUpSpawner.tryDrop(this);
+      if (this.game && this.game.powerUpSpawner) {
+		this.game.powerUpSpawner.tryDrop(this);
       }
     }
   }

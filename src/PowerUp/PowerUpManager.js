@@ -29,7 +29,7 @@ import { PowerUpType } from '@/PowerUp/PowerUpType';
 export class PowerUpManager {
 
   constructor () {
-    // Map of PowerUpType.id → { type, expiresAt: DOMHighResTimeStamp | null }
+    // Map of PowerUpType.id → { type, remaining: DOMHighResTimeStamp | null }
     this._active = new Map();
   }
 
@@ -67,15 +67,12 @@ export class PowerUpManager {
 
     // --- Timed weapon effects ---
     if (type.isWeapon && type.duration) {
-      const expiresAt = performance.now() + type.duration;
+      const remaining = type.duration / 1000;
 
       // Replace any existing instance of the same weapon power-up (resets timer)
-      this._active.set(type.id, { type, expiresAt });
+      this._active.set(type.id, { type, remaining });
 
-      this._emit('powerup:collected', {
-        type,
-        remaining: type.duration / 1000,
-      });
+      this._emit('powerup:collected', { type, remaining });
     }
   }
 
@@ -84,12 +81,16 @@ export class PowerUpManager {
    * @param {number} delta  - Seconds since last frame (not used directly;
    *                          expiry uses wall-clock via performance.now())
    */
-  update (_delta) {
-    const now = performance.now();
+  update (delta) {
     for (const [id, entry] of this._active) {
-      if (entry.expiresAt !== null && now >= entry.expiresAt) {
-        this._active.delete(id);
-        this._emit('powerup:expired', { type: entry.type });
+      if (entry.remaining !== null && entry.remaining !== undefined) {
+        // Subtract elapsed frame time
+        entry.remaining -= delta;
+        
+        if (entry.remaining <= 0) {
+          this._active.delete(id);
+          this._emit('powerup:expired', { type: entry.type });
+        }
       }
     }
   }
@@ -110,17 +111,17 @@ export class PowerUpManager {
   /** Seconds remaining for a timed power-up, or 0 if not active. */
   remainingSeconds (powerUpTypeId) {
     const entry = this._active.get(powerUpTypeId);
-    if (!entry || entry.expiresAt === null) return 0;
-    return Math.max(0, (entry.expiresAt - performance.now()) / 1000);
+    if (!entry || entry.remaining === null || entry.remaining === undefined) return 0;
+    return Math.max(0, entry.remaining);
   }
 
   // ---------------------------------------------------------------------------
   // Convenience booleans for weapon/fire systems
   // ---------------------------------------------------------------------------
 
-  /** True while PARTICLE_LASER is active. */
-  get hasParticleLaser () {
-    return this.isActive(PowerUpType.PARTICLE_LASER.id);
+  /** True while PARTICLE_BLASTER is active. */
+  get hasParticleBlaster () {
+    return this.isActive(PowerUpType.PARTICLE_BLASTER.id);
   }
 
   /** True while RAPID_FIRE is active. */
@@ -158,17 +159,17 @@ export class PowerUpManager {
    * @param {number} [baseDamage=1]
    */
   getBulletDamage (baseDamage = 1) {
-    if (this.hasParticleLaser) return baseDamage * 2.5;
+    if (this.hasParticleBlaster) return baseDamage * 2.5;
     if (this.hasLaser)         return baseDamage * 2.0;
     return baseDamage;
   }
 
   /**
    * Returns the spike-clearing speed multiplier.
-   * PARTICLE_LASER makes the Superzapper-style spike digger much faster.
+   * PARTICLE_BLASTER makes the Superzapper-style spike digger much faster.
    */
   getSpikeDigMultiplier () {
-    return this.hasParticleLaser ? 3.0 : 1.0;
+    return this.hasParticleBlaster ? 3.0 : 1.0;
   }
 
   /**
@@ -186,7 +187,13 @@ export class PowerUpManager {
    * Returns the visual length multiplier for the bullet/laser beam.
    */
   getBulletLengthMultiplier () {
-    return this.hasLaser ? 3.5 : 1.0;
+    return this.hasLaser ? 35.0 : 1.0;
+  }
+  
+  getBulletColor (baseColor = 0xffffff) {
+    if (this.hasParticleBlaster) return 0xff0000; // Red for Particle Blaster
+    if (this.hasLaser)         return 0x00ff00; // Bright Green for Laser!
+    return baseColor;
   }
 
   // ---------------------------------------------------------------------------

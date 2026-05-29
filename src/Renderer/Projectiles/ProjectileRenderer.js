@@ -24,6 +24,12 @@ export default class ProjectileRenderer extends SurfaceObjectWrapper {
       this.children[1].material = new LineBasicMaterial({
         color: this.getMaterialColor()
       });
+
+      const lengthMult = this.object.lengthMult || 1.0;
+      
+      // If it's a laser, make the beam 50% thicker (1.5) as well as longer!
+      const thickness = lengthMult > 1.0 ? 1.5 : 1.0;
+      this.scale.set(thickness, thickness, lengthMult);
     }
   }
 
@@ -42,8 +48,14 @@ export default class ProjectileRenderer extends SurfaceObjectWrapper {
   }
 
   rotate () {
-    this.rotation.x += ProjectileRenderer.ROTATION_SPEED;
-    this.rotation.y += ProjectileRenderer.ROTATION_SPEED;
+    // If it is an elongated laser beam, stop the tumbling effect!
+    if (this.object && this.object.lengthMult > 1.0) {
+       this.rotation.set(0, 0, 0); 
+    } else {
+       // Otherwise, tumble normally
+       this.rotation.x += ProjectileRenderer.ROTATION_SPEED;
+       this.rotation.y += ProjectileRenderer.ROTATION_SPEED;
+    }
   }
 
   loadModel () {
@@ -73,8 +85,10 @@ export default class ProjectileRenderer extends SurfaceObjectWrapper {
   }
 
   getMaterialColor () {
-    return this.object.source === Projectile.SOURCE_SHOOTER
-      ? ProjectileRenderer.PROJECTILE_SHOOTER_COLOR
-      : ProjectileRenderer.PROJECTILE_ENEMY_COLOR;
+    // Check if the customColor was applied from the PowerUpManager
+    if (this.object && this.object.source === Projectile.SOURCE_SHOOTER) {
+      return this.object.customColor || ProjectileRenderer.PROJECTILE_SHOOTER_COLOR;
+    }
+    return ProjectileRenderer.PROJECTILE_ENEMY_COLOR;
   }
 }

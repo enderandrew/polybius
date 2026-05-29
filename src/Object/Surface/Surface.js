@@ -23,6 +23,11 @@ export default class Surface {
     this.name = name;
     this.isOpen = isOpen;
     this.rawLanesCoords = lanesCoords;
+	
+	if (!this.rawLanesCoords || !this.rawLanesCoords.length) {
+        console.error("Surface constructor received empty coords for:", name);
+    }
+	
     this.zOffset = zOffset;
     this.lanesAmount = lanesCoords.length - (isOpen ? 1 : 0);
     this.activeLaneId = 0;
@@ -30,10 +35,10 @@ export default class Surface {
 
     this.shortedLanes = new Array(this.lanesAmount).fill(0);
 
-    this.calculateCenteredLanesCoords();
+    this.calculateCenteredLanesCoords(); 
     this.calculateLanesCenterCoords();
     this.calculateLanesCenterDirection();
-  }
+}
 
   /**
    * Returns the 3D world position for a given lane and depth.
@@ -45,8 +50,15 @@ export default class Surface {
   lanePositionAt (laneId, depth) {
     if (laneId < 0 || laneId >= this.lanesAmount) return null;
     const mid = this.lanesMiddleCoords[laneId];
+
+    if (!mid) {
+        console.error(`SURFACE ERROR: laneId ${laneId} is out of bounds or missing!`, 
+                      { laneId, lanesAmount: this.lanesAmount, length: this.lanesMiddleCoords.length });
+        return null;
+    }
+    
     return new Vector3(mid.x, mid.y, depth * this.depth);
-  }
+}
 
   calculateCenteredLanesCoords () {
     // Replaced BoundingBox2 with native Three.js Box2
@@ -61,14 +73,18 @@ export default class Surface {
   calculateLanesCenterCoords () {
     this.lanesMiddleCoords = [];
 
+	if (!this.lanesCoords || this.lanesCoords.length === 0) {
+        console.error("Surface: Cannot calculate center coords, lanesCoords is empty!");
+        return;
+    }
+
     for (let i = 0; i < this.lanesAmount; i++) {
       let p1 = this.lanesCoords[i];
-      let p2 = this.lanesCoords[(i + 1) % Surface.LINES_AMOUNT];
+      let p2 = this.lanesCoords[(i + 1) % this.lanesCoords.length];
       
       // The center between two points is simply their average (midpoint).
       // This entirely removes the need to construct a BoundingBox just to find a center.
       let center = new Vector2().addVectors(p1, p2).multiplyScalar(0.5);
-      
       this.lanesMiddleCoords.push(center);
     }
   }

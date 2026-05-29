@@ -18,6 +18,7 @@ import AudioManager from '@/Object/Manager/AudioManager';
 import ScreenParodySurface from '@/Object/Screen/ScreenParodySurface';
 import { PowerUpManager } from '@/PowerUp/PowerUpManager';
 import { PowerUpSpawner  } from '@/PowerUp/PowerUpSpawner';
+import { PowerUpHUD } from '@/PowerUp/PowerUpHUD';
 
 export default class Game {
   // Removed legacy @readonly decorators
@@ -64,7 +65,6 @@ export default class Game {
 
   constructor () {
     this.setState(Game.STATE_SELECT_SURFACE);
-
     this.setupRenderer();
     this.setupLogic();
   }
@@ -138,12 +138,24 @@ startLevel (levelId, firstLevel = false) {
       // This single line tells your game loop's handleState() to automatically 
       // destroy the parody screen, load the ScreenPlay UI, and instantiate the level!
       this.setState(Game.STATE_PLAY);
-    }, 3000);
+    }, 4000);
   }
 
   loadLevel (level) {
     let surfaceId = ((level - 1) % 16) + 1;
-    let surface = this.surfacesCollection.find(surface => surface.id === surfaceId);
+    //let surface = this.surfacesCollection.find(surface => surface.id === surfaceId);
+    let surfaceData = surfaces.find(s => s.id === surfaceId);
+    if (!surfaceData) throw new Error("Surface data not found!");
+	
+	const vectorCoords = surfaceData.coords.map(c => new Vector2(c.x, c.y));
+
+    let surface = new Surface(
+        surfaceData.id,
+        surfaceData.name,
+        surfaceData.isOpen,
+        vectorCoords,
+        surfaceData.zOffset
+    );
 
     if (surface === undefined) {
       this.setState(Game.STATE_SELECT_SURFACE);
@@ -172,10 +184,13 @@ startLevel (levelId, firstLevel = false) {
 	  this
     );
 
-    this.levelObject.registerKeys();
+    console.log("GAME: Level loaded. New Surface:", surface);
+	this.powerUpSpawner.webGeometry = surface;
+	//console.log("GAME: Spawner webGeometry updated to:", this.powerUpSpawner.webGeometry);
+	this.levelObject.registerKeys();
     this.levelRenderer.bindLevel(this.levelObject);
     this.populateScreenContentManager();
-	this.powerUpSpawner.webGeometry = this.levelObject.surface;
+	this.shooter = this.levelObject.shooter;
   }
 
   releaseLevel () {
@@ -308,10 +323,13 @@ startLevel (levelId, firstLevel = false) {
     this.scene.add(this.screenGroup);
     this.powerUpManager = new PowerUpManager();
     this.powerUpSpawner = new PowerUpSpawner(this.scene, null);
+	this.powerUpSpawner.scene = this.scene;
+	this.powerUpHUD = new PowerUpHUD(this.powerUpManager);
   }
 
   update () {
-    requestAnimationFrame(this.update.bind(this));
+    //console.log("This shooter value:", this.shooter);
+	requestAnimationFrame(this.update.bind(this));
   
     // Track delta time (seconds since last frame) for physics/movement
     const now = performance.now();
@@ -333,11 +351,18 @@ startLevel (levelId, firstLevel = false) {
       this.powerUpSpawner.update(delta);
       this.powerUpManager.update(delta);
   
-      const collected = this.powerUpSpawner.checkPlayerCollision(
-        this.levelObject.shooterLane,
-        1.2
-      );
-      if (collected) this.powerUpManager.collect(collected, this);
+      if (this.shooter && this.shooter.laneId !== undefined) {
+        const collected = this.powerUpSpawner.checkPlayerCollision(
+          this.shooter.laneId,
+          0.1
+        );
+
+        if (collected) {
+          this.powerUpManager.collect(collected, this);
+          // ADD THIS: Force the main UI to update the score immediately
+          this.screenContentManager.setScore(this.score);
+        }
+      }
     }
   
     this.audioManager.update();

@@ -65,9 +65,11 @@ export default class Level {
     this.levelWonCallback = levelWonCallback;
     this.shooterKilledCallback = shooterKilledCallback;
     this.getCurrentScore = getCurrentScore;
+	this.game = game;
 
     this.surfaceObjectsManager = new SurfaceObjectsManager(surface);
     this.projectileManager = new ProjectileManager(this.surfaceObjectsManager);
+	this.projectileManager.game = this.game;
     this.enemySpawner = new EnemySpawner(
       this.surfaceObjectsManager,
       this.projectileManager,

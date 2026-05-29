@@ -12,9 +12,9 @@ export const PowerUpType = Object.freeze({
 
   // --- WEAPON UPGRADES ---
 
-  PARTICLE_LASER: {
-    id:          'PARTICLE_LASER',
-    label:       'PARTICLE\nLASER',   // Two-line label rendered on the shape
+  PARTICLE_BLASTER: {
+    id:          'PARTICLE_BLASTER',
+    label:       'PARTICLE\nBLASTER',   // Two-line label rendered on the shape
     color:       '#00ffff',           // Cyan — distinct from enemy red/orange
     glowColor:   'rgba(0,255,255,0.6)',
     shape:       'diamond',           // See PowerUpRenderer for shape definitions

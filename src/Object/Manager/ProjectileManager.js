@@ -35,8 +35,22 @@ export default class ProjectileManager extends FIFOManager {
         return false;
       }
 
-      this.shooterProjectiles.push(new Projectile(this.surfaceObjectsManager.surface, laneId, source, zPosition, damage));
-      this.rendererHelperNewProjectilesIds.push(this.shooterProjectiles[this.shooterProjectiles.length - 1].objectId);
+      // Create the projectile object
+      const projectile = new Projectile(this.surfaceObjectsManager.surface, laneId, source, zPosition, damage);
+
+      if (this.game && this.game.powerUpManager) {
+          projectile.customColor = this.game.powerUpManager.getBulletColor(0xffff00);
+          projectile.lengthMult = this.game.powerUpManager.getBulletLengthMultiplier();
+		  if (this.game.powerUpManager.hasLaser) {
+             projectile.killRadiusForward = 0.20;
+             projectile.killRadiusBackward = 0.20;
+         }
+      }
+
+      // Push it to the arrays
+      this.shooterProjectiles.push(projectile);
+      this.rendererHelperNewProjectilesIds.push(projectile.objectId);
+
     } else {
       if (this.enemyProjectiles.length >= ProjectileManager.MAX_AMOUNT_OF_ENEMY_PROJECTILES) {
         console.log('Too much enemy projectiles!');

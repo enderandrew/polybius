@@ -40,7 +40,7 @@ export default class EnemySpawner {
    * @param {number} levelInitScore
    * @param {number} targetScore
    */
-  constructor (surfaceObjectsManager, projectileManager, rewardCallback, level, levelInitScore, targetScore) {
+  constructor (surfaceObjectsManager, projectileManager, rewardCallback, level, levelInitScore, targetScore, game) {
     this.surfaceObjectsManager = surfaceObjectsManager;
     this.projectileManager = projectileManager;
     this.rewardCallback = rewardCallback;
@@ -48,6 +48,7 @@ export default class EnemySpawner {
     this.currentLevel = level;
     this.currentScore = levelInitScore;
     this.targetScore = targetScore;
+	this.game = game;
   }
 
   /**
@@ -141,7 +142,9 @@ export default class EnemySpawner {
         this.projectileManager,
         this.rewardCallback,
         lane,
-        zPosition
+        zPosition,
+		//Enemy.TYPE_FLIPPER,
+		this.game
       )
     );
 
@@ -163,7 +166,9 @@ export default class EnemySpawner {
         this.projectileManager,
         this.rewardCallback,
         lane,
-        zPosition
+        zPosition,
+		this.game
+
       )
     );
   }
@@ -179,7 +184,9 @@ export default class EnemySpawner {
         this.projectileManager,
         this.rewardCallback,
         lane,
-        zPosition
+        zPosition,
+		this.game
+
       )
     );
   }
@@ -195,7 +202,8 @@ export default class EnemySpawner {
         this.projectileManager,
         this.rewardCallback,
         lane,
-        zPosition
+        zPosition,
+		this.game
       )
     );
   }
@@ -212,7 +220,8 @@ export default class EnemySpawner {
         this.spawnFlipper.bind(this),
         this.rewardCallback,
         lane,
-        zPosition
+        zPosition,
+		this.game
       )
     );
   }
@@ -229,7 +238,8 @@ export default class EnemySpawner {
         this.spawnFuseball.bind(this),
         this.rewardCallback,
         lane,
-        zPosition
+        zPosition,
+		this.game
       )
     );
   }
@@ -246,7 +256,8 @@ export default class EnemySpawner {
         this.spawnPulsar.bind(this),
         this.rewardCallback,
         lane,
-        zPosition
+        zPosition,
+		this.game
       )
     );
   }
