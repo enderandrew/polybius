@@ -13,6 +13,16 @@ export class MessageBroker {
   static MESSAGE_ENEMY_DEATH = 'message_enemy_death';
   static MESSAGE_MENU_CHANGE = 'message_menu_change';
   static MESSAGE_MENU_SELECT = 'message_menu_select';
+  static MESSAGE_1UP = '1up';
+  static MESSAGE_ACHIEVEMENT = 'achievement';
+  static MESSAGE_BIGFOOT = 'bigfoot';
+  static MESSAGE_CRT = 'crt';
+  static MESSAGE_GAME = 'game';
+  static MESSAGE_JUMP = 'jump';
+  static MESSAGE_KONAMI = 'Konami';
+  static MESSAGE_PAUSE = 'pause';
+  static MESSAGE_POWERUP = 'powerup';
+  static MESSAGE_SPOOKY = 'spooky';
 
   // Initialized as a standard object rather than an array for proper key-value topic mapping
   messages = {};

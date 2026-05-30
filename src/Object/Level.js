@@ -107,13 +107,23 @@ export default class Level {
     this.unregisterKeys();
   }
 
-  registerKeys () {
+registerKeys () {
+    // Player 1 - WASD
     keyboardInput.register('KeyA', () => { this.shooter.moveLeft(); });
     keyboardInput.register('KeyD', () => { this.shooter.moveRight(); });
     keyboardInput.register('KeyW', () => { this.shooter.jump(); });
     keyboardInput.register('Space', () => { this.shooter.fire(); });
     keyboardInput.register('KeyE', () => { this.shooter.fireSuperzapper(); });
     keyboardInput.register('End', () => { this.shooter.setState(Shooter.STATE_GOING_DOWN_THE_TUBE); });
+
+    // Player 1 - Arrows
+    keyboardInput.register('ArrowLeft', () => { this.shooter.moveLeft(); });
+    keyboardInput.register('ArrowRight', () => { this.shooter.moveRight(); });
+    keyboardInput.register('ArrowUp', () => { this.shooter.jump(); });
+    keyboardInput.register('ArrowDown', () => { this.shooter.fireSuperzapper(); });
+
+    // Global Pause
+    keyboardInput.register('Escape', () => { this.game.togglePause(); });
   }
 
   unregisterKeys () {
@@ -123,6 +133,11 @@ export default class Level {
     keyboardInput.unregister('Space');
     keyboardInput.unregister('KeyE');
     keyboardInput.unregister('End');
+    keyboardInput.unregister('ArrowLeft');
+    keyboardInput.unregister('ArrowRight');
+    keyboardInput.unregister('ArrowUp');
+    keyboardInput.unregister('ArrowDown');
+    keyboardInput.unregister('Escape');
   }
 
   update () {

@@ -15,6 +15,7 @@ import keyboardInput from '@/utils/KeyboardInput';
 import surfaces from '@/Assets/Surfaces';
 import levels from '@/Assets/Levels';
 import AudioManager from '@/Object/Manager/AudioManager';
+import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 import ScreenParodySurface from '@/Object/Screen/ScreenParodySurface';
 import { PowerUpManager } from '@/PowerUp/PowerUpManager';
 import { PowerUpSpawner  } from '@/PowerUp/PowerUpSpawner';
@@ -67,6 +68,9 @@ export default class Game {
     this.setState(Game.STATE_SELECT_SURFACE);
     this.setupRenderer();
     this.setupLogic();
+    this.isPaused = false;
+    this.prevGamepadState = {};
+    this.prevGamepadAxis = 0;
   }
 
   handleState () {
@@ -198,10 +202,14 @@ startLevel (levelId, firstLevel = false) {
       return;
     }
 
+    this.isPaused = false;
+    if (this.pauseOverlay) this.pauseOverlay.style.display = 'none';
+
     this.powerUpSpawner.webGeometry = null;
     this.powerUpSpawner.clearAll();    
     this.levelObject.release();
     this.levelObject = null;
+	this.shooter = null;
     this.levelRenderer.releaseLevel();
   }
 
@@ -300,6 +308,31 @@ startLevel (levelId, firstLevel = false) {
     this.renderer.domElement.style.display = 'block'; 
     
     document.getElementById('display').appendChild(this.renderer.domElement);
+	
+    const displayContainer = document.getElementById('display');
+    displayContainer.style.position = 'relative'; // Ensure absolute children stay inside
+
+    this.pauseOverlay = document.createElement('div');
+    this.pauseOverlay.style.position = 'absolute';
+    this.pauseOverlay.style.top = '0';
+    this.pauseOverlay.style.left = '0';
+    this.pauseOverlay.style.width = '100%';
+    this.pauseOverlay.style.height = '100%';
+    this.pauseOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.65)'; // Dims the screen
+    this.pauseOverlay.style.display = 'none'; // Hidden by default
+    this.pauseOverlay.style.justifyContent = 'center';
+    this.pauseOverlay.style.alignItems = 'center';
+    this.pauseOverlay.style.color = '#00ffff'; 
+    this.pauseOverlay.style.fontFamily = '"Courier New", Courier, monospace';
+    this.pauseOverlay.style.fontSize = '5rem';
+    this.pauseOverlay.style.fontWeight = 'bold';
+    this.pauseOverlay.style.textShadow = '0 0 20px #00ffff';
+    this.pauseOverlay.style.letterSpacing = '10px';
+    this.pauseOverlay.style.zIndex = '1000';
+    this.pauseOverlay.style.pointerEvents = 'none'; // Prevents blocking clicks
+    this.pauseOverlay.innerHTML = 'PAUSE';
+
+    displayContainer.appendChild(this.pauseOverlay);
 
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
@@ -337,10 +370,20 @@ startLevel (levelId, firstLevel = false) {
     this._lastTime = now;
   
     this.handleState();
-    keyboardInput.dispatchActions();
-  
+
+    if (!this.isLoadingLevel) {
+        keyboardInput.dispatchActions();
+        this.pollGamepads();
+    }
+
     if (this.screenObject !== null) {
       this.screenObject.update();
+    }
+
+    if (this.isPaused) {
+      // Keep rendering the screen so it doesn't go black, but skip updating the level
+      this.composer.render();
+      return; 
     }
   
     if (this.levelObject !== null && this.levelRenderer !== null) {
@@ -358,8 +401,8 @@ startLevel (levelId, firstLevel = false) {
         );
 
         if (collected) {
-          this.powerUpManager.collect(collected, this);
-          // ADD THIS: Force the main UI to update the score immediately
+		  messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_POWERUP);
+		  this.powerUpManager.collect(collected, this);
           this.screenContentManager.setScore(this.score);
         }
       }
@@ -434,5 +477,74 @@ startLevel (levelId, firstLevel = false) {
   
   requestWarp () {
     this.levelWonCallback();
+  }
+
+  togglePause () {
+    // Only allow pausing if we are actually in the play state
+	messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PAUSE);
+	if (!this.state.equals(Game.STATE_PLAY)) return;
+    this.isPaused = !this.isPaused;
+    if (this.pauseOverlay) {
+      this.pauseOverlay.style.display = this.isPaused ? 'flex' : 'none';
+    }
+  }
+
+  pollGamepads () {
+    const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const gp = gamepads[0]; 
+    
+    if (!gp) return;
+
+    const isPressed = (idx) => gp.buttons[idx] && gp.buttons[idx].pressed;
+    const wasPressed = (idx) => this.prevGamepadState[idx];
+    const justPressed = (idx) => isPressed(idx) && !wasPressed(idx);
+
+    // Helper to send native keyboard events to the menu screens
+    const sendKey = (code) => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { code }));
+      // Fire a keyup shortly after so the keyboard manager doesn't think it's permanently stuck!
+      setTimeout(() => {
+        document.dispatchEvent(new KeyboardEvent('keyup', { code }));
+      }, 50); 
+    };
+
+    // Pause / Start Button (Index 9)
+    if (justPressed(9)) {
+        if (this.state.equals(Game.STATE_PLAY)) {
+            this.togglePause();
+        } else {
+            // If in menu, "Start" will act like hitting Space/Enter to select a level
+            sendKey('Space');
+            sendKey('Enter');
+        }
+    }
+
+    // Play State Controls
+    if (this.state.equals(Game.STATE_PLAY)) {
+        if (!this.isPaused && this.shooter) {
+          if (justPressed(14) || (gp.axes[0] < -0.5 && this.prevGamepadAxis >= -0.5)) this.shooter.moveLeft();
+          if (justPressed(15) || (gp.axes[0] > 0.5 && this.prevGamepadAxis <= 0.5)) this.shooter.moveRight();
+          if (justPressed(12) || justPressed(1) || justPressed(3)) this.shooter.jump();
+          if (justPressed(13) || justPressed(2)) this.shooter.fireSuperzapper();
+          if (isPressed(0) || isPressed(7)) this.shooter.fire();
+        }
+    } 
+    // Menu State Controls
+    else {
+        // Left D-Pad or Left Stick
+        if (justPressed(14) || (gp.axes[0] < -0.5 && this.prevGamepadAxis >= -0.5)) sendKey('ArrowLeft');
+        // Right D-Pad or Right Stick
+        if (justPressed(15) || (gp.axes[0] > 0.5 && this.prevGamepadAxis <= 0.5)) sendKey('ArrowRight');
+        // 'A' Button to Select Level
+        if (justPressed(0)) {
+            sendKey('Space');
+            sendKey('Enter');
+        }
+    }
+
+    for (let i = 0; i < gp.buttons.length; i++) {
+      this.prevGamepadState[i] = isPressed(i);
+    }
+    this.prevGamepadAxis = gp.axes[0];
   }
 }

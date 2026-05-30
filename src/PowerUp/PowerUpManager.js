@@ -25,6 +25,7 @@
  */
 
 import { PowerUpType } from '@/PowerUp/PowerUpType';
+import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
 export class PowerUpManager {
 
@@ -56,6 +57,7 @@ export class PowerUpManager {
 
     if (type.grantsLife) {
       gameState.lives += 1;
+	  messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_1UP);
       this._emit('powerup:extralife', {});
     }
 

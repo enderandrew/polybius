@@ -242,11 +242,12 @@ export default class Shooter extends ShootingSurfaceObject {
     if (
       !this.game?.powerUpManager?.hasJump
       || !this.inState(Shooter.STATE_ALIVE)
-      || !this.canShoot
+      //|| !this.canShoot
     ) {
       return;
     }
-    this.jumpTimestamp = Date.now();
+	messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_JUMP);
+	this.jumpTimestamp = Date.now();
     this.setState(Shooter.STATE_JUMPING);
   }
 

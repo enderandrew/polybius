@@ -9,6 +9,17 @@ export default class AudioManager {
   static SOUND_PLAYER_LANE_CHANGE = 'player_lane_change';
   static SOUND_PLAYER_SHOOT = 'player_shoot';
   static SOUND_ENEMY_SHOOT = 'enemy_shoot';
+  static SOUND_1UP = '1up';
+  static SOUND_ACHIEVEMENT = 'achievement';
+  static SOUND_BIGFOOT = 'bigfoot';
+  static SOUND_CRT = 'crt';
+  static SOUND_KONAMI = 'konami';
+  static SOUND_PAUSE = 'pause';
+  static SOUND_SPOOKY = 'spooky';
+  static SOUND_JUMP = 'jump';
+  static SOUND_POWERUP = 'powerup';
+  static SOUND_GAME = 'game';
+  static SOUND_MENU_SELECT = 'menu_select';
 
   static SOUND_VOLUME = 0.4;
 
@@ -69,6 +80,36 @@ export default class AudioManager {
         break;
       case MessageBroker.MESSAGE_MENU_SELECT:
         this.playSound(AudioManager.SOUND_PLAYER_SHOOT, 0.8);
+        break;
+      case MessageBroker.MESSAGE_1UP:
+        this.playSound(AudioManager.SOUND_1UP, 0.8);
+        break;
+      case MessageBroker.MESSAGE_ACHIEVEMENT:
+        this.playSound(AudioManager.SOUND_ACHIEVEMENT, 0.8);
+        break;
+      case MessageBroker.MESSAGE_BIGFOOT:
+        this.playSound(AudioManager.SOUND_BIGFOOT, 0.8);
+        break;
+      case MessageBroker.MESSAGE_CRT:
+        this.playSound(AudioManager.SOUND_CRT, 0.8);
+        break;
+      case MessageBroker.MESSAGE_GAME:
+        this.playSound(AudioManager.SOUND_GAME, 0.8);
+        break;
+      case MessageBroker.MESSAGE_JUMP:
+        this.playSound(AudioManager.SOUND_JUMP, 0.8);
+        break;
+      case MessageBroker.MESSAGE_KONAMI:
+        this.playSound(AudioManager.SOUND_KONAMI, 0.8);
+        break;
+      case MessageBroker.MESSAGE_PAUSE:
+        this.playSound(AudioManager.SOUND_PAUSE, 0.8);
+        break;
+      case MessageBroker.MESSAGE_POWERUP:
+        this.playSound(AudioManager.SOUND_POWERUP, 0.8);
+        break;
+      case MessageBroker.MESSAGE_SPOOKY:
+        this.playSound(AudioManager.SOUND_SPOOKY, 0.8);
         break;
     }
   }
