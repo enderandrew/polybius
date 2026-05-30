@@ -21,6 +21,7 @@ import { PowerUpManager } from '@/PowerUp/PowerUpManager';
 import { PowerUpSpawner  } from '@/PowerUp/PowerUpSpawner';
 import { PowerUpHUD } from '@/PowerUp/PowerUpHUD';
 import { AIDroid } from '@/PowerUp/AIDroid';
+import Starfield from '@/Renderer/Background/Starfield';
 
 export default class Game {
   // Removed legacy @readonly decorators
@@ -288,6 +289,8 @@ startLevel (levelId, firstLevel = false) {
 
   setupRenderer (highQuality = true) {
     this.scene = new Scene();
+	this.starfield = new Starfield();
+    this.scene.add(this.starfield);
 
     // Get the actual pixel dimensions of the CRT screen interior
     const screenElement = document.getElementById('screen');
@@ -394,6 +397,10 @@ startLevel (levelId, firstLevel = false) {
 
     if (this.screenObject !== null) {
       this.screenObject.update();
+    }
+
+    if (this.starfield) {
+        this.starfield.update(delta);
     }
 
     if (this.isPaused) {
