@@ -93,14 +93,7 @@ export class PowerUp {
     if (pos) {
         this.sprite.position.copy(pos);
         this.sprite.position.y += bob;
-        
-        // Log the position once per second (roughly) to avoid console spam
-        if (Math.random() < 0.02) {
-             console.log(`POWERUP VISUAL: [${this.type.id}] Pos(x:${this.sprite.position.x.toFixed(2)}, y:${this.sprite.position.y.toFixed(2)}, z:${this.sprite.position.z.toFixed(2)}) | Scale: ${this.sprite.scale.x.toFixed(2)}`);
-        }
-    } else {
-        console.warn(`POWERUP VISUAL: lanePositionAt returned null for lane ${this.lane}, depth ${this.depth}`);
-    }
+    } 
 
     this.sprite.material.rotation = this._rotTime * 0.5;
     this.sprite.scale.setScalar(this._baseScale * pulse);
@@ -138,7 +131,7 @@ export class PowerUp {
 
   _buildSprite () {
     const canvas  = PowerUpRenderer.createCanvas(this.type);
-	console.log(`POWERUP RENDER: Canvas created for ${this.type.id}. Size: ${canvas.width}x${canvas.height}`);
+	//console.log(`POWERUP RENDER: Canvas created for ${this.type.id}. Size: ${canvas.width}x${canvas.height}`);
     const texture = new THREE.CanvasTexture(canvas);
 
     const material = new THREE.SpriteMaterial({
@@ -152,7 +145,7 @@ export class PowerUp {
     this.sprite = new THREE.Sprite(material);
     this.sprite.scale.setScalar(this._baseScale);
     this.sprite.renderOrder = 10;            // Draw above web geometry
-	console.log(`POWERUP RENDER: Sprite built. Scale:`, this.sprite.scale, `Opacity:`, this.sprite.material.opacity);
+	//console.log(`POWERUP RENDER: Sprite built. Scale:`, this.sprite.scale, `Opacity:`, this.sprite.material.opacity);
   }
 
   _playCollectVFX () {

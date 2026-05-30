@@ -1,5 +1,6 @@
 import Enemy from '@/Object/Enemies/Enemy';
 import State from '@/Object/State';
+import SurfaceObject from '@/Object/Surface/SurfaceObject';
 import randomRange from '@/utils/randomRange';
 
 export default class EnemyTanker extends Enemy {
@@ -25,17 +26,8 @@ export default class EnemyTanker extends Enemy {
    * @param {number} laneId
    * @param {number} zPosition
    */
-  constructor (
-    surface,
-    projectileManager,
-    enemySpawnFunction,
-    rewardCallback,
-    type,
-    laneId = 0,
-    zPosition = 1,
-	game
-  ) {
-    super(surface, projectileManager, rewardCallback, laneId, zPosition, SurfaceObject.TYPE_TANKER, game);
+  constructor (surface, projectileManager, enemySpawnFunction, rewardCallback, type, laneId = 0, zPosition = 1, game) {
+	super(surface, projectileManager, rewardCallback, laneId, zPosition, type, game);
 
     this.enemySpawnFunction = enemySpawnFunction;
 

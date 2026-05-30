@@ -87,6 +87,10 @@ export class PowerUpRenderer {
         PowerUpRenderer._heart(ctx, cx, cy, r, type.color);
         break;
 
+      case 'cube':
+        PowerUpRenderer._isoCube(ctx, cx, cy, r, type.color);
+        break;
+
       default:
         PowerUpRenderer._diamond(ctx, cx, cy, r, type.color);
     }
@@ -267,6 +271,49 @@ export class PowerUpRenderer {
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
     ctx.fill();
     ctx.restore();
+  }
+
+  static _isoCube (ctx, cx, cy, r, color) {
+    const w = r * 0.88, h = r * 0.44;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth   = 1.5;
+  
+    // Top face
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - h); ctx.lineTo(cx + w, cy);
+    ctx.lineTo(cx, cy + h); ctx.lineTo(cx - w, cy);
+    ctx.closePath();
+    ctx.fillStyle = color; ctx.fill(); ctx.stroke();
+  
+    // Right face (darker)
+    ctx.beginPath();
+    ctx.moveTo(cx + w, cy); ctx.lineTo(cx + w, cy + h * 2);
+    ctx.lineTo(cx, cy + h * 3); ctx.lineTo(cx, cy + h);
+    ctx.closePath();
+    ctx.globalAlpha = 0.7; ctx.fillStyle = color;
+    ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
+  
+    // Left face (darkest)
+    ctx.beginPath();
+    ctx.moveTo(cx - w, cy); ctx.lineTo(cx - w, cy + h * 2);
+    ctx.lineTo(cx, cy + h * 3); ctx.lineTo(cx, cy + h);
+    ctx.closePath();
+    ctx.globalAlpha = 0.45; ctx.fillStyle = color;
+    ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
+  
+    // Heart on top face — isometric-skewed
+    const hs = r * 0.28;
+    ctx.beginPath();
+    for (let i = 0; i <= 32; i++) {
+      const t  = (i / 32) * Math.PI * 2;
+      const hx = hs * 16 * Math.pow(Math.sin(t), 3) / 16;
+      const hy = -hs * (13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t)) / 16;
+      const ix = cx + hx * 0.9 - hy * 0.45;
+      const iy = (cy - h * 0.4) + hx * 0.22 + hy * 0.22;
+      i === 0 ? ctx.moveTo(ix, iy) : ctx.lineTo(ix, iy);
+    }
+    ctx.closePath();
+    ctx.fillStyle = '#ff0066'; ctx.fill();
   }
 
   /** Renders the label text centred below the shape's midpoint */

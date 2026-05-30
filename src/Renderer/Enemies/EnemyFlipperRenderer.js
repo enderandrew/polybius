@@ -8,8 +8,8 @@ export default class EnemyFlipperRenderer extends EnemyRenderer {
    * @param {EnemyFlipper} enemyFlipper
    * @param {Surface} surface
    */
-  constructor (enemyFlipper, surface) {
-    super(enemyFlipper, surface, Enemy.TYPE_FLIPPER);
+  constructor (enemy, surface, type = Enemy.TYPE_FLIPPER) {
+    super(enemy, surface, type);
   }
 
   updateState () {

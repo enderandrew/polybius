@@ -20,6 +20,7 @@ import ScreenParodySurface from '@/Object/Screen/ScreenParodySurface';
 import { PowerUpManager } from '@/PowerUp/PowerUpManager';
 import { PowerUpSpawner  } from '@/PowerUp/PowerUpSpawner';
 import { PowerUpHUD } from '@/PowerUp/PowerUpHUD';
+import { AIDroid } from '@/PowerUp/AIDroid';
 
 export default class Game {
   // Removed legacy @readonly decorators
@@ -69,6 +70,7 @@ export default class Game {
     this.setupRenderer();
     this.setupLogic();
     this.isPaused = false;
+	this.aiDroid = null;
     this.prevGamepadState = {};
     this.prevGamepadAxis = 0;
   }
@@ -195,6 +197,9 @@ startLevel (levelId, firstLevel = false) {
     this.levelRenderer.bindLevel(this.levelObject);
     this.populateScreenContentManager();
 	this.shooter = this.levelObject.shooter;
+    if (this.powerUpManager.hasAIDroid) {
+      this._spawnAIDroid();
+    }
   }
 
   releaseLevel () {
@@ -205,7 +210,8 @@ startLevel (levelId, firstLevel = false) {
     this.isPaused = false;
     if (this.pauseOverlay) this.pauseOverlay.style.display = 'none';
 
-    this.powerUpSpawner.webGeometry = null;
+    this._disposeAIDroid();
+	this.powerUpSpawner.webGeometry = null;
     this.powerUpSpawner.clearAll();    
     this.levelObject.release();
     this.levelObject = null;
@@ -358,6 +364,16 @@ startLevel (levelId, firstLevel = false) {
     this.powerUpSpawner = new PowerUpSpawner(this.scene, null);
 	this.powerUpSpawner.scene = this.scene;
 	this.powerUpHUD = new PowerUpHUD(this.powerUpManager);
+    window.addEventListener('powerup:collected', ({ detail: { type } }) => {
+      if (type.id === 'AI_DROID' && this.levelObject) {
+        this._spawnAIDroid();
+      }
+    });
+    window.addEventListener('powerup:expired', ({ detail: { type } }) => {
+      if (type.id === 'AI_DROID') {
+        this._disposeAIDroid();
+      }
+    });
   }
 
   update () {
@@ -393,6 +409,7 @@ startLevel (levelId, firstLevel = false) {
       // Power-up tick
       this.powerUpSpawner.update(delta);
       this.powerUpManager.update(delta);
+	  if (this.aiDroid) this.aiDroid.update(delta);
   
       if (this.shooter && this.shooter.laneId !== undefined) {
         const collected = this.powerUpSpawner.checkPlayerCollision(
@@ -486,6 +503,24 @@ startLevel (levelId, firstLevel = false) {
     this.isPaused = !this.isPaused;
     if (this.pauseOverlay) {
       this.pauseOverlay.style.display = this.isPaused ? 'flex' : 'none';
+    }
+  }
+  
+  _spawnAIDroid () {
+    this._disposeAIDroid();  // Clear any existing one first
+    this.aiDroid = new AIDroid(
+      this.scene,
+      this.levelObject.surface,
+      this.levelObject.surfaceObjectsManager,
+      this.levelObject.projectileManager,
+      this.shooter
+    );
+  }
+  
+  _disposeAIDroid () {
+    if (this.aiDroid) {
+      this.aiDroid.dispose();
+      this.aiDroid = null;
     }
   }
 

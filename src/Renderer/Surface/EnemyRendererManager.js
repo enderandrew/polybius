@@ -71,11 +71,11 @@ export default class EnemyRendererManager extends Group {
    * @param {Enemy} enemy
    */
   pushEnemy (enemy) {
-    if (enemy.type in this.enemyRenderersAvailabilityMap && this.enemyRenderersAvailabilityMap[enemy.type].length) {
-      // console.log(`Reusing enemy renderer #${this.enemyRenderersAvailabilityMap[enemy.type].slice(0, 1)}`);
-      this.enemyRenderers[this.enemyRenderersAvailabilityMap[enemy.type].shift()].setObjectRef(enemy);
+    const renderType = enemy.isMutant ? Enemy.TYPE_MUTANT_FLIPPER : (enemy.isStealth ? Enemy.TYPE_STEALTH_FLIPPER : enemy.type);
+
+    if (renderType in this.enemyRenderersAvailabilityMap && this.enemyRenderersAvailabilityMap[renderType].length) {
+      this.enemyRenderers[this.enemyRenderersAvailabilityMap[renderType].shift()].setObjectRef(enemy);
     } else {
-      // console.log(`Creating new enemy renderer #${this.enemyRenderers.length} for ${enemy.type}`);
       this.enemyRenderers.push(this.enemyRendererFactory(enemy));
       this.add(this.enemyRenderers[this.enemyRenderers.length - 1]);
     }
@@ -85,9 +85,13 @@ export default class EnemyRendererManager extends Group {
    * @param {Enemy|EnemyFlipper|EnemySpiker|EnemySpike|EnemyFlipperTanker|EnemyPulsar} enemy
    */
   enemyRendererFactory (enemy) {
-    switch (enemy.type) {
+    const renderType = enemy.isMutant ? Enemy.TYPE_MUTANT_FLIPPER : (enemy.isStealth ? Enemy.TYPE_STEALTH_FLIPPER : enemy.type);
+    
+    switch (renderType) {
       case Enemy.TYPE_FLIPPER:
-        return new EnemyFlipperRenderer(enemy, this.surface);
+      case Enemy.TYPE_MUTANT_FLIPPER:
+	  case Enemy.TYPE_STEALTH_FLIPPER:
+        return new EnemyFlipperRenderer(enemy, this.surface, renderType);
       case Enemy.TYPE_SPIKER:
         return new EnemySpikerRenderer(enemy, this.surface);
       case Enemy.TYPE_SPIKE:

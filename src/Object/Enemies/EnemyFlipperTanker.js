@@ -20,7 +20,16 @@ export default class EnemyFlipperTanker extends EnemyTanker {
     zPosition = 1,
 	game
   ) {
-    super(surface, projectileManager, enemySpawnFunction, rewardCallback, Enemy.TYPE_FLIPPER_TANKER, laneId, zPosition, game);
+    super(
+	  surface,
+	  projectileManager,
+	  enemySpawnFunction,
+	  rewardCallback,
+	  Enemy.TYPE_FLIPPER_TANKER,
+	  laneId,
+	  zPosition,
+	  game
+	);
 
     this.firstLevel = 3;
 	this.game = game;
@@ -32,8 +41,8 @@ export default class EnemyFlipperTanker extends EnemyTanker {
     let CWWLaneId = this.surface.getActualLaneIdFromProjectedMovement(this.laneId - 1);
     let canSpawnEnemyCCW = CWWLaneId !== this.laneId;
 
-    let enemyCW = this.enemySpawnFunction(this.laneId, this.zPosition);
-    let enemyCCW = this.enemySpawnFunction(this.laneId, this.zPosition);
+    let enemyCW = this.enemySpawnFunction(this.laneId, this.zPosition, true);
+    let enemyCCW = this.enemySpawnFunction(this.laneId, this.zPosition, true);
 
     if (canSpawnEnemyCW) {
       enemyCW.setState(EnemyFlipper.STATE_ROTATING_BEGIN);

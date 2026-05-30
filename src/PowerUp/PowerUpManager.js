@@ -199,6 +199,10 @@ export class PowerUpManager {
     return this.isActive(PowerUpType.JUMP.id);
   }
 
+  get hasAIDroid () {
+    return this.isActive(PowerUpType.AI_DROID.id);
+  }
+
   // ---------------------------------------------------------------------------
   // Private
   // ---------------------------------------------------------------------------

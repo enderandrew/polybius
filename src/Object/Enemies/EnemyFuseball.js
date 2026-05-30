@@ -43,7 +43,7 @@ export default class EnemyFuseball extends Enemy {
   constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
     super(surface, projectileManager, rewardCallback, laneId, zPosition, SurfaceObject.TYPE_FUSEBALL, game);
 
-    this.firstLevel = 11;
+	this.firstLevel = 11;
     this.valueInPoints = 250;
 
     this.setState(EnemyFuseball.STATE_MOVING_ALONG_LINE);

@@ -6,6 +6,8 @@ import EnemyPulsar from '@/Object/Enemies/EnemyPulsar';
 import EnemyFlipperTanker from '@/Object/Enemies/EnemyFlipperTanker';
 import EnemyFuseballTanker from '@/Object/Enemies/EnemyFuseballTanker';
 import EnemyPulsarTanker from '@/Object/Enemies/EnemyPulsarTanker';
+import EnemyMutantFlipper from '@/Object/Enemies/EnemyMutantFlipper';
+import EnemyStealthFlipper from '@/Object/Enemies/EnemyStealthFlipper';
 import randomRange from '@/utils/randomRange';
 
 export default class EnemySpawner {
@@ -134,19 +136,46 @@ export default class EnemySpawner {
   /**
    * @param {number} lane
    * @param {number} zPosition
+   * @param {boolean} fromTanker
    */
-  spawnFlipper (lane, zPosition = 1) {
-    let flipper = this.surfaceObjectsManager.addEnemy(
-      new EnemyFlipper(
-        this.surfaceObjectsManager.surface,
-        this.projectileManager,
-        this.rewardCallback,
-        lane,
-        zPosition,
-		//Enemy.TYPE_FLIPPER,
-		this.game
-      )
-    );
+  spawnFlipper (lane, zPosition = 1, fromTanker = false) {
+    let isMutant = false;
+    let isStealth = false;
+
+    // Tankers at Level 15+ roll for Stealth Flippers first!
+    if (this.currentLevel >= 15 && fromTanker) {
+       if (Math.random() < 0.25) { // 25% chance from tankers
+           isStealth = true;
+       }
+    }
+
+    // Only roll for Mutant if it didn't already roll Stealth
+    if (!isStealth && this.currentLevel >= 4) {
+      if (fromTanker) {
+        const chance = Math.min(0.75, (this.currentLevel - 3) * 0.08); 
+        isMutant = Math.random() < chance;
+      } else if (this.currentLevel >= 6) {
+        const chance = Math.min(0.40, (this.currentLevel - 5) * 0.04); 
+        isMutant = Math.random() < chance;
+      }
+    }
+
+    let flipper;
+    if (isStealth) {
+      //console.log(`%c[SPAWNER] Level ${this.currentLevel}: Deploying STEALTH Flipper on lane ${lane}!`, 'color: #aa00ff; font-weight: bold;');
+	  flipper = this.surfaceObjectsManager.addEnemy(
+		new EnemyStealthFlipper(this.surfaceObjectsManager.surface, this.projectileManager, this.rewardCallback, lane, zPosition, this.game)
+      );
+    } else if (isMutant) {
+      //console.log(`%c[SPAWNER] Level ${this.currentLevel}: Deploying MUTANT Flipper on lane ${lane}!`, 'color: #aa0000; font-weight: bold;');
+      flipper = this.surfaceObjectsManager.addEnemy(
+        new EnemyMutantFlipper(this.surfaceObjectsManager.surface, this.projectileManager, this.rewardCallback, lane, zPosition, this.game)
+      );
+    } else {
+      flipper = this.surfaceObjectsManager.addEnemy(
+        new EnemyFlipper(this.surfaceObjectsManager.surface, this.projectileManager, this.rewardCallback, lane, zPosition, this.game)
+      );
+    }
 
     if (this.currentLevel === 1) {
       flipper.cannotFlip();

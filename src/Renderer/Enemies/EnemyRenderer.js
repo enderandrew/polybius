@@ -28,27 +28,35 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     this.setLaneOffset();
   }
 
-  setObjectRef (object) {
-    if (object.type !== this.objectType) {
-      throw new Error(`Can't associate ${object.type} with ${this.objectType} renderer`);
+ setObjectRef (object) {
+    let expectedType = object.type;
+    if (object.isMutant) expectedType = 'mutant_flipper';
+    if (object.isStealth) expectedType = 'stealth_flipper';
+    
+    if (expectedType !== this.objectType) {
+      throw new Error(`Can't associate ${expectedType} with ${this.objectType} renderer`);
     }
 
     super.setObjectRef(object);
     
     if (this.modelGroup) {
-        // Change the enemy's color to Red-Orange if they are strong
         const isStrong = this.object.isStrong;
         
         this.modelGroup.children.forEach(child => {
+            if (child.material) child.material.opacity = 1.0; 
+
             if (isStrong) {
-                child.material.color.setHex(0xff4400); 
+                // Set the material to its original base color
+                child.material.color.setHex(child.material.userData.originalColor);
+                
+                // Rotate the Hue by 180 degrees (0.5 on a 0.0 - 1.0 scale)
+                // This creates a perfect opposite/inverted neon color!
+                child.material.color.offsetHSL(0.5, 0, 0); 
             } else {
-                // Safely revert to normal color using the data we stashed during loadModel()
                 child.material.color.setHex(child.material.userData.originalColor);
             }
         });
     }
-    
     this.setVisualsToNormal();
   }
 
@@ -105,6 +113,13 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
 
   rotate () {
     this.rotation.z = this.zRotationBase + this.zRotationOffset;
+
+    if (this.object.isStealth && this.modelGroup) {
+        this.modelGroup.children.forEach(child => {
+            if (child.material) child.material.opacity = this.object.opacity;
+        });
+    }
+
     if (this.shieldMesh && this.object) {
         // Toggle visibility based on health state
         this.shieldMesh.visible = this.object.hasShield;
@@ -168,10 +183,15 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
 
   loadModel () {
     this.modelGroup = new Group();
+	
+    let lookupType = this.object.type;
+    if (this.object.isMutant) lookupType = 'mutant_flipper';
+    if (this.object.isStealth) lookupType = 'stealth_flipper';
 
-    let enemyDataset = enemies.find(enemy => enemy.name === this.object.type);
+    let enemyDataset = enemies.find(enemy => enemy.name === lookupType);
+    
     if (enemyDataset === undefined) {
-      throw new Error('Unknown object: ' + this.object.type);
+      throw new Error('Unknown object: ' + lookupType);
     }
 
     let flatCoords = [].concat(...enemyDataset.coords);
@@ -189,7 +209,10 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     enemyDataset.coords.forEach((xyArray, i) => {
       let originalColor = Array.isArray(enemyDataset.color) ? enemyDataset.color[i] : enemyDataset.color;
       let material = new MeshBasicMaterial({
-          color: originalColor,
+		  //color: Array.isArray(enemyDataset.color) ? enemyDataset.color[i] : enemyDataset.color,
+		  color: originalColor,
+          transparent: true,
+          opacity: 1.0
         }
       );
       // Save the original color so we can reset it when the enemy is pooled

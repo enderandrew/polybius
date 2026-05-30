@@ -74,6 +74,20 @@ export const PowerUpType = Object.freeze({
     dropWeight:  10,
     description: 'Press W to jump over enemies',
   },
+  
+  AI_DROID: {
+    id:           'AI_DROID',
+    label:        'A.I.\nDROID',
+    color:        '#ff88cc',
+    glowColor:    'rgba(255,136,204,0.7)',
+    shape:        'cube',
+    duration:     25000,
+    isWeapon:     false,
+    grantsAIDroid: true,
+    //dropWeight:   3,
+	dropWeight:   99,
+    description:  'Companion cube droid that auto-targets enemies',
+  },
 
   // --- SCORE BONUSES ---
 

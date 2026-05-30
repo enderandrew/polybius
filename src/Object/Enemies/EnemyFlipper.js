@@ -36,8 +36,8 @@ export default class EnemyFlipper extends Enemy {
    * @param {number} laneId
    * @param {number} zPosition
    */
-  constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
-    super(surface, projectileManager, rewardCallback, laneId, zPosition, SurfaceObject.TYPE_FLIPPER, game);
+  constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game, type = Enemy.TYPE_FLIPPER) {
+	super(surface, projectileManager, rewardCallback, laneId, zPosition, type, game);
 
     this.firstLevel = 1;
     this.valueInPoints = 150;

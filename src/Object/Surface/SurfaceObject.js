@@ -13,6 +13,8 @@ export default class SurfaceObject {
   static TYPE_FLIPPER = 'flipper';
   static TYPE_FUSEBALL = 'fuseball';
   static TYPE_PROJECTILE = 'projectile';
+  static TYPE_MUTANT_FLIPPER = 'mutant_flipper';
+  static TYPE_STEALTH_FLIPPER = 'stealth_flipper';
 
   // Modern ES class fields replacing JSDoc @var comments
   surface;

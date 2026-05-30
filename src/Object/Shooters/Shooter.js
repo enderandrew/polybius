@@ -220,7 +220,7 @@ export default class Shooter extends ShootingSurfaceObject {
     if (
       !this.canShoot
       || this.zPosition > 1
-      || (!this.inState(Shooter.STATE_ALIVE) && !this.inState(Shooter.STATE_GOING_DOWN_THE_TUBE))
+      || (!this.inState(Shooter.STATE_ALIVE) && !this.inState(Shooter.STATE_GOING_DOWN_THE_TUBE) && !this.inState(Shooter.STATE_JUMPING))
     ) {
       return;
     }
@@ -242,7 +242,7 @@ export default class Shooter extends ShootingSurfaceObject {
     if (
       !this.game?.powerUpManager?.hasJump
       || !this.inState(Shooter.STATE_ALIVE)
-      //|| !this.canShoot
+      || !this.canShoot
     ) {
       return;
     }
