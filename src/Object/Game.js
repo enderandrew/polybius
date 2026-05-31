@@ -1,4 +1,5 @@
 import { AudioListener, Group, PerspectiveCamera, Scene, WebGLRenderer, Vector2 } from 'three';
+import BgmManager from '@/Object/Manager/BgmManager';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
@@ -68,12 +69,25 @@ export default class Game {
 
   constructor () {
     this.setState(Game.STATE_SELECT_SURFACE);
-    this.setupRenderer();
+    this.setupRenderer(true);
     this.setupLogic();
     this.isPaused = false;
 	this.aiDroid = null;
     this.prevGamepadState = {};
     this.prevGamepadAxis = 0;
+    this.bgmManager = new BgmManager();
+
+    this.bgmManager.onBeat = () => {
+        if (this.starfield) this.starfield.pulse(1.2); //1.5
+        if (this.levelRenderer) this.levelRenderer.beatPulse = 0.15; // 40% flash
+		this.beatGlow = 0.1;
+    };
+
+    this.bgmManager.onAccent = () => {
+        if (this.starfield) this.starfield.pulse(2.0); //3.5
+        if (this.levelRenderer) this.levelRenderer.beatPulse = 0.35; // 90% flash
+		this.beatGlow = 0.3;
+    };
   }
 
   handleState () {
@@ -347,13 +361,14 @@ startLevel (levelId, firstLevel = false) {
     this.composer.addPass(new RenderPass(this.scene, this.camera));
 
     if (highQuality) {
-      // 4. Pass the interior dimensions to the post-processing effects
-      this.composer.addPass(new UnrealBloomPass(
+      // Pass the interior dimensions to the post-processing effects
+      this.bloomPass = new UnrealBloomPass(
         new Vector2(width, height), 
-        0.8,
+        0.8,  // Base strength
         0.9,
         0
-      ));
+      );
+      this.composer.addPass(this.bloomPass);
       this.composer.addPass(new SMAAPass(width, height));
     }
 
@@ -387,6 +402,19 @@ startLevel (levelId, firstLevel = false) {
     const now = performance.now();
     const delta = this._lastTime ? (now - this._lastTime) / 1000 : 0;
     this._lastTime = now;
+
+    if (this.beatGlow === undefined) {
+        this.beatGlow = 0.0;
+        // Save whatever you originally set your bloom pass strength to (e.g., 1.5)
+        // Adjust 'this.bloomPass' to whatever variable name you used for your UnrealBloomPass
+        this.baseBloom = this.bloomPass ? this.bloomPass.strength : 0.5; 
+    }
+	
+	this.beatGlow += (0.0 - this.beatGlow) * 0.10;
+
+    if (this.bloomPass) {
+        this.bloomPass.strength = (this.baseBloom + this.beatGlow);
+    }
   
     this.handleState();
 
@@ -394,6 +422,14 @@ startLevel (levelId, firstLevel = false) {
         keyboardInput.dispatchActions();
         this.pollGamepads();
     }
+
+    if (this.state.equals(Game.STATE_PLAY) && !this.isLoadingLevel) {
+        this.bgmManager.playForLevel(this.level);
+    } else {
+        this.bgmManager.stop();
+    }
+
+    this.bgmManager.update();
 
     if (this.screenObject !== null) {
       this.screenObject.update();
@@ -510,6 +546,11 @@ startLevel (levelId, firstLevel = false) {
     this.isPaused = !this.isPaused;
     if (this.pauseOverlay) {
       this.pauseOverlay.style.display = this.isPaused ? 'flex' : 'none';
+    }
+    if (this.isPaused) {
+        this.bgmManager.pause();
+    } else {
+        this.bgmManager.resume();
     }
   }
   

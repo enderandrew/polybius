@@ -1,4 +1,4 @@
-import { Group } from 'three';
+import { Color, Group } from 'three';
 import SurfaceRenderer from '@/Renderer/Surface/SurfaceRenderer';
 import ShooterRenderer from '@/Renderer/Shooters/ShooterRenderer';
 import ProjectileRendererManager from '@/Renderer/Surface/ProjectileRendererManager';
@@ -72,6 +72,29 @@ export default class LevelRenderer extends Group {
 
   update () {
     if (this.level !== null) {
+      if (this.beatPulse === undefined) {
+        this.beatPulse = 0.0;
+        this.whiteColor = new Color(0xffffff); // The color it flashes to
+      }
+      
+      // Smoothly decay the pulse back to 0
+      this.beatPulse += (0.0 - this.beatPulse) * 0.10; 
+	  
+      // Find wherever you store the material for your web lines (e.g., this.webMaterial)
+      if (this.surfaceRenderer) {
+          this.surfaceRenderer.traverse((child) => {
+              if (child.material && child.material.color) {
+                  // Save the original base color the very first time
+                  if (!child.material.userData.baseColor) {
+                      child.material.userData.baseColor = child.material.color.clone();
+                  }
+                  
+                  // Blend between the base color and pure white based on the beat!
+                  child.material.color.copy(child.material.userData.baseColor).lerp(this.whiteColor, this.beatPulse);
+              }
+          });
+      }
+	  
       this.surfaceRenderer.update();
       this.shooterRenderer.update();
       this.enemyRendererManager.update();

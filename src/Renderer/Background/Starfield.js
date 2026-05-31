@@ -1,6 +1,12 @@
 import { Group, BufferGeometry, BufferAttribute, PointsMaterial, Points, MathUtils } from 'three';
 
 export default class Starfield extends Group {
+  // Modern ES class fields guarantee these are never undefined!
+  numStars;
+  size;
+  speed;
+  speedMultiplier = 1.0; 
+
   constructor(numStars = 2500, size = 150, speed = 15.0) {
     super();
     this.numStars = numStars;
@@ -10,16 +16,14 @@ export default class Starfield extends Group {
     const geometry = new BufferGeometry();
     const positions = new Float32Array(this.numStars * 3);
 
-    // Scatter stars randomly inside a large cube
     for (let i = 0; i < this.numStars; i++) {
-      positions[i * 3] = MathUtils.randFloatSpread(this.size);     // X
-      positions[i * 3 + 1] = MathUtils.randFloatSpread(this.size); // Y
-      positions[i * 3 + 2] = MathUtils.randFloatSpread(this.size); // Z
+      positions[i * 3] = MathUtils.randFloatSpread(this.size);    
+      positions[i * 3 + 1] = MathUtils.randFloatSpread(this.size); 
+      positions[i * 3 + 2] = MathUtils.randFloatSpread(this.size); 
     }
 
     geometry.setAttribute('position', new BufferAttribute(positions, 3));
 
-    // Simple, bright white squares - true to 80s arcade limitations
     const material = new PointsMaterial({
       color: 0xffffff,
       size: 0.15, 
@@ -31,30 +35,29 @@ export default class Starfield extends Group {
     this.add(this.points);
   }
 
+  pulse(intensity) {
+      this.speedMultiplier = intensity;
+  }
+
   update(delta) {
     if (!this.points) return;
 
-    // Grab the raw coordinate array from the GPU memory buffer
+    // Smoothly decay the multiplier back to 1.0 (normal speed)
+    this.speedMultiplier += (1.0 - this.speedMultiplier) * delta * 6.0;
+
     const positions = this.points.geometry.attributes.position.array;
-    const distance = this.speed * delta;
+    const distance = this.speed * this.speedMultiplier * delta; 
 
     for (let i = 0; i < this.numStars; i++) {
-      // Move the stars towards the camera (negative Z direction)
       positions[i * 3 + 2] -= distance;
 
-      // FIX: Check if the star has flown past the NEGATIVE boundary
       if (positions[i * 3 + 2] < -this.size / 2) {
-        
-        // Wrap it back to the deep background (POSITIVE boundary)
         positions[i * 3 + 2] += this.size;
-        
-        // Randomize the X and Y so the pattern doesn't become recognizable
         positions[i * 3] = MathUtils.randFloatSpread(this.size);
         positions[i * 3 + 1] = MathUtils.randFloatSpread(this.size);
       }
     }
 
-    // You MUST tell Three.js that the buffer has changed, or it won't render the movement
     this.points.geometry.attributes.position.needsUpdate = true;
   }
 }
