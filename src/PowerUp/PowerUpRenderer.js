@@ -91,6 +91,10 @@ export class PowerUpRenderer {
         PowerUpRenderer._isoCube(ctx, cx, cy, r, type.color);
         break;
 
+      case 'token':
+        PowerUpRenderer._token(ctx, cx, cy, r, type.color);
+        break;
+
       default:
         PowerUpRenderer._diamond(ctx, cx, cy, r, type.color);
     }
@@ -314,6 +318,25 @@ export class PowerUpRenderer {
     }
     ctx.closePath();
     ctx.fillStyle = '#ff0066'; ctx.fill();
+  }
+
+  static _token (ctx, cx, cy, r, color) {
+    // Outer coin
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Inner ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.68, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // Star inside
+    PowerUpRenderer._star(ctx, cx, cy, r * 0.52, r * 0.22, 5, 'rgba(0,0,0,0.5)');
   }
 
   /** Renders the label text centred below the shape's midpoint */

@@ -4,25 +4,26 @@ export class MessageBroker {
   static TOPIC_AUDIO = 'topic_audio';
   static TOPIC_SCREEN = 'topic_screen';
 
-  static MESSAGE_PLAYER_DEATH = 'message_player_death';
-  static MESSAGE_PLAYER_CHANGED_LANE = 'message_player_changed_lane';
-  static MESSAGE_NEXT_LEVEL = 'message_next_level';
-  static MESSAGE_PLAYER_SHOOT = 'message_player_shoot';
-  static MESSAGE_PLAYER_SUPERZAPPER_USED = 'message_player_superzapper_used';
-  static MESSAGE_ENEMY_SHOOT = 'message_enemy_shoot';
-  static MESSAGE_ENEMY_DEATH = 'message_enemy_death';
-  static MESSAGE_MENU_CHANGE = 'message_menu_change';
-  static MESSAGE_MENU_SELECT = 'message_menu_select';
   static MESSAGE_1UP = '1up';
   static MESSAGE_ACHIEVEMENT = 'achievement';
   static MESSAGE_BIGFOOT = 'bigfoot';
-  static MESSAGE_CRT = 'crt';
+  static MESSAGE_ENEMY_DEATH = 'message_enemy_death';
+  static MESSAGE_ENEMY_SHOOT = 'message_enemy_shoot';
   static MESSAGE_GAME = 'game';
+  static MESSAGE_GAME_OVER = 'game_over';
   static MESSAGE_JUMP = 'jump';
   static MESSAGE_KONAMI = 'Konami';
+  static MESSAGE_MENU_CHANGE = 'message_menu_change';
+  static MESSAGE_MENU_SELECT = 'message_menu_select';
+  static MESSAGE_NEXT_LEVEL = 'message_next_level';
   static MESSAGE_PAUSE = 'pause';
+  static MESSAGE_PLAYER_CHANGED_LANE = 'message_player_changed_lane';
+  static MESSAGE_PLAYER_DEATH = 'message_player_death';
+  static MESSAGE_PLAYER_SHOOT = 'message_player_shoot';
+  static MESSAGE_PLAYER_SUPERZAPPER_USED = 'message_player_superzapper_used';
   static MESSAGE_POWERUP = 'powerup';
   static MESSAGE_SPOOKY = 'spooky';
+  static MESSAGE_YES = 'yes';
 
   // Initialized as a standard object rather than an array for proper key-value topic mapping
   messages = {};

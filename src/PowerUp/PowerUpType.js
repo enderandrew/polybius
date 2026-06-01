@@ -118,6 +118,19 @@ export const PowerUpType = Object.freeze({
     description: '+5,000 points and warp to next stage',
   },
 
+  WARP_TOKEN: {
+    id:           'WARP_TOKEN',
+    label:        'WARP\nTOKEN',
+    color:        '#ffd700',
+    glowColor:    'rgba(255,215,0,0.7)',
+    shape:        'token',
+    duration:     null,
+    isWeapon:     false,
+    isWarpToken:  true,
+    dropWeight:   4,
+    description:  'Collect 3 to unlock bonus stage',
+  },
+
   // --- LIFE ---
 
   ONE_UP: {

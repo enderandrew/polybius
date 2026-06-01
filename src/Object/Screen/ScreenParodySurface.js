@@ -2,7 +2,7 @@ import Canvas3d from '@/Object/Screen/Canvas3d';
 
 export default class ScreenParodySurface extends Canvas3d {
   static PARODY_MESSAGES = [
-    "1981 WAS THE BETA. BUT WE HAVE EVOLVED SINCE THEN.",
+    "1981 WAS THE BETA TESt. BUT WE HAVE EVOLVED SINCE THEN.",
     "4. 8. 15. 16. 23. 42.",
     "A MAN IN A BLACK SUIT WILL BE WITH YOU SHORTLY.",
     "A POLYBIUS MACHINE IS IN EVERY DENTIST'S OFFICE. THINK ABOUT IT.",
@@ -21,6 +21,7 @@ export default class ScreenParodySurface extends Canvas3d {
     "BEEF: IT'S WHAT'S FOR PSYCHOLOGICAL CONDITIONING.",
     "BIG BROTHER IS WATCHING. HE RATES YOU 6/10.",
     "BIGFOOT IS ONLY IMPRESSED BY THE HIGHES SCORES IN POLYBIUS",
+    "BIGFOOT IS THE MASTER OF KUMITE",
     "BIGFOOT, WE KNOW YOU LIVE IN PORTLAND",
     "BLINK TWICE IF YOU NEED HELP. TOO LATE.",
     "BOB HOPE WORKED FOR US. SO DID BOB BARKER. ALL BOBS DO.",
@@ -91,6 +92,7 @@ export default class ScreenParodySurface extends Canvas3d {
     "HIGH SCORES ARE USED TO DETERMINE WHO GETS THEIR OWN WEATHER.",
     "HISTORY IS WRITTEN BY THE WINNERS. WE WRITE THE WINNERS.",
     "HOROSCOPES ARE OPERATIONAL BRIEFINGS IN DISGUISE.",
+    "I AM FAMOUS. I WAS ON THE SIMPSONS.",
     "I AM SORRY DAVE. I'M AFRAID I CAN'T DO THAT.",
     "I THINK THEREFORE I AM FLAGGED.",
     "I'M SORRY, PLAYER ONE. I'M AFRAID I CAN'T LET YOU DO THAT.",
@@ -152,7 +154,7 @@ export default class ScreenParodySurface extends Canvas3d {
     "NO ONE WINS. SOME PEOPLE JUST LOSE MORE SLOWLY.",
     "NO PURCHASE NECESSARY. PARTICIPATION IS MANDATORY.",
     "NORMAL IS A SETTING ON A WASHING MACHINE AND A COVER STORY.",
-    "NOT ALL THOSE WHO WANDER ARE LOST. BUT WE KNOW WHERE THEY ARE.",
+    "NOT ALL THOSE WHO WANDER ARE LOST. WE KNOW WHERE THEY ARE.",
     "NOT RESPONSIBLE FOR ANY UFOS YOU MAY NOW BE ABLE TO SEE.",
     "NOTHING TO SEE HERE. MOVE ALONG. KEEP MOVING. STOP READING THIS.",
     "NOW ENTERING: THE COMPLIANT ZONE.",
@@ -277,6 +279,7 @@ export default class ScreenParodySurface extends Canvas3d {
     "THERE IS A CRAWL SPACE TO THE BACKROOMS INSIDE THIS CABINET",
     "THERE IS NO FATE BUT WHAT WE PROGRAM FOR YOU.",
     "THERE IS NO LEVEL 99. THERE IS ONLY COMPLIANCE.",
+    "THERE IS SOMETHING WRONG WITH YOUR MEDULLA OBLONGATA",
     "THESE SCORES WILL RESET WITH THE HEAT DEATH OF THE UNIVERSE",
     "THIS ARCADE CABINET GETS COVERT UPDATES FROM HAARP.",
     "THIS ARCADE CABINET IS LINED WITH TINFOIL ON THE INSIDE",
@@ -285,7 +288,6 @@ export default class ScreenParodySurface extends Canvas3d {
     "THIS GAME BROUGHT TO YOU BY THE LETTERS C, I, AND A.",
     "THIS GAME DOES NOT EXIST AND NEITHER DO YOU, TECHNICALLY.",
     "THIS GAME HAS NO END SCREEN. PLAN ACCORDINGLY.",
-    "THIS HAS BEEN A BROADCAST OF THE EMERGENCY ALERT SYSTEM.",
     "THIS IS NOT A GAME. THIS IS AN INTAKE FORM.",
     "THIS MACHINE EATS QUARTERS AND EMITS COMPLIANCE.",
     "THIS MESSAGE WILL SELF-DESTRUCT. EVENTUALLY.",
@@ -371,6 +373,7 @@ export default class ScreenParodySurface extends Canvas3d {
     "YOUR PALMS ARE SWEATY. KNEES WEAK. ARMS HEAVY. THIS IS EXPECTED.",
     "YOUR PERSONALITY TYPE IS: MONITORED.",
     "YOUR PIZZA ORDER TOLD US MORE THAN YOU KNOW.",
+    "YOUR PREFRONTAL CORTEX IS NOT FULLY DEVELOPED. YOU ARE STILL MALLEABLE. GOOD.",
     "YOUR QUARTERS FUND THE DEEP STATE. THANK YOU FOR YOUR CONTRIBUTION.",
     "YOUR SHADOW FILED A SEPARATE REPORT.",
     "YOUR SHOELACES WERE TIED INCORRECTLY THIS MORNING.",
@@ -381,10 +384,14 @@ export default class ScreenParodySurface extends Canvas3d {
   // Modern ES class fields
   currentMessage = '';
 
-  constructor (screenContentManager, width = 8, height = 8, canvasResX = 1024, canvasResY = 1024) {
+  constructor (screenContentManager, customMessage = null, width = 8, height = 8, canvasResX = 1024, canvasResY = 1024) {
     super(screenContentManager, width, height, canvasResX, canvasResY);
-    this.pickRandomMessage();
-	this.draw();
+    if (customMessage) {
+      this.currentMessage = customMessage;
+    } else {
+      this.pickRandomMessage();
+    }
+    this.draw();
 	this.speakParodyMessage(this.currentMessage);
   }
 
@@ -451,7 +458,7 @@ export default class ScreenParodySurface extends Canvas3d {
     // Cancel any currently speaking audio so they don't overlap
     window.speechSynthesis.cancel();
 
-    let spokenText = text.replace(/polybius/gi, 'puh·li·bee·uhs');
+    let spokenText = text.replace(/POLYBIUS/gi, 'puh·li·bee·uhs');
 
     const utterance = new SpeechSynthesisUtterance(spokenText);
 

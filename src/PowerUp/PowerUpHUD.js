@@ -89,6 +89,23 @@ export class PowerUpHUD {
     this.flash = document.createElement('div');
     this.flash.id = 'pu-flash';
 
+    this.tokenRow = document.createElement('div');
+    this.tokenRow.style.cssText = [
+      'position: absolute', 'bottom: 12px', 'left: 12px', 'z-index: 500',
+      'font-family: "Courier New", monospace', 'font-size: 12px',
+      'pointer-events: none', 'display: flex', 'gap: 8px', 'align-items: center',
+      'background: rgba(0,0,0,0.65)', 'padding: 4px 10px',
+      'border: 1px solid #333', 'border-radius: 3px',
+    ].join('; ');
+    this.tokenRow.innerHTML = `
+      <span style="color:#555; font-size:10px; letter-spacing:0.1em;">WARP</span>
+      <span class="wt" style="color:#333; font-size:16px;">◈</span>
+      <span class="wt" style="color:#333; font-size:16px;">◈</span>
+      <span class="wt" style="color:#333; font-size:16px;">◈</span>
+    `;
+    document.getElementById('screen').appendChild(this.tokenRow);
+    this._tokenSlots = this.tokenRow.querySelectorAll('.wt');
+
     const screen = document.getElementById('screen');
     screen.appendChild(this.root);
     screen.appendChild(this.flash);
@@ -110,6 +127,21 @@ export class PowerUpHUD {
     });
     window.addEventListener('powerup:warp', () => {
       this._showFlash('OUTTA HERE!  ►► WARPING...', '#ffffff');
+    });
+    window.addEventListener('warptoken:collected', ({ detail: { count } }) => {
+      this._tokenSlots.forEach((slot, i) => {
+        slot.style.color      = i < count ? '#ffd700' : '#333';
+        slot.style.textShadow = i < count ? '0 0 8px #ffd700' : 'none';
+      });
+    });
+    window.addEventListener('warptoken:ready', () => {
+      // Flash all three gold then show BONUS READY
+      this._tokenSlots.forEach(s => { s.style.color = '#ffffff'; s.style.textShadow = '0 0 12px #ffd700'; });
+      this.tokenRow.querySelector('span').textContent = 'BONUS';
+      setTimeout(() => {
+        this._tokenSlots.forEach(s => { s.style.color = '#ffd700'; });
+        this.tokenRow.querySelector('span').textContent = 'WARP';
+      }, 600);
     });
   }
 
@@ -184,5 +216,27 @@ export class PowerUpHUD {
   destroy () {
     this.root.remove();
     this.flash.remove();
+	if (this.tokenRow) this.tokenRow.remove();
+  }
+
+  hide () {
+    this.root.style.display = 'none';
+    if (this.tokenRow) this.tokenRow.style.display = 'none';
+    this.flash.style.display = 'none';
+  }
+
+  show () {
+    this.root.style.display = 'flex';
+    if (this.tokenRow) this.tokenRow.style.display = 'flex';
+  }
+
+  clear () {
+    // Wipes all active timer bars visually
+    for (const [id, entry] of this.strips) {
+      entry.el.remove();
+    }
+    this.strips.clear();
+    clearTimeout(this.flashTimer);
+    this.flash.style.opacity = '0';
   }
 }

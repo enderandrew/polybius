@@ -32,6 +32,8 @@ export class PowerUpManager {
   constructor () {
     // Map of PowerUpType.id → { type, remaining: DOMHighResTimeStamp | null }
     this._active = new Map();
+	this.warpTokenCount    = 0;
+    this.bonusStageEarned  = false;
   }
 
   // ---------------------------------------------------------------------------
@@ -52,7 +54,20 @@ export class PowerUpManager {
     // --- Instant effects ---
     if (type.scoreBonus) {
       gameState.score += type.scoreBonus;
+      if (gameState.bonusScoreOffset !== undefined) {
+          gameState.bonusScoreOffset += type.scoreBonus;
+      }
       this._emit('powerup:score', { amount: type.scoreBonus, label: type.label });
+    }
+
+    if (type.isWarpToken) {
+      this.warpTokenCount++;
+      this._emit('warptoken:collected', { count: this.warpTokenCount });
+      if (this.warpTokenCount >= 3) {
+        this.warpTokenCount   = 0;
+        this.bonusStageEarned = true;
+        this._emit('warptoken:ready', {});
+      }
     }
 
     if (type.grantsLife) {
@@ -201,6 +216,20 @@ export class PowerUpManager {
 
   get hasAIDroid () {
     return this.isActive(PowerUpType.AI_DROID.id);
+  }
+
+  get hasBonusStageEarned () {
+    return this.bonusStageEarned;
+  }
+  
+  resetBonusStageEarned () {
+    this.bonusStageEarned = false;
+  }
+
+  consumeWarpTokens () {
+    this.warpTokenCount = 0;
+    this.bonusStageEarned = false;
+    this._emit('warptoken:collected', { count: 0 }); // Tells the HUD to dim the gold tokens
   }
 
   // ---------------------------------------------------------------------------

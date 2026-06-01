@@ -26,7 +26,35 @@ Project uses Three.js as a rendering library. It was written purely in JavaScrip
 It's based on vue webpack config, so it can be developed, served and built without any hustle.
 
 ## New Features
-Added in a sanity system and glitches.
+* Polybius theming
+* Random parody message plays between levels (spoken aloud)
+* Power-ups
+** Particle Blaster - More powerful gun that does double damage
+** Jump - Allows you to jump, jump
+** Laser - No sharks attached sadly
+** Rapid Fire - Fire super fast!
+** Spread weapon - Contra?
+** 1-Up - Mario?
+** Outta Here! - Rare drop of 5000 points and advance to the next stage
+** Zappo 2000 - 2000 sweet points 
+* Enemy hit points and damage system
+* Enemies have a 10% chance of having a shield
+* New Enemies:
+** Mutant Flippers
+** Stealth Flippers
+** Demon Heads
+** Strong variants of all enemies
+* Bonus stage - collect 3 warp tokens and get taken to a bonus stage right out of Superman 64!
+* YES EFFECT - pick up a power-up while warping out of a level to trigger an additional bonus power-up
+* New controls and gamepad support
+* Background music
+* Game elements pulse to the beat (bloom + glow)
+* Pause screen
+* Starfield!
+* New sound effects
+* Updated to latest Three.js and removed old decorators
+* Updated Vite build system
+* Added in a sanity system and glitches.
 
 ## Licensing
 All sounds used in Polybius comes from freesound.org and are published on free-to-use licences.

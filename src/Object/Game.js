@@ -20,9 +20,11 @@ import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 import ScreenParodySurface from '@/Object/Screen/ScreenParodySurface';
 import { PowerUpManager } from '@/PowerUp/PowerUpManager';
 import { PowerUpSpawner  } from '@/PowerUp/PowerUpSpawner';
+import { PowerUpType } from '@/PowerUp/PowerUpType';
 import { PowerUpHUD } from '@/PowerUp/PowerUpHUD';
 import { AIDroid } from '@/PowerUp/AIDroid';
 import Starfield from '@/Renderer/Background/Starfield';
+import { BonusStage } from '@/Object/BonusStage/BonusStage';
 
 export default class Game {
   // Removed legacy @readonly decorators
@@ -68,7 +70,9 @@ export default class Game {
   surfacesCollection;
 
   constructor () {
-    this.setState(Game.STATE_SELECT_SURFACE);
+    this.isWarping = false;
+	this.bonusScoreOffset = 0;
+	this.setState(Game.STATE_SELECT_SURFACE);
     this.setupRenderer(true);
     this.setupLogic();
     this.isPaused = false;
@@ -88,6 +92,27 @@ export default class Game {
         if (this.levelRenderer) this.levelRenderer.beatPulse = 0.35; // 90% flash
 		this.beatGlow = 0.3;
     };
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'End' && this.state.equals(Game.STATE_PLAY) && !this.isLoadingLevel) {
+        
+        // Prevent your old 'End' key logic from running!
+        e.stopImmediatePropagation(); 
+        e.preventDefault();
+        
+        console.log('[DEBUG] Hijacking End key: Forcing Bonus Stage!');
+        
+        // 1. Max out tokens and flag the bonus stage as earned
+        this.powerUpManager.warpTokenCount = 3;
+        this.powerUpManager.bonusStageEarned = true;
+        
+        // 2. Trigger the PowerUpHUD to flash "BONUS READY" in gold
+        window.dispatchEvent(new CustomEvent('warptoken:ready'));
+        
+        // 3. Trigger the normal warp-out sequence down the tube
+        this.levelWonCallback();
+      }
+    }, true);
   }
 
   handleState () {
@@ -100,17 +125,29 @@ export default class Game {
         this.loadLevel(this.level);
         this.screenContentManager.setLevel(this.level);
 
+        if (this.powerUpHUD) this.powerUpHUD.show();
+
       } else if (this.state.equals(Game.STATE_SELECT_SURFACE)) {
         this.releaseLevel();
 
         this.lives = 5;
         this.score = 0;
+		this.bonusScoreOffset = 0;
 
+        if (this.powerUpHUD) {
+            this.powerUpHUD.clear();
+            this.powerUpHUD.hide();
+        }
+        this.powerUpManager.consumeWarpTokens();
+        this.powerUpManager.reset();
         this.populateScreenContentManager();
         this.loadScreen(new ScreenSelectSurface(this.screenContentManager));
+		messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_GAME);
 
       } else if (this.state.equals(Game.STATE_HIGH_SCORES)) {
         this.releaseLevel();
+		if (this.powerUpHUD) this.powerUpHUD.hide();
+		messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_GAME_OVER);
         this.loadScreen(new ScreenHighScores(this.screenContentManager));
 
       }
@@ -135,6 +172,7 @@ startLevel (levelId, firstLevel = false) {
     this.firstLevel = firstLevel;
     this.level = levelId;
     this.screenContentManager.setLevel(this.level);
+	if (this.powerUpHUD) this.powerUpHUD.hide();
 
     // Clear out whatever screen is currently active (Menu or previous Play UI)
     this.releaseScreen();
@@ -193,6 +231,8 @@ startLevel (levelId, firstLevel = false) {
       ? this.levelData.targetScore - this.levelData.scoreBonus
       : this.levelData.targetScore;
 
+    targetScore += this.bonusScoreOffset;
+
     this.levelObject = new Level(
       surface,
       this.level,
@@ -218,12 +258,18 @@ startLevel (levelId, firstLevel = false) {
   }
 
   releaseLevel () {
+    if (this.bonusStage) {
+      this.bonusStage.dispose();
+      this.bonusStage = null;
+    }
     if (this.levelObject === null) {
       return;
     }
 
     this.isPaused = false;
+	this.isWarping = false;
     if (this.pauseOverlay) this.pauseOverlay.style.display = 'none';
+	if (this.bonusOverlay) this.bonusOverlay.style.display = 'none';
 
     this._disposeAIDroid();
 	this.powerUpSpawner.webGeometry = null;
@@ -237,6 +283,7 @@ startLevel (levelId, firstLevel = false) {
   loadScreen (screen) {
     if (this.screenObject !== null) {
       this.screenObject.release();
+	  this.releaseScreen();
     }
 
     this.screenObject = screen;
@@ -259,7 +306,16 @@ startLevel (levelId, firstLevel = false) {
 
   loadGameState () {
     console.log('STATE LOADED');
-    this.highScores = new Array(8).fill({ name: 'EZY', score: 4096 });
+    this.highScores = [
+        { name: 'NWO', score: 524288 },
+        { name: 'MKU', score: 262144 },
+        { name: 'CIA', score: 131072 },
+        { name: 'NSA', score: 65536 },
+        { name: 'FBI', score: 32768 },
+        { name: 'UFO', score: 16384 },
+        { name: 'BIG', score: 8192 },
+        { name: 'FOT', score: 4096 }
+    ];
 
     let highScores = localStorage.getItem(Game.HIGH_SCORES_STORAGE_KEY);
     if (highScores !== null) {
@@ -357,6 +413,23 @@ startLevel (levelId, firstLevel = false) {
 
     displayContainer.appendChild(this.pauseOverlay);
 
+    this.bonusOverlay = document.createElement('div');
+    this.bonusOverlay.style.position = 'absolute';
+    this.bonusOverlay.style.top = '40%';
+    this.bonusOverlay.style.width = '100%';
+    this.bonusOverlay.style.textAlign = 'center';
+    this.bonusOverlay.style.color = '#ffff00';
+    this.bonusOverlay.style.fontFamily = '"Courier New", Courier, monospace';
+    this.bonusOverlay.style.fontSize = '4rem';
+    this.bonusOverlay.style.fontWeight = 'bold';
+    this.bonusOverlay.style.textShadow = '0 0 15px #ffff00';
+    this.bonusOverlay.style.zIndex = '1000';
+    this.bonusOverlay.style.pointerEvents = 'none';
+    this.bonusOverlay.style.display = 'none';
+    this.bonusOverlay.innerHTML = 'YES<br/><span style="font-size: 2rem">BONUS POWERUP!</span>';
+
+    displayContainer.appendChild(this.bonusOverlay);
+
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
 
@@ -445,24 +518,50 @@ startLevel (levelId, firstLevel = false) {
       return; 
     }
   
-    if (this.levelObject !== null && this.levelRenderer !== null) {
+    if (this.bonusStage) {
+      this.bonusStage.update(delta);
+    } else if (this.levelObject !== null && this.levelRenderer !== null) {
       this.levelObject.update();
       this.levelRenderer.update();
-  
+
       // Power-up tick
       this.powerUpSpawner.update(delta);
       this.powerUpManager.update(delta);
 	  if (this.aiDroid) this.aiDroid.update(delta);
   
       if (this.shooter && this.shooter.laneId !== undefined) {
-        const collected = this.powerUpSpawner.checkPlayerCollision(
-          this.shooter.laneId,
-          0.1
-        );
+        // DYNAMIC DEPTH: Uses 0.1 at the rim, but perfectly tracks the ship down the tube!
+        const hitDepth = Math.max(0.1, this.shooter.zPosition);
+        
+        const collected = this.powerUpSpawner.checkPlayerCollision(this.shooter.laneId, hitDepth);
 
         if (collected) {
-		  messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_POWERUP);
-		  this.powerUpManager.collect(collected, this);
+          // Because normal play is Z=0 and jumping is Z=0.22, anything beyond 0.25 is a warp!
+          const isNativeWarping = this.shooter.zPosition > 0.25;
+          
+          if (isNativeWarping) {
+              // Play the YES sound!
+              messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_YES);
+              
+              // Flash the overlay
+              this.bonusOverlay.style.display = 'block';
+              setTimeout(() => { if(this.bonusOverlay) this.bonusOverlay.style.display = 'none'; }, 2000);
+              
+              // Grant the random bonus
+              const bonusType = this._getRandomBonusPowerUp(collected);
+              if (bonusType) {
+                  this.powerUpManager.collect(bonusType, this);
+              }
+          } else {
+              // Normal audio logic
+              if (collected.id === 'ONE_UP' || collected.id === 'EXTRA_LIFE') {
+                  messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_1UP);
+              } else {
+                  messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_POWERUP);
+              }
+          }
+
+          this.powerUpManager.collect(collected, this);
           this.screenContentManager.setScore(this.score);
         }
       }
@@ -499,12 +598,21 @@ startLevel (levelId, firstLevel = false) {
 
     this.firstLevel = false;
 
+    const nextLevel = this.level + 1;
     this.releaseLevel();
-    this.startLevel(this.level + 1);
+    
+    if (this.powerUpManager.hasBonusStageEarned) {
+      this.powerUpManager.resetBonusStageEarned();
+      this._startBonusStageSequence(nextLevel);
+    } else {
+      this.startLevel(nextLevel);
+    }
   }
 
   shooterKilledCallback () {
     this.lives--;
+    this.isWarping = false; 
+    if (this.bonusOverlay) this.bonusOverlay.style.display = 'none';
 
     this.screenContentManager.setLives(this.lives);
 
@@ -512,6 +620,10 @@ startLevel (levelId, firstLevel = false) {
       if (this.level > this.highestLevel) {
         this.highestLevel = this.level;
       }
+
+      this.powerUpManager.consumeWarpTokens();
+      this.powerUpManager.reset();
+      if (this.powerUpHUD) this.powerUpHUD.clear();
 
       this.setState(Game.STATE_HIGH_SCORES);
       return false;
@@ -533,10 +645,6 @@ startLevel (levelId, firstLevel = false) {
 
   getCurrentScore () {
     return this.score;
-  }
-  
-  requestWarp () {
-    this.levelWonCallback();
   }
 
   togglePause () {
@@ -570,6 +678,87 @@ startLevel (levelId, firstLevel = false) {
       this.aiDroid.dispose();
       this.aiDroid = null;
     }
+  }
+
+  _startBonusStageSequence (nextLevel) {
+    this._bonusStageNextLevel = nextLevel;
+    this.isLoadingLevel = true;
+
+    if (this.powerUpHUD) this.powerUpHUD.hide();
+    this.powerUpManager.consumeWarpTokens();
+
+    this.camera.position.set(0, 0, -6);
+    this.camera.lookAt(0, 0, 10);
+  
+    // Show parody message
+    const msg = 'SUPERMAN 64? FLY THROUGH RINGS.';
+    this.loadScreen(new ScreenParodySurface(this.screenContentManager, msg));
+    this.screenObject.position.z = 0.1;
+  
+    // Read it aloud
+    try {
+      window.speechSynthesis.cancel();
+      const utt   = new SpeechSynthesisUtterance('Superman 64? Fly through rings.');
+      utt.rate    = 0.85;
+      utt.pitch   = 0.9;
+      window.speechSynthesis.speak(utt);
+    } catch (e) { /* TTS unavailable */ }
+  
+    setTimeout(() => {
+      this.releaseScreen();
+      this.bonusStage    = new BonusStage(
+        this.scene,
+        this.camera,
+        this._onBonusStageEnd.bind(this)
+      );
+      this.isLoadingLevel = false;
+    }, 3500);
+  }
+  
+  _onBonusStageEnd (totalScore, ringsCleared) {
+    if (totalScore > 0) {
+      this.score += totalScore;
+	  this.bonusScoreOffset += totalScore;
+      this.screenContentManager.setScore(this.score);
+    }
+    if (this.bonusStage) { this.bonusStage.dispose(); this.bonusStage = null; }
+  
+    this.camera.position.set(0, 0, -6);
+    this.camera.lookAt(0, 0, 10);
+  
+    const msg = ringsCleared === 0
+      ? 'EVEN SUPERMAN COULD FLY THROUGH RINGS. JUST SAYING.'
+      : ringsCleared >= BonusStage.RING_COUNT
+        ? 'PERFECT RUN. SINNESLÖSCHEN IS PLEASED.'
+        : `${ringsCleared} RINGS. ADEQUATE. THE GOVERNMENT EXPECTED MORE.`;
+  
+    this.loadScreen(new ScreenParodySurface(this.screenContentManager, msg));
+    this.screenObject.position.z = 0.1;
+    this.isLoadingLevel = true;
+  
+    setTimeout(() => {
+      this.isLoadingLevel  = false;
+      this.startLevel(this._bonusStageNextLevel);
+    }, 2500);
+  }
+  
+  _getRandomBonusPowerUp(excludeType) {
+    const allTypes = [
+      PowerUpType.AI_DROID,
+      PowerUpType.JUMP,
+      PowerUpType.LASER,
+      PowerUpType.ONE_UP,
+      PowerUpType.LASER,
+      PowerUpType.PARTICLE_BLASTER,
+      PowerUpType.RAPID_FIRE, 
+      PowerUpType.SPREAD_GUN, 
+    ];
+    
+    // Filter out the one they just picked up
+    const available = allTypes.filter(t => t.id !== excludeType.id);
+    
+    // Pick a random one from the remaining pool
+    return available[Math.floor(Math.random() * available.length)];
   }
 
   pollGamepads () {

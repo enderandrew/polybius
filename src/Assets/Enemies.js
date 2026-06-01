@@ -220,7 +220,69 @@ const enemies = ([
         {x: 0.5151, y: 0.2682}, {x: 0.3585, y: 0.2713},
       ]
     ]
-  }
+  },
+  {
+    name: 'demon_head',
+    color: 0xff0000, // Blood Red
+    coords: [
+      // Main Skull Outline & Fangs
+      [
+        { x: -0.3, y: 0.3 },   // Top Left edge
+        { x: 0.3, y: 0.3 },    // Top Right edge
+        { x: 0.6, y: 0.1 },    // Upper Right cheek (horn base)
+        { x: 0.6, y: -0.2 },   // Lower Right cheek
+        { x: 0.25, y: -0.8 },  // Right Fang Tip
+        { x: 0.25, y: -0.4 },  // Right Fang Inner
+        { x: -0.25, y: -0.4 }, // Left Fang Inner
+        { x: -0.25, y: -0.8 }, // Left Fang Tip
+        { x: -0.6, y: -0.2 },  // Lower Left cheek
+        { x: -0.6, y: 0.1 },   // Upper Left cheek (horn base)
+        { x: -0.3, y: 0.3 }    // Close path back to Top Left
+      ],
+      // Left Eye (Triangle)
+      [
+        { x: -0.4, y: 0.1 }, 
+        { x: -0.15, y: 0.1 }, 
+        { x: -0.25, y: -0.15 }, 
+        { x: -0.4, y: 0.1 }
+      ],
+      // Right Eye (Triangle)
+      [
+        { x: 0.4, y: 0.1 }, 
+        { x: 0.15, y: 0.1 }, 
+        { x: 0.25, y: -0.15 }, 
+        { x: 0.4, y: 0.1 }
+      ],
+      // Left Horn (Visually attached to the head)
+      [
+        { x: -0.6, y: 0.1 },   // Connects to outer cheek
+        { x: -0.85, y: 0.8 },  // Sharp point up and out
+        { x: -0.3, y: 0.3 },   // Connects to inner brow
+        { x: -0.6, y: 0.1 }    // Close path
+      ],
+      // Right Horn (Visually attached to the head)
+      [
+        { x: 0.6, y: 0.1 },    // Connects to outer cheek
+        { x: 0.85, y: 0.8 },   // Sharp point up and out
+        { x: 0.3, y: 0.3 },    // Connects to inner brow
+        { x: 0.6, y: 0.1 }     // Close path
+      ]
+    ]
+  },
+  {
+    name: 'demon_horn',
+    color: 0xff5500, // Fiery Orange
+    coords: [
+      // Sharp, detached arrowhead shape simulating the broken horn
+      [
+        { x: 0, y: 0.6 },      // Sharp tip
+        { x: 0.3, y: -0.4 },   // Bottom right
+        { x: 0, y: -0.2 },     // Inner notch
+        { x: -0.3, y: -0.4 },  // Bottom left
+        { x: 0, y: 0.6 }       // Close path back to tip
+      ]
+    ]
+  },
 ]);
 
 export default enemies;

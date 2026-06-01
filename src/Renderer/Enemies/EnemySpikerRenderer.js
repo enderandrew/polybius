@@ -10,8 +10,8 @@ export default class EnemySpikerRenderer extends EnemyRenderer {
    * @param {EnemySpiker} enemySpiker
    * @param {Surface} surface
    */
-  constructor (enemySpiker, surface) {
-    super(enemySpiker, surface, Enemy.TYPE_SPIKER);
+  constructor (enemy, surface, type = Enemy.TYPE_SPIKER) {
+    super(enemy, surface, type);
   }
 
   updateState () {

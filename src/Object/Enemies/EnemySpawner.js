@@ -8,6 +8,7 @@ import EnemyFuseballTanker from '@/Object/Enemies/EnemyFuseballTanker';
 import EnemyPulsarTanker from '@/Object/Enemies/EnemyPulsarTanker';
 import EnemyMutantFlipper from '@/Object/Enemies/EnemyMutantFlipper';
 import EnemyStealthFlipper from '@/Object/Enemies/EnemyStealthFlipper';
+import EnemyDemonHead from '@/Object/Enemies/EnemyDemonHead';
 import randomRange from '@/utils/randomRange';
 
 export default class EnemySpawner {
@@ -16,6 +17,7 @@ export default class EnemySpawner {
     { type: Enemy.TYPE_FLIPPER, level: 1, chanceOfSpawning: 1 },
     { type: Enemy.TYPE_FLIPPER_TANKER, level: 3, chanceOfSpawning: 0.5 },
     { type: Enemy.TYPE_SPIKER, level: 4, chanceOfSpawning: 1 },
+	{ type: Enemy.TYPE_DEMON_HEAD, level: 10, chanceOfSpawning: 0.6 },
     { type: Enemy.TYPE_FUSEBALL, level: 11, chanceOfSpawning: 0.8 },
     { type: Enemy.TYPE_PULSAR, level: 17, chanceOfSpawning: 0.8 },
     { type: Enemy.TYPE_FUSEBALL_TANKER, level: 33, chanceOfSpawning: 0.5 },
@@ -108,6 +110,9 @@ export default class EnemySpawner {
         break;
       case Enemy.TYPE_PULSAR_TANKER:
         enemy = this.spawnPulsarTanker(lane);
+        break;
+      case Enemy.TYPE_DEMON_HEAD:
+        enemy = this.spawnDemonHead(lane);
         break;
       default:
         throw new Error(`Trying to spawn unknown enemy: ${enemyToSpawn.type}`);
@@ -287,6 +292,23 @@ export default class EnemySpawner {
         lane,
         zPosition,
 		this.game
+      )
+    );
+  }
+
+  /**
+   * @param {number} lane
+   * @param {number} zPosition
+   */  
+  spawnDemonHead (lane, zPosition = 1) {
+    return this.surfaceObjectsManager.addEnemy(
+      new EnemyDemonHead(
+        this.surfaceObjectsManager.surface,
+        this.projectileManager,
+        this.rewardCallback,
+        lane,
+        zPosition,
+        this.game
       )
     );
   }

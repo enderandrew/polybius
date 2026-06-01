@@ -32,6 +32,8 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     let expectedType = object.type;
     if (object.isMutant) expectedType = 'mutant_flipper';
     if (object.isStealth) expectedType = 'stealth_flipper';
+	if (object.isDemonHead) expectedType = 'demon_head';
+    if (object.isDemonHorn) expectedType = 'demon_horn';
     
     if (expectedType !== this.objectType) {
       throw new Error(`Can't associate ${expectedType} with ${this.objectType} renderer`);
@@ -187,6 +189,8 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     let lookupType = this.object.type;
     if (this.object.isMutant) lookupType = 'mutant_flipper';
     if (this.object.isStealth) lookupType = 'stealth_flipper';
+	if (this.object.isDemonHead) lookupType = 'demon_head';
+    if (this.object.isDemonHorn) lookupType = 'demon_horn';
 
     let enemyDataset = enemies.find(enemy => enemy.name === lookupType);
     

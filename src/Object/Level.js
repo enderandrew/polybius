@@ -1,7 +1,6 @@
 import Shooter from '@/Object/Shooters/Shooter';
 import SurfaceObjectsManager from '@/Object/Manager/SurfaceObjectsManager';
 import ProjectileManager from '@/Object/Manager/ProjectileManager';
-
 import keyboardInput from '@/utils/KeyboardInput';
 import EnemySpawner from '@/Object/Enemies/EnemySpawner';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
