@@ -28,32 +28,33 @@ It's based on vue webpack config, so it can be developed, served and built witho
 * Polybius theming
 * Random parody message plays between levels (spoken aloud)
 * Power-ups
-** Particle Blaster - More powerful gun that does double damage
-** Laser - No sharks attached sadly
-** Rapid Fire - Fire super fast!
-** Homing Missile - Locks on nearest target
-** Spread weapon - Contra?
-** Jump - Allows you to jump, jump
-** Phantom - Allows your ship to safely phase through all damage for 12 seconds
-** Shield - No timer. Lasts until shield is damaged. Protects you from one hit.
-** 1-Up - Mario?
-** Timer Extend - Extend timers on current power-ups
-** Warp Token - Collect 3 to warp to bonus stage
-** Outta Here! - Rare drop of 5000 points and advance to the next stage
-** Zappo 2000 - 2000 sweet points 
+     * Particle Blaster - More powerful gun that does double damage
+     * Laser - No sharks attached sadly
+     * Rapid Fire - Fire super fast!
+     * Homing Missile - Locks on nearest target
+     * Spread weapon - Contra?
+     * Jump - Allows you to jump, jump
+     * Phantom - Allows your ship to safely phase through all damage for 12 seconds
+     * Shield - No timer. Lasts until shield is damaged. Protects you from one hit.
+     * 1-Up - Mario?
+     * Timer Extend - Extend timers on current power-ups
+     * Warp Token - Collect 3 to warp to bonus stage
+     * Outta Here! - Rare drop of 5000 points and advance to the next stage
+     * Zappo 2000 - 2000 sweet points 
 * Enemy hit points and damage system
 * Enemies have a 10% chance of having a shield
 * New Enemies:
-** Mutant Flippers
-** Stealth Flippers
-** Demon Heads
-** Strong variants of all enemies
-** More new enemies and variants coming soon!
+     * Mutant Flippers
+     * Stealth Flippers
+     * Demon Heads
+     * Strong variants of all enemies
+     * More new enemies and variants coming soon!
 * Bonus stage - collect 3 warp tokens and get taken to a bonus stage right out of Superman 64!
 * YES EFFECT - pick up a power-up while warping out of a level to trigger an additional bonus power-up
 * New controls and gamepad support
 * Background music
 * Game elements pulse to the beat (bloom + glow)
+* CRT bezel with working power button, contrast knob and brightness knob
 * Pause screen
 * Starfield!
 * New sound effects
