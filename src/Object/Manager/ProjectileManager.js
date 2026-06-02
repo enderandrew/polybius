@@ -3,7 +3,7 @@ import FIFOManager from '@/Object/Manager/FIFOManager';
 
 export default class ProjectileManager extends FIFOManager {
   // Removed legacy @readonly decorators
-  static MAX_AMOUNT_OF_SHOOTER_PROJECTILES = 6;
+  static MAX_AMOUNT_OF_SHOOTER_PROJECTILES = 48;
   static MAX_AMOUNT_OF_ENEMY_PROJECTILES = 32;
 
   // Modern ES class fields replacing JSDoc @var comments
@@ -28,26 +28,64 @@ export default class ProjectileManager extends FIFOManager {
    * @param {number} source
    * @param {?number} zPosition
    */
-  fire (laneId, source, zPosition = null, damage = 1) {
+  fire (laneId, source, zPosition = null, damage = 1, weaponOverride = null) {
     if (source === Projectile.SOURCE_SHOOTER) {
       if (this.shooterProjectiles.length >= ProjectileManager.MAX_AMOUNT_OF_SHOOTER_PROJECTILES) {
-        console.log('Too much shooter projectiles!');
         return false;
       }
 
-      // Create the projectile object
       const projectile = new Projectile(this.surfaceObjectsManager.surface, laneId, source, zPosition, damage);
 
       if (this.game && this.game.powerUpManager) {
-          projectile.customColor = this.game.powerUpManager.getBulletColor(0xffff00);
-          projectile.lengthMult = this.game.powerUpManager.getBulletLengthMultiplier();
-		  if (this.game.powerUpManager.hasLaser) {
-             projectile.killRadiusForward = 0.20;
-             projectile.killRadiusBackward = 0.20;
-         }
+          const powerUps = this.game.powerUpManager;
+          
+          // Base Damage Multiplier (Particle Blaster buffs ALL weapons!)
+          if (powerUps.hasParticleBlaster) {
+              projectile.damage *= 2.5; 
+          }
+
+          // Determine exactly what weapon is being fired
+          let wType = weaponOverride;
+          if (!wType) {
+              if (powerUps.hasGrenade) wType = 'GRENADE';
+              else if (powerUps.hasLaser) wType = 'LASER';
+              else if (powerUps.hasMissile) wType = 'MISSILE';
+              else wType = 'NORMAL';
+          }
+
+          // Apply the specific weapon logic
+          let baseColor = 0xffff00;
+          let lengthMult = 1.0;
+
+          if (wType === 'LASER') {
+              projectile.isLaser = true;
+              projectile.zPosition = 0.5;
+              projectile.zSpeed = 0;
+              projectile.laserFrames = 6;
+              projectile.killRadiusForward = 0.5; 
+              projectile.killRadiusBackward = 0.5; 
+              baseColor = 0x00ff00;
+              lengthMult = powerUps.getBulletLengthMultiplier();
+          } else if (wType === 'GRENADE') {
+              projectile.isGrenade = true;
+              projectile.zSpeed = Projectile.PROJECTILE_SPEED * 0.6;
+              baseColor = 0xff6600;
+          } else if (wType === 'MISSILE') {
+              projectile.isMissile = true;
+              baseColor = 0xff3333;
+          } else {
+              lengthMult = powerUps.getBulletLengthMultiplier();
+          }
+
+          // Visual override for Particle Blaster if using standard weapons
+          if (powerUps.hasParticleBlaster && (wType === 'NORMAL' || wType === 'MISSILE')) {
+              baseColor = 0xff8c00; // Orange
+          }
+
+          projectile.customColor = baseColor;
+          projectile.lengthMult = lengthMult;
       }
 
-      // Push it to the arrays
       this.shooterProjectiles.push(projectile);
       this.rendererHelperNewProjectilesIds.push(projectile.objectId);
 
@@ -66,11 +104,89 @@ export default class ProjectileManager extends FIFOManager {
   }
 
   update () {
+    const steeringSpeed = 0.15; 
+
     this.shooterProjectiles.forEach(projectile => {
+
+      if (projectile.isGrenade && projectile.needsAoECheck) {
+        projectile.needsAoECheck = false;
+        
+        // Wipe Enemies in blast radius
+        this.surfaceObjectsManager.enemies.forEach(enemy => {
+          if (enemy.alive && enemy.hittable) {
+            let diff = Math.abs(enemy.laneId - projectile.laneId);
+            if (diff > 8) diff = 16 - diff; 
+            let zDiff = Math.abs(enemy.zPosition - projectile.zPosition);
+            
+            // diff <= 2 hits 5 whole lanes (the center, plus 2 on each side)
+            // zDiff <= 0.45 hits almost half the depth of the entire tube!
+            if (diff <= 2 && zDiff <= 0.45) {
+              enemy.hitByProjectile(projectile.damage);
+            }
+          }
+        });
+        
+        // Wipe Spikes in blast radius
+        this.surfaceObjectsManager.spikes.forEach(spike => {
+          if (spike.alive && spike.hittable) {
+            let diff = Math.abs(spike.laneId - projectile.laneId);
+            if (diff > 8) diff = 16 - diff; 
+            let zDiff = Math.abs(spike.zPosition - projectile.zPosition);
+            
+            if (diff <= 2 && zDiff <= 0.45) {
+              spike.hitByProjectile(projectile.damage);
+            }
+          }
+        });
+      }
+      
+      if (projectile.isMissile && projectile.alive) {
+          
+          // FIX 1: Initialize a secret decimal tracker the very first time!
+          if (projectile.exactLane === undefined) {
+              projectile.exactLane = projectile.laneId;
+          }
+
+          let nearestTarget = null;
+          let minZ = Infinity;
+      
+          this.surfaceObjectsManager.enemies.forEach(enemy => {
+              if (enemy.alive && enemy.zPosition > projectile.zPosition) {
+                  let dist = enemy.zPosition - projectile.zPosition;
+                  if (dist < minZ) {
+                      minZ = dist;
+                      nearestTarget = enemy;
+                  }
+              }
+          });
+      
+          if (nearestTarget) {
+              // Calculate difference using the exact decimal
+              let diff = nearestTarget.laneId - projectile.exactLane;
+              
+              if (diff > 8) diff -= 16;
+              if (diff < -8) diff += 16;
+              
+              // Smoothly steer our secret tracker
+              projectile.exactLane += diff * steeringSpeed;
+              
+              if (projectile.exactLane < 0) projectile.exactLane += 16;
+              if (projectile.exactLane >= 16) projectile.exactLane -= 16;
+
+              // FIX 2: Give the core engine a perfectly rounded whole number!
+              projectile.laneId = Math.round(projectile.exactLane) % 16;
+          }
+      }
+
+      // Now the core engine can safely look up the X/Y coordinates!
       projectile.update();
-      projectile.detectCollision(this.surfaceObjectsManager.enemiesMap[projectile.laneId]);
-      projectile.detectCollision(this.surfaceObjectsManager.spikesMap[projectile.laneId]);
-      projectile.detectCollision(this.enemyProjectilesMap[projectile.laneId]);
+      
+      // We still use the safe lane for grid collisions
+      const safeLane = projectile.laneId;
+
+      projectile.detectCollision(this.surfaceObjectsManager.enemiesMap[safeLane]);
+      projectile.detectCollision(this.surfaceObjectsManager.spikesMap[safeLane]);
+      projectile.detectCollision(this.enemyProjectilesMap[safeLane]);
     });
 
     this.enemyProjectiles.forEach(projectile => {
@@ -92,7 +208,7 @@ export default class ProjectileManager extends FIFOManager {
       }
       // if (collectedShooterProjectiles) console.log(`Collected ${collectedShooterProjectiles} shooter projectiles.`);
       // if (collectedEnemyProjectiles) console.log(`Collected ${collectedEnemyProjectiles} enemy projectiles`);
-	  }
+    }
   }
 
   updateObjectsMap () {

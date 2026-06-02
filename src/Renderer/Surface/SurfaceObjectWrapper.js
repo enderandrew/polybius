@@ -56,7 +56,7 @@ export default class SurfaceObjectWrapper extends Group {
 
   setObjectRef (object) {
     this.object = object;
-	this.visible = true;
+  this.visible = true;
   }
 
   breakObjectRef () {

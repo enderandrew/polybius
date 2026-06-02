@@ -36,12 +36,12 @@ export class PowerUp {
     this.lane        = lane;
     this.depth       = depth;
     this.webGeometry = webGeometry;
-	//console.log("POWERUP: Constructed with geometry:", this.webGeometry);
+  //console.log("POWERUP: Constructed with geometry:", this.webGeometry);
     if (!this.webGeometry.coords && !this.webGeometry.lanesCoords) {
         console.error("CRITICAL: webGeometry passed to PowerUp is missing coordinate data!");
         console.log("Geometry Object:", this.webGeometry);
     }
-	
+  
     this.isCollected = false;
     this.isExpired   = false;
 
@@ -131,7 +131,7 @@ export class PowerUp {
 
   _buildSprite () {
     const canvas  = PowerUpRenderer.createCanvas(this.type);
-	//console.log(`POWERUP RENDER: Canvas created for ${this.type.id}. Size: ${canvas.width}x${canvas.height}`);
+  //console.log(`POWERUP RENDER: Canvas created for ${this.type.id}. Size: ${canvas.width}x${canvas.height}`);
     const texture = new THREE.CanvasTexture(canvas);
 
     const material = new THREE.SpriteMaterial({
@@ -139,13 +139,13 @@ export class PowerUp {
       transparent: true,
       blending:    THREE.AdditiveBlending,   // Glows nicely against dark backgrounds
       depthTest:   false,
-	  depthWrite:  false,
+    depthWrite:  false,
     });
 
     this.sprite = new THREE.Sprite(material);
     this.sprite.scale.setScalar(this._baseScale);
     this.sprite.renderOrder = 10;            // Draw above web geometry
-	//console.log(`POWERUP RENDER: Sprite built. Scale:`, this.sprite.scale, `Opacity:`, this.sprite.material.opacity);
+  //console.log(`POWERUP RENDER: Sprite built. Scale:`, this.sprite.scale, `Opacity:`, this.sprite.material.opacity);
   }
 
   _playCollectVFX () {

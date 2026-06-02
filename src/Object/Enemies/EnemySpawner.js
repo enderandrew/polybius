@@ -9,6 +9,7 @@ import EnemyPulsarTanker from '@/Object/Enemies/EnemyPulsarTanker';
 import EnemyMutantFlipper from '@/Object/Enemies/EnemyMutantFlipper';
 import EnemyStealthFlipper from '@/Object/Enemies/EnemyStealthFlipper';
 import EnemyDemonHead from '@/Object/Enemies/EnemyDemonHead';
+import EnemyGravityFuseball from '@/Object/Enemies/EnemyGravityFuseball';
 import randomRange from '@/utils/randomRange';
 
 export default class EnemySpawner {
@@ -17,7 +18,7 @@ export default class EnemySpawner {
     { type: Enemy.TYPE_FLIPPER, level: 1, chanceOfSpawning: 1 },
     { type: Enemy.TYPE_FLIPPER_TANKER, level: 3, chanceOfSpawning: 0.5 },
     { type: Enemy.TYPE_SPIKER, level: 4, chanceOfSpawning: 1 },
-	{ type: Enemy.TYPE_DEMON_HEAD, level: 10, chanceOfSpawning: 0.6 },
+  { type: Enemy.TYPE_DEMON_HEAD, level: 10, chanceOfSpawning: 0.6 },
     { type: Enemy.TYPE_FUSEBALL, level: 11, chanceOfSpawning: 0.8 },
     { type: Enemy.TYPE_PULSAR, level: 17, chanceOfSpawning: 0.8 },
     { type: Enemy.TYPE_FUSEBALL_TANKER, level: 33, chanceOfSpawning: 0.5 },
@@ -52,7 +53,7 @@ export default class EnemySpawner {
     this.currentLevel = level;
     this.currentScore = levelInitScore;
     this.targetScore = targetScore;
-	this.game = game;
+  this.game = game;
   }
 
   /**
@@ -119,7 +120,7 @@ export default class EnemySpawner {
     }
 
     this.currentScore += enemy.valueInPoints;
-	// console.log(`Spawning ${enemyToSpawn.type} on lane ${lane}. Score on surface: ${this.currentScore}`);																										
+  // console.log(`Spawning ${enemyToSpawn.type} on lane ${lane}. Score on surface: ${this.currentScore}`);                                                    
   }
 
   /** @param {{level: number, type: string, chanceOfSpawning: number}[]} enemies */
@@ -168,8 +169,8 @@ export default class EnemySpawner {
     let flipper;
     if (isStealth) {
       //console.log(`%c[SPAWNER] Level ${this.currentLevel}: Deploying STEALTH Flipper on lane ${lane}!`, 'color: #aa00ff; font-weight: bold;');
-	  flipper = this.surfaceObjectsManager.addEnemy(
-		new EnemyStealthFlipper(this.surfaceObjectsManager.surface, this.projectileManager, this.rewardCallback, lane, zPosition, this.game)
+    flipper = this.surfaceObjectsManager.addEnemy(
+    new EnemyStealthFlipper(this.surfaceObjectsManager.surface, this.projectileManager, this.rewardCallback, lane, zPosition, this.game)
       );
     } else if (isMutant) {
       //console.log(`%c[SPAWNER] Level ${this.currentLevel}: Deploying MUTANT Flipper on lane ${lane}!`, 'color: #aa0000; font-weight: bold;');
@@ -201,7 +202,7 @@ export default class EnemySpawner {
         this.rewardCallback,
         lane,
         zPosition,
-		this.game
+    this.game
 
       )
     );
@@ -212,16 +213,31 @@ export default class EnemySpawner {
    * @param {number} zPosition
    */
   spawnFuseball (lane, zPosition = 1) {
+    const gravityChance = this.currentLevel >= 21
+      ? Math.min(0.50, (this.currentLevel - 20) * 0.04)  // 4% per level, caps at 50%
+      : 0;
+    const isGravity = Math.random() < gravityChance;
+	
+	if (isGravity) { console.log("SPAWN: Gravity Fuseball") }
+  
     return this.surfaceObjectsManager.addEnemy(
-      new EnemyFuseball(
-        this.surfaceObjectsManager.surface,
-        this.projectileManager,
-        this.rewardCallback,
-        lane,
-        zPosition,
-		this.game
-
-      )
+      isGravity
+        ? new EnemyGravityFuseball(
+            this.surfaceObjectsManager.surface,
+            this.projectileManager,
+            this.rewardCallback,
+            lane,
+            zPosition,
+            this.game
+          )
+        : new EnemyFuseball(
+            this.surfaceObjectsManager.surface,
+            this.projectileManager,
+            this.rewardCallback,
+            lane,
+            zPosition,
+            this.game
+          )
     );
   }
 
@@ -237,7 +253,7 @@ export default class EnemySpawner {
         this.rewardCallback,
         lane,
         zPosition,
-		this.game
+    this.game
       )
     );
   }
@@ -255,7 +271,7 @@ export default class EnemySpawner {
         this.rewardCallback,
         lane,
         zPosition,
-		this.game
+    this.game
       )
     );
   }
@@ -273,7 +289,7 @@ export default class EnemySpawner {
         this.rewardCallback,
         lane,
         zPosition,
-		this.game
+    this.game
       )
     );
   }
@@ -291,7 +307,7 @@ export default class EnemySpawner {
         this.rewardCallback,
         lane,
         zPosition,
-		this.game
+    this.game
       )
     );
   }

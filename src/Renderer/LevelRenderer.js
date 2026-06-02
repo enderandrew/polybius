@@ -79,7 +79,7 @@ export default class LevelRenderer extends Group {
       
       // Smoothly decay the pulse back to 0
       this.beatPulse += (0.0 - this.beatPulse) * 0.10; 
-	  
+    
       // Find wherever you store the material for your web lines (e.g., this.webMaterial)
       if (this.surfaceRenderer) {
           this.surfaceRenderer.traverse((child) => {
@@ -94,7 +94,7 @@ export default class LevelRenderer extends Group {
               }
           });
       }
-	  
+    
       this.surfaceRenderer.update();
       this.shooterRenderer.update();
       this.enemyRendererManager.update();

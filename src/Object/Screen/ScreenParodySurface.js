@@ -242,7 +242,7 @@ export default class ScreenParodySurface extends Canvas3d {
     "TECHNICALLY SPEAKING, YOU CANNOT PROVE THIS ISN'T A TEST.",
     "TECHNICALLY YOU CONSENTED TO THIS IN THE EULA.",
     "TELEPHONE POLES ARE ANTENNAE. ALWAYS HAVE BEEN.",
-    "TELEVISISON IS THE RETINA OF THE MIND'S EYE",
+    "TELEVISION IS THE RETINA OF THE MIND'S EYE",
     "TELL ALL YOUR FRIENDS TO PLAY POLYBIUS AND NOTHING ELSE",
     "TELL MOM HI. SHE WORKS FOR US.",
     "THE BALD EAGLE HAS A 23-HOUR BATTERY LIFE.",
@@ -392,7 +392,7 @@ export default class ScreenParodySurface extends Canvas3d {
       this.pickRandomMessage();
     }
     this.draw();
-	this.speakParodyMessage(this.currentMessage);
+  this.speakParodyMessage(this.currentMessage);
   }
 
   pickRandomMessage () {

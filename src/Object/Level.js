@@ -52,7 +52,7 @@ export default class Level {
     levelWonCallback,
     shooterKilledCallback,
     getCurrentScore,
-	game
+  game
   ) {
     this.surface = surface;
 
@@ -64,11 +64,11 @@ export default class Level {
     this.levelWonCallback = levelWonCallback;
     this.shooterKilledCallback = shooterKilledCallback;
     this.getCurrentScore = getCurrentScore;
-	this.game = game;
+  this.game = game;
 
     this.surfaceObjectsManager = new SurfaceObjectsManager(surface);
     this.projectileManager = new ProjectileManager(this.surfaceObjectsManager);
-	this.projectileManager.game = this.game;
+  this.projectileManager.game = this.game;
     this.enemySpawner = new EnemySpawner(
       this.surfaceObjectsManager,
       this.projectileManager,
@@ -76,7 +76,7 @@ export default class Level {
       this.currentLevel,
       this.levelInitScore,
       this.targetScore,
-	  this.game
+    this.game
     );
 
     this.shooter = new Shooter(
@@ -86,7 +86,7 @@ export default class Level {
       this.shooterKilled.bind(this),
       7
     );
-	this.shooter.game = this.game;
+  this.shooter.game = this.game;
 
     this.surfaceObjectsManager.addShooter(this.shooter);
   }
@@ -128,7 +128,7 @@ registerKeys () {
   unregisterKeys () {
     keyboardInput.unregister('KeyA');
     keyboardInput.unregister('KeyD');
-	keyboardInput.unregister('KeyW');
+  keyboardInput.unregister('KeyW');
     keyboardInput.unregister('Space');
     keyboardInput.unregister('KeyE');
     keyboardInput.unregister('End');

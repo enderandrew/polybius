@@ -34,7 +34,7 @@ export default class EnemySpiker extends Enemy {
 
     this.zSpeed = -randomRange(3, 6) * 0.001;
     this.setState(EnemySpiker.STATE_IDLE);
-	this.game = game;
+  this.game = game;
   }
 
   updateState () {

@@ -98,11 +98,11 @@ export default class EnemyRendererManager extends Group {
     switch (renderType) {
       case Enemy.TYPE_FLIPPER:
       case Enemy.TYPE_MUTANT_FLIPPER:
-	  case Enemy.TYPE_STEALTH_FLIPPER:
+    case Enemy.TYPE_STEALTH_FLIPPER:
       case Enemy.TYPE_DEMON_HEAD: 
         return new EnemyFlipperRenderer(enemy, this.surface, renderType);
       case Enemy.TYPE_SPIKER:
-	  case Enemy.TYPE_DEMON_HORN:
+    case Enemy.TYPE_DEMON_HORN:
         return new EnemySpikerRenderer(enemy, this.surface, renderType);
       case Enemy.TYPE_SPIKE:
         return new EnemySpikeRenderer(enemy, this.surface);

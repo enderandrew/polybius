@@ -12,6 +12,42 @@ export const PowerUpType = Object.freeze({
 
   // --- WEAPON UPGRADES ---
 
+  GRENADE: {
+    id:          'GRENADE',
+    label:       'GRENADE\nLAUNCHER',
+    color:       '#ff6600',           // Orange
+    glowColor:   'rgba(255,102,0,0.6)',
+    shape:       'bomb',
+    duration:    15000,
+    isWeapon:    true,
+    dropWeight:  5,
+    description: 'Fires explosive charges that deal Area-of-Effect damage',
+  },
+
+  LASER: {
+    id:          'LASER',
+    label:       'LASER',
+    color:       '#ff00ff',           // Magenta — visually distinct
+    glowColor:   'rgba(255,0,255,0.6)',
+    shape:       'beam',              // Elongated hexagon
+    duration:    18000,
+    isWeapon:    true,
+    dropWeight:  5,
+    description: 'Long beam, double damage — slow rate of fire',
+  },
+
+  MISSILE: {
+    id:          'MISSILE',
+    label:       'HOMING\nMISSILE',
+    color:       '#ff3333',           // Red
+    glowColor:   'rgba(255,51,51,0.6)',
+    shape:       'missile',
+    duration:    15000,
+    isWeapon:    true,
+    dropWeight:  6,
+    description: 'Fires a single homing missile that tracks the nearest enemy',
+  },
+
   PARTICLE_BLASTER: {
     id:          'PARTICLE_BLASTER',
     label:       'PARTICLE\nBLASTER',   // Two-line label rendered on the shape
@@ -48,19 +84,32 @@ export const PowerUpType = Object.freeze({
     description: 'Fires a spread of shots like Contra — timed power-up',
   },
 
-  LASER: {
-    id:          'LASER',
-    label:       'LASER',
-    color:       '#ff00ff',           // Magenta — visually distinct
+  SYNTH_SURGE: {
+    id:          'SYNTH_SURGE',
+    label:       'SYNTH\nSURGE',
+    color:       '#ff00ff',           // Magenta
     glowColor:   'rgba(255,0,255,0.6)',
-    shape:       'beam',              // Elongated hexagon
-    duration:    18000,
+    shape:       'eq',                // Equalizer bars
+    duration:    12000,
     isWeapon:    true,
-    dropWeight:  5,
-    description: 'Long beam, double damage — slow rate of fire',
+    dropWeight:  3,                   // Powerful so a little rare
+    description: 'Auto-fires to the rhythm of the music',
   },
   
   // --- HELPERS ---
+
+  AI_DROID: {
+    id:           'AI_DROID',
+    label:        'A.I.\nDROID',
+    color:        '#ff88cc',
+    glowColor:    'rgba(255,136,204,0.7)',
+    shape:        'cube',
+    duration:     25000,
+    isWeapon:     false,
+    grantsAIDroid: true,
+    dropWeight:   5,
+    description:  'Companion cube droid that auto-targets enemies',
+  },
 
   JUMP: {
     id:          'JUMP',
@@ -75,34 +124,45 @@ export const PowerUpType = Object.freeze({
     description: 'Press W to jump over enemies',
   },
   
-  AI_DROID: {
-    id:           'AI_DROID',
-    label:        'A.I.\nDROID',
-    color:        '#ff88cc',
-    glowColor:    'rgba(255,136,204,0.7)',
-    shape:        'cube',
-    duration:     25000,
-    isWeapon:     false,
-    grantsAIDroid: true,
-    //dropWeight:   3,
-	dropWeight:   99,
-    description:  'Companion cube droid that auto-targets enemies',
+  PHANTOM: {
+    id:          'PHANTOM',
+    label:       'PHANTOM\nMODE',
+    color:       '#b266ff',           // Ethereal purple
+    glowColor:   'rgba(178,102,255,0.6)',
+    shape:       'ghost',
+    duration:    12000,               // 12 seconds of invincibility
+    isWeapon:    false,
+    dropWeight:  6,
+    description: 'Become ethereal to pass through enemies and hazards',
+  },
+
+  SHIELD: {
+    id:          'SHIELD',
+    label:       'DEFLECTOR\nSHIELD',
+    color:       '#00ffff',           // Cyan 
+    glowColor:   'rgba(0,255,255,0.6)',
+    shape:       'octagon',
+    duration:    null,                // Permanent until broken
+    isWeapon:    false,
+    isShield:    true,                // Custom flag for the manager
+    dropWeight:  5,
+    description: 'Absorbs one fatal hit',
+  },
+
+  TIMER_EXTEND: {
+    id:          'TIMER_EXTEND',
+    label:       'TIMER\nMAX',
+    color:       '#00ffcc',           // Bright Teal
+    glowColor:   'rgba(0,255,204,0.6)',
+    shape:       'hourglass',
+    duration:    null,                // Instant effect
+    isWeapon:    false,
+    refillsTimers: true,              // Custom flag for the Manager
+    dropWeight:  8,
+    description: 'Refills all active power-up timers to their maximum',
   },
 
   // --- SCORE BONUSES ---
-
-  ZAPPO_2000: {
-    id:          'ZAPPO_2000',
-    label:       'ZAPPO\n2000',
-    color:       '#aaffaa',           // Soft green
-    glowColor:   'rgba(170,255,170,0.6)',
-    shape:       'circle',
-    duration:    null,                // Instant effect — no timer
-    isWeapon:    false,
-    scoreBonus:  2000,
-    dropWeight:  12,
-    description: '+2,000 point bonus',
-  },
 
   OUTTA_HERE: {
     id:          'OUTTA_HERE',
@@ -129,6 +189,19 @@ export const PowerUpType = Object.freeze({
     isWarpToken:  true,
     dropWeight:   4,
     description:  'Collect 3 to unlock bonus stage',
+  },
+
+  ZAPPO_2000: {
+    id:          'ZAPPO_2000',
+    label:       'ZAPPO\n2000',
+    color:       '#aaffaa',           // Soft green
+    glowColor:   'rgba(170,255,170,0.6)',
+    shape:       'circle',
+    duration:    null,                // Instant effect — no timer
+    isWeapon:    false,
+    scoreBonus:  2000,
+    dropWeight:  12,
+    description: '+2,000 point bonus',
   },
 
   // --- LIFE ---

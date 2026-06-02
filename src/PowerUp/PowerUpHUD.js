@@ -216,7 +216,7 @@ export class PowerUpHUD {
   destroy () {
     this.root.remove();
     this.flash.remove();
-	if (this.tokenRow) this.tokenRow.remove();
+  if (this.tokenRow) this.tokenRow.remove();
   }
 
   hide () {

@@ -59,40 +59,64 @@ export class PowerUpRenderer {
 
     switch (type.shape) {
 
-      case 'diamond':
-        PowerUpRenderer._diamond(ctx, cx, cy, r, type.color);
-        break;
-
-      case 'star':
-        PowerUpRenderer._star(ctx, cx, cy, r, r * 0.45, 5, type.color);
-        break;
-
-      case 'fan':
-        PowerUpRenderer._fan(ctx, cx, cy, r, type.color);
-        break;
-
       case 'beam':
         PowerUpRenderer._beam(ctx, cx, cy, r, type.color);
+        break;
+
+      case 'bomb':
+        PowerUpRenderer._bomb(ctx, cx, cy, r, type.color);
         break;
 
       case 'circle':
         PowerUpRenderer._circle(ctx, cx, cy, r, type.color);
         break;
 
-      case 'warp':
-        PowerUpRenderer._warp(ctx, cx, cy, r, type.color);
+      case 'cube':
+        PowerUpRenderer._isoCube(ctx, cx, cy, r, type.color);
+        break;
+
+      case 'diamond':
+        PowerUpRenderer._diamond(ctx, cx, cy, r, type.color);
+        break;
+
+      case 'eq':
+        PowerUpRenderer._eq(ctx, cx, cy, r, type.color);
+        break;
+
+      case 'fan':
+        PowerUpRenderer._fan(ctx, cx, cy, r, type.color);
+        break;
+
+      case 'ghost':
+        PowerUpRenderer._ghost(ctx, cx, cy, r, type.color);
         break;
 
       case 'heart':
         PowerUpRenderer._heart(ctx, cx, cy, r, type.color);
         break;
 
-      case 'cube':
-        PowerUpRenderer._isoCube(ctx, cx, cy, r, type.color);
+      case 'hourglass':
+        PowerUpRenderer._hourglass(ctx, cx, cy, r, type.color);
+        break;
+
+      case 'missile':
+        PowerUpRenderer._missile(ctx, cx, cy, r, type.color);
+        break;
+
+      case 'octagon':
+        PowerUpRenderer._octagon(ctx, cx, cy, r, type.color);
+        break;
+
+      case 'star':
+        PowerUpRenderer._star(ctx, cx, cy, r, r * 0.45, 5, type.color);
         break;
 
       case 'token':
         PowerUpRenderer._token(ctx, cx, cy, r, type.color);
+        break;
+
+      case 'warp':
+        PowerUpRenderer._warp(ctx, cx, cy, r, type.color);
         break;
 
       default:
@@ -103,73 +127,6 @@ export class PowerUpRenderer {
   }
 
   // --- Individual shape drawers ---
-
-  /** Rotated square (diamond) with inner highlight */
-  static _diamond (ctx, cx, cy, r, color) {
-    ctx.beginPath();
-    ctx.moveTo(cx,     cy - r);
-    ctx.lineTo(cx + r, cy);
-    ctx.lineTo(cx,     cy + r);
-    ctx.lineTo(cx - r, cy);
-    ctx.closePath();
-    ctx.fillStyle   = color;
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth   = 1.5;
-    ctx.stroke();
-    // Inner diamond highlight
-    const ir = r * 0.45;
-    ctx.beginPath();
-    ctx.moveTo(cx,      cy - ir);
-    ctx.lineTo(cx + ir, cy);
-    ctx.lineTo(cx,      cy + ir);
-    ctx.lineTo(cx - ir, cy);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.fill();
-  }
-
-  /** N-pointed star */
-  static _star (ctx, cx, cy, outerR, innerR, points, color) {
-    ctx.beginPath();
-    for (let i = 0; i < points * 2; i++) {
-      const angle = (i * Math.PI) / points - Math.PI / 2;
-      const rad   = i % 2 === 0 ? outerR : innerR;
-      const x     = cx + Math.cos(angle) * rad;
-      const y     = cy + Math.sin(angle) * rad;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.fillStyle   = color;
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth   = 1.5;
-    ctx.stroke();
-  }
-
-  /** Three-pronged fan — evokes a spread shot pattern */
-  static _fan (ctx, cx, cy, r, color) {
-    const prongs = 3;
-    const spread = Math.PI * 0.28;   // Angle between prongs
-    const baseAngle = -Math.PI / 2;  // Point upward
-    ctx.fillStyle   = color;
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth   = 1.5;
-    for (let i = 0; i < prongs; i++) {
-      const angle = baseAngle + (i - 1) * spread;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, r, angle - 0.22, angle + 0.22);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-    }
-    // Centre circle
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.22, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffffff';
-    ctx.fill();
-  }
 
   /** Elongated hexagon — represents a laser beam */
   static _beam (ctx, cx, cy, r, color) {
@@ -194,6 +151,20 @@ export class PowerUpRenderer {
     ctx.fillRect(cx - hw * 0.3, cy - hh * 0.7, hw * 0.6, hh * 1.4);
   }
 
+  static _bomb (ctx, cx, cy, r, color) {
+    // Bomb body
+    ctx.beginPath(); ctx.arc(cx, cy + r * 0.15, r * 0.65, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.stroke();
+    // Metal Cap
+    ctx.fillStyle = '#999999';
+    ctx.fillRect(cx - r * 0.2, cy - r * 0.65, r * 0.4, r * 0.2);
+    // Lit Fuse
+    ctx.beginPath(); ctx.moveTo(cx, cy - r * 0.65);
+    ctx.quadraticCurveTo(cx + r * 0.4, cy - r * 0.9, cx + r * 0.5, cy - r * 1.1);
+    ctx.strokeStyle = '#ffff00'; ctx.stroke();
+  }
+
   /** Simple circle with cross-hair accent */
   static _circle (ctx, cx, cy, r, color) {
     ctx.beginPath();
@@ -213,68 +184,6 @@ export class PowerUpRenderer {
       ctx.lineTo(cx + Math.cos(a) * r * 0.8,  cy + Math.sin(a) * r * 0.8);
       ctx.stroke();
     });
-  }
-
-  /** Double-headed arrow in a circle — warp symbol */
-  static _warp (ctx, cx, cy, r, color) {
-    // Outer ring
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.strokeStyle = color;
-    ctx.lineWidth   = 3.5;
-    ctx.stroke();
-    // Two arrows pointing in opposite directions
-    const arrowLen = r * 0.55;
-    const headSize = r * 0.28;
-    [[1, 0], [-1, 0]].forEach(([dx]) => {
-      const ax = cx + dx * arrowLen;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(ax, cy);
-      ctx.strokeStyle = color;
-      ctx.lineWidth   = 3;
-      ctx.stroke();
-      // Arrowhead
-      ctx.beginPath();
-      ctx.moveTo(ax,                      cy);
-      ctx.lineTo(ax - dx * headSize,      cy - headSize * 0.55);
-      ctx.lineTo(ax - dx * headSize,      cy + headSize * 0.55);
-      ctx.closePath();
-      ctx.fillStyle = color;
-      ctx.fill();
-    });
-    // Centre dot
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.12, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffffff';
-    ctx.fill();
-  }
-
-  /** Stylised pixel heart */
-  static _heart (ctx, cx, cy, r, color) {
-    const s = r * 0.9;
-    ctx.save();
-    ctx.translate(cx, cy + s * 0.15);
-    ctx.beginPath();
-    ctx.moveTo(0, -s * 0.2);
-    // Left lobe
-    ctx.bezierCurveTo(-s * 0.1, -s * 0.8, -s * 1.0, -s * 0.7, -s * 0.9, -s * 0.1);
-    ctx.bezierCurveTo(-s * 0.8,  s * 0.4, -s * 0.3,  s * 0.7,  0,         s * 0.9);
-    // Right lobe
-    ctx.bezierCurveTo( s * 0.3,  s * 0.7,  s * 0.8,  s * 0.4,  s * 0.9, -s * 0.1);
-    ctx.bezierCurveTo( s * 1.0, -s * 0.7,  s * 0.1, -s * 0.8,  0,        -s * 0.2);
-    ctx.closePath();
-    ctx.fillStyle   = color;
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth   = 1.5;
-    ctx.stroke();
-    // Highlight
-    ctx.beginPath();
-    ctx.arc(-s * 0.32, -s * 0.18, s * 0.18, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.fill();
-    ctx.restore();
   }
 
   static _isoCube (ctx, cx, cy, r, color) {
@@ -320,6 +229,219 @@ export class PowerUpRenderer {
     ctx.fillStyle = '#ff0066'; ctx.fill();
   }
 
+  /** Rotated square (diamond) with inner highlight */
+  static _diamond (ctx, cx, cy, r, color) {
+    ctx.beginPath();
+    ctx.moveTo(cx,     cy - r);
+    ctx.lineTo(cx + r, cy);
+    ctx.lineTo(cx,     cy + r);
+    ctx.lineTo(cx - r, cy);
+    ctx.closePath();
+    ctx.fillStyle   = color;
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth   = 1.5;
+    ctx.stroke();
+    // Inner diamond highlight
+    const ir = r * 0.45;
+    ctx.beginPath();
+    ctx.moveTo(cx,      cy - ir);
+    ctx.lineTo(cx + ir, cy);
+    ctx.lineTo(cx,      cy + ir);
+    ctx.lineTo(cx - ir, cy);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fill();
+  }
+
+  static _eq (ctx, cx, cy, r, color) {
+    ctx.fillStyle = color;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    
+    const barW = r * 0.4;
+    
+    // Left bar
+    ctx.fillRect(cx - r * 0.7, cy + r * 0.5, barW, -r * 0.8);
+    ctx.strokeRect(cx - r * 0.7, cy + r * 0.5, barW, -r * 0.8);
+    
+    // Middle bar (tallest)
+    ctx.fillRect(cx - r * 0.15, cy + r * 0.5, barW, -r * 1.2);
+    ctx.strokeRect(cx - r * 0.15, cy + r * 0.5, barW, -r * 1.2);
+    
+    // Right bar
+    ctx.fillRect(cx + r * 0.4, cy + r * 0.5, barW, -r * 0.6);
+    ctx.strokeRect(cx + r * 0.4, cy + r * 0.5, barW, -r * 0.6);
+  }
+
+  /** Three-pronged fan — evokes a spread shot pattern */
+  static _fan (ctx, cx, cy, r, color) {
+    const prongs = 3;
+    const spread = Math.PI * 0.28;   // Angle between prongs
+    const baseAngle = -Math.PI / 2;  // Point upward
+    ctx.fillStyle   = color;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth   = 1.5;
+    for (let i = 0; i < prongs; i++) {
+      const angle = baseAngle + (i - 1) * spread;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, angle - 0.22, angle + 0.22);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    // Centre circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.22, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+  }
+
+  /** Classic Arcade Ghost */
+  static _ghost (ctx, cx, cy, r, color) {
+    const w = r * 0.8;
+    const h = r * 0.9;
+    
+    // Ghost Body
+    ctx.beginPath();
+    ctx.arc(cx, cy - h * 0.2, w, Math.PI, 0); // Top dome
+    ctx.lineTo(cx + w, cy + h);               // Right edge
+    // Bottom frills
+    ctx.lineTo(cx + w * 0.33, cy + h - w * 0.3);
+    ctx.lineTo(cx - w * 0.33, cy + h);
+    ctx.lineTo(cx - w, cy + h);               // Left edge
+    ctx.closePath();
+    
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Eye Whites
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(cx - w * 0.35, cy - h * 0.2, w * 0.25, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + w * 0.35, cy - h * 0.2, w * 0.25, 0, Math.PI * 2); ctx.fill();
+    
+    // Pupils
+    ctx.fillStyle = '#000000';
+    ctx.beginPath(); ctx.arc(cx - w * 0.35, cy - h * 0.2, w * 0.1, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + w * 0.35, cy - h * 0.2, w * 0.1, 0, Math.PI * 2); ctx.fill();
+  }
+
+  /** Stylised pixel heart */
+  static _heart (ctx, cx, cy, r, color) {
+    const s = r * 0.9;
+    ctx.save();
+    ctx.translate(cx, cy + s * 0.15);
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 0.2);
+    // Left lobe
+    ctx.bezierCurveTo(-s * 0.1, -s * 0.8, -s * 1.0, -s * 0.7, -s * 0.9, -s * 0.1);
+    ctx.bezierCurveTo(-s * 0.8,  s * 0.4, -s * 0.3,  s * 0.7,  0,         s * 0.9);
+    // Right lobe
+    ctx.bezierCurveTo( s * 0.3,  s * 0.7,  s * 0.8,  s * 0.4,  s * 0.9, -s * 0.1);
+    ctx.bezierCurveTo( s * 1.0, -s * 0.7,  s * 0.1, -s * 0.8,  0,        -s * 0.2);
+    ctx.closePath();
+    ctx.fillStyle   = color;
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth   = 1.5;
+    ctx.stroke();
+    // Highlight
+    ctx.beginPath();
+    ctx.arc(-s * 0.32, -s * 0.18, s * 0.18, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /** Classic Hourglass */
+  static _hourglass (ctx, cx, cy, r, color) {
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.6, cy - r * 0.8); // Top Left
+    ctx.lineTo(cx + r * 0.6, cy - r * 0.8); // Top Right
+    ctx.lineTo(cx + r * 0.1, cy);           // Pinch Right
+    ctx.lineTo(cx + r * 0.6, cy + r * 0.8); // Bottom Right
+    ctx.lineTo(cx - r * 0.6, cy + r * 0.8); // Bottom Left
+    ctx.lineTo(cx - r * 0.1, cy);           // Pinch Left
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    
+    // Add "Sand" in the bottom half
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillRect(cx - r * 0.3, cy + r * 0.4, r * 0.6, r * 0.4);
+  }
+
+  /** Sleek Rocket Shape */
+  static _missile (ctx, cx, cy, r, color) {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r); // Tip
+    ctx.lineTo(cx + r * 0.3, cy - r * 0.4); // Right nose
+    ctx.lineTo(cx + r * 0.3, cy + r * 0.6); // Right body
+    ctx.lineTo(cx + r * 0.6, cy + r);       // Right fin
+    ctx.lineTo(cx - r * 0.6, cy + r);       // Left fin
+    ctx.lineTo(cx - r * 0.3, cy + r * 0.6); // Left body
+    ctx.lineTo(cx - r * 0.3, cy - r * 0.4); // Left nose
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  static _octagon (ctx, cx, cy, r, color) {
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI) / 4 - Math.PI / 8;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Inner detail (a smaller concentric octagon)
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI) / 4 - Math.PI / 8;
+      const x = cx + Math.cos(angle) * (r * 0.55);
+      const y = cy + Math.sin(angle) * (r * 0.55);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fill();
+  }
+
+  /** N-pointed star */
+  static _star (ctx, cx, cy, outerR, innerR, points, color) {
+    ctx.beginPath();
+    for (let i = 0; i < points * 2; i++) {
+      const angle = (i * Math.PI) / points - Math.PI / 2;
+      const rad   = i % 2 === 0 ? outerR : innerR;
+      const x     = cx + Math.cos(angle) * rad;
+      const y     = cy + Math.sin(angle) * rad;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle   = color;
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth   = 1.5;
+    ctx.stroke();
+  }
+
   static _token (ctx, cx, cy, r, color) {
     // Outer coin
     ctx.beginPath();
@@ -337,6 +459,41 @@ export class PowerUpRenderer {
     ctx.stroke();
     // Star inside
     PowerUpRenderer._star(ctx, cx, cy, r * 0.52, r * 0.22, 5, 'rgba(0,0,0,0.5)');
+  }
+
+  /** Double-headed arrow in a circle — warp symbol */
+  static _warp (ctx, cx, cy, r, color) {
+    // Outer ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 3.5;
+    ctx.stroke();
+    // Two arrows pointing in opposite directions
+    const arrowLen = r * 0.55;
+    const headSize = r * 0.28;
+    [[1, 0], [-1, 0]].forEach(([dx]) => {
+      const ax = cx + dx * arrowLen;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(ax, cy);
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = 3;
+      ctx.stroke();
+      // Arrowhead
+      ctx.beginPath();
+      ctx.moveTo(ax,                      cy);
+      ctx.lineTo(ax - dx * headSize,      cy - headSize * 0.55);
+      ctx.lineTo(ax - dx * headSize,      cy + headSize * 0.55);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
+    // Centre dot
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.12, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
   }
 
   /** Renders the label text centred below the shape's midpoint */

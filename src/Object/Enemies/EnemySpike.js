@@ -31,7 +31,7 @@ export default class EnemySpike extends Enemy {
     this.canExplode = false;
 
     this.setState(EnemySpike.STATE_ALIVE);
-	this.game = game;
+  this.game = game;
   }
 
   updateState () {

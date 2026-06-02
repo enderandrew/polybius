@@ -1,4 +1,4 @@
-import { BoxGeometry, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, WireframeGeometry } from 'three';
+import { BoxGeometry, ConeGeometry, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, SphereGeometry, WireframeGeometry } from 'three';
 import SurfaceObjectWrapper from '@/Renderer/Surface/SurfaceObjectWrapper';
 import Projectile from '@/Object/Projectiles/Projectile';
 
@@ -20,22 +20,55 @@ export default class ProjectileRenderer extends SurfaceObjectWrapper {
   setObjectRef (object) {
     super.setObjectRef(object);
 
+    // Rebuild the mesh when recycled so it doesn't get stuck as the wrong shape/color!
+    this.loadModel(); 
+
     if (this.children.length) {
-      this.children[1].material = new LineBasicMaterial({
-        color: this.getMaterialColor()
+      this.children.forEach(child => {
+         if (child.material) {
+             child.material.transparent = false;
+             child.material.opacity = 1.0;
+         }
       });
 
-      const lengthMult = this.object.lengthMult || 1.0;
-      
-      // If it's a laser, make the beam 50% thicker (1.5) as well as longer!
-      const thickness = lengthMult > 1.0 ? 1.5 : 1.0;
-      this.scale.set(thickness, thickness, lengthMult);
+      if (this.object.isLaser) {
+          // Stretch it exactly to the depth of the 3D tube!
+          const stretch = this.surface.depth / ProjectileRenderer.PROJECTILE_SIZE;
+          this.scale.set(1.5, 1.5, stretch);
+      } else if (this.object.isMissile || this.object.isGrenade) {
+          // Keeps 3D geometry aerodynamic and round
+          this.scale.set(1, 1, 1);
+      } else {
+          // Normal bullet scaling
+          const lengthMult = this.object.lengthMult || 1.0;
+          const thickness = lengthMult > 1.0 ? 1.5 : 1.0;
+          this.scale.set(thickness, thickness, lengthMult);
+      }
     }
   }
 
   updateState () {
     this.positionBase = this.surface.lanesMiddleCoords[this.object.laneId].clone();
     this.zRotationBase = this.surface.lanesCenterDirectionRadians[this.object.laneId];
+  }
+
+  explodeAnimation () {
+    if (!this.object || !this.object.isGrenade) return;
+
+    // Expand the sphere to visually match the blast radius (covers adjacent lanes)
+    const scaleFactor = 1 + (this.object.explosionProgress * 15);
+    this.scale.set(scaleFactor, scaleFactor, scaleFactor);
+    
+    // Fade the blast out so it looks like a dissipating shockwave
+    this.children.forEach(child => {
+      if (child.material) {
+        child.material.transparent = true;
+        child.material.opacity = 1.0 - this.object.explosionProgress;
+      }
+    });
+
+    // Stop tumbling while exploding
+    this.rotation.set(0, 0, 0);
   }
 
   move () {
@@ -48,23 +81,36 @@ export default class ProjectileRenderer extends SurfaceObjectWrapper {
   }
 
   rotate () {
-    // If it is an elongated laser beam, stop the tumbling effect!
-    if (this.object && this.object.lengthMult > 1.0) {
+    // If it is an elongated laser beam OR a missile, stop the tumbling effect!
+    if (this.object && (this.object.lengthMult > 1.0 || this.object.isMissile)) {
        this.rotation.set(0, 0, 0); 
     } else {
-       // Otherwise, tumble normally
+       // Otherwise, tumble the standard boxes normally
        this.rotation.x += ProjectileRenderer.ROTATION_SPEED;
        this.rotation.y += ProjectileRenderer.ROTATION_SPEED;
     }
   }
 
   loadModel () {
-    this.clear();
-    let geometry = new BoxGeometry(
-      ProjectileRenderer.PROJECTILE_SIZE,
-      ProjectileRenderer.PROJECTILE_SIZE,
-      ProjectileRenderer.PROJECTILE_SIZE
-    );
+    this.clear(); // Wipes previous geometry
+
+    let geometry;
+    
+    if (this.object && this.object.isMissile) {
+      // 4-sided pyramid (dart) pointing down the Z-axis
+      geometry = new ConeGeometry(0.06, 0.35, 4);
+      geometry.rotateX(-Math.PI / 2);
+      geometry.rotateZ(Math.PI / 4); // Aligns the flat fins with the arcade lanes
+    } else if (this.object && this.object.isGrenade) {
+      geometry = new SphereGeometry(0.12, 6, 6); // A wireframe orb
+    } else {
+      // Standard box geometry
+      geometry = new BoxGeometry(
+        ProjectileRenderer.PROJECTILE_SIZE,
+        ProjectileRenderer.PROJECTILE_SIZE,
+        ProjectileRenderer.PROJECTILE_SIZE
+      );
+    }
 
     let material = new MeshBasicMaterial({
       color: 0,

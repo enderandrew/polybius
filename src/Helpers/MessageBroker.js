@@ -17,12 +17,18 @@ export class MessageBroker {
   static MESSAGE_MENU_SELECT = 'message_menu_select';
   static MESSAGE_NEXT_LEVEL = 'message_next_level';
   static MESSAGE_PAUSE = 'pause';
+  static MESSAGE_PHANTOM = 'phantom';
   static MESSAGE_PLAYER_CHANGED_LANE = 'message_player_changed_lane';
   static MESSAGE_PLAYER_DEATH = 'message_player_death';
   static MESSAGE_PLAYER_SHOOT = 'message_player_shoot';
+  static MESSAGE_PLAYER_SHOOT_GRENADE = 'message_player_shoot_grenade'; 
+  static MESSAGE_PLAYER_SHOOT_LASER = 'message_player_shoot_laser'; 
+  static MESSAGE_PLAYER_SHOOT_MISSILE = 'message_player_shoot_missile';
   static MESSAGE_PLAYER_SUPERZAPPER_USED = 'message_player_superzapper_used';
   static MESSAGE_POWERUP = 'powerup';
+  static MESSAGE_SHIELD = 'shield';
   static MESSAGE_SPOOKY = 'spooky';
+  static MESSAGE_SYNTH_SURGE = 'synth_surge';
   static MESSAGE_YES = 'yes';
 
   // Initialized as a standard object rather than an array for proper key-value topic mapping

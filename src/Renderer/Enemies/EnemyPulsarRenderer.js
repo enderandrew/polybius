@@ -89,7 +89,7 @@ export default class EnemyPulsarRenderer extends EnemyRenderer {
   }
 
   setScale () {
-	// noinspection JSUnresolvedVariable									
+  // noinspection JSUnresolvedVariable                  
     let scale = EnemyPulsarRenderer.BASE_Y_SCALE;
 
     if (this.object.inState(EnemyPulsar.STATE_WARNING)) {
@@ -104,7 +104,7 @@ export default class EnemyPulsarRenderer extends EnemyRenderer {
       scale *= -1;
     }
 
-	// noinspection JSUnresolvedVariable									
+  // noinspection JSUnresolvedVariable                  
     if (this.object.rendererHelperLaneChangesAmount % 2 === 1) {
       scale *= -1;
     }

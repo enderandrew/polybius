@@ -32,8 +32,9 @@ export class PowerUpManager {
   constructor () {
     // Map of PowerUpType.id → { type, remaining: DOMHighResTimeStamp | null }
     this._active = new Map();
-	this.warpTokenCount    = 0;
+  this.warpTokenCount    = 0;
     this.bonusStageEarned  = false;
+  this.shieldActive = false;
   }
 
   // ---------------------------------------------------------------------------
@@ -60,6 +61,37 @@ export class PowerUpManager {
       this._emit('powerup:score', { amount: type.scoreBonus, label: type.label });
     }
 
+    if (type.refillsTimers) {
+      let refilled = false;
+      for (const [id, entry] of this._active) {
+        if (entry.type.duration) {
+          // Reset the timer back to maximum! The HUD will automatically snap back to 100%.
+          entry.remaining = entry.type.duration / 1000;
+          refilled = true;
+        }
+      }
+      
+      // Grant a small score bonus, and trigger the HUD flash text!
+      const score = refilled ? 1000 : 250;
+      gameState.score += score;
+      if (gameState.bonusScoreOffset !== undefined) gameState.bonusScoreOffset += score;
+      
+      const label = refilled ? 'TIMERS MAXED' : 'TIMER (EMPTY)';
+      this._emit('powerup:score', { amount: score, label: label });
+    }
+  
+    if (type.isShield) {
+      if (!this.shieldActive) {
+        this.shieldActive = true;
+        this._emit('powerup:score', { amount: 250, label: 'SHIELD UP' });
+      } else {
+        // If they pick up a second shield while already shielded!
+        gameState.score += 1000;
+        if (gameState.bonusScoreOffset !== undefined) gameState.bonusScoreOffset += 1000;
+        this._emit('powerup:score', { amount: 1000, label: 'SHIELD (MAX)' });
+      }
+    }
+
     if (type.isWarpToken) {
       this.warpTokenCount++;
       this._emit('warptoken:collected', { count: this.warpTokenCount });
@@ -72,7 +104,7 @@ export class PowerUpManager {
 
     if (type.grantsLife) {
       gameState.lives += 1;
-	  messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_1UP);
+    messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_1UP);
       this._emit('powerup:extralife', {});
     }
 
@@ -112,6 +144,7 @@ export class PowerUpManager {
   /** Remove all active effects (call on player death or level reset). */
   reset () {
     this._active.clear();
+  this.shieldActive = false;
   }
 
   // ---------------------------------------------------------------------------
@@ -133,24 +166,32 @@ export class PowerUpManager {
   // Convenience booleans for weapon/fire systems
   // ---------------------------------------------------------------------------
 
-  /** True while PARTICLE_BLASTER is active. */
+  get hasGrenade () {
+    return this.isActive(PowerUpType.GRENADE.id);
+  }
+
+  get hasLaser () {
+    return this.isActive(PowerUpType.LASER.id);
+  }
+
+  get hasMissile () {
+    return this.isActive(PowerUpType.MISSILE.id);
+  }
+
   get hasParticleBlaster () {
     return this.isActive(PowerUpType.PARTICLE_BLASTER.id);
   }
 
-  /** True while RAPID_FIRE is active. */
   get hasRapidFire () {
     return this.isActive(PowerUpType.RAPID_FIRE.id);
   }
 
-  /** True while SPREAD_GUN is active. */
   get hasSpreadGun () {
     return this.isActive(PowerUpType.SPREAD_GUN.id);
   }
-
-  /** True while LASER is active. */
-  get hasLaser () {
-    return this.isActive(PowerUpType.LASER.id);
+  
+  get hasSynthSurge () {
+    return this.isActive(PowerUpType.SYNTH_SURGE.id);
   }
 
   // ---------------------------------------------------------------------------
@@ -162,10 +203,11 @@ export class PowerUpManager {
    * Returns the shot cooldown in ms, modified by active power-ups.
    * @param {number} baseCooldown  - The default cooldown without power-ups (ms)
    */
-  getShotCooldown (baseCooldown) {
-    if (this.hasLaser)     return baseCooldown * 3.5;   // Laser: much slower
-    if (this.hasRapidFire) return baseCooldown * 0.35;  // Rapid Fire: ~3× faster
-    return baseCooldown;
+  getShotCooldown (baseMs) {
+    if (this.hasLaser) return 1000.0;     // Absolute 2 seconds!
+    if (this.hasGrenade) return 500.0;   // Absolute 1 second!
+    if (this.hasRapidFire) return baseMs * 0.35; // 35% of normal timeout
+    return baseMs;
   }
 
   /**
@@ -201,21 +243,39 @@ export class PowerUpManager {
    * Returns the visual length multiplier for the bullet/laser beam.
    */
   getBulletLengthMultiplier () {
-    return this.hasLaser ? 35.0 : 1.0;
+    if (this.hasLaser) return 175.0; // Stretches the visual mesh to cover the tube
+    if (this.hasParticleBlaster) return 1.5;
+    return 1.0;
   }
   
-  getBulletColor (baseColor = 0xffffff) {
-    if (this.hasParticleBlaster) return 0xff0000; // Red for Particle Blaster
-    if (this.hasLaser)         return 0x00ff00; // Bright Green for Laser!
-    return baseColor;
+  getBulletColor (defaultColor) {
+    if (this.hasLaser) return 0x00ff00; // Bright Green Railgun
+    if (this.hasMissile) return 0xff3333;
+    if (this.hasGrenade) return 0xff6600;
+    if (this.hasParticleBlaster) return 0xff8c00;
+    return defaultColor;
   }
+
+  get hasAIDroid () {
+    return this.isActive(PowerUpType.AI_DROID.id);
+  }
+
 
   get hasJump () {
     return this.isActive(PowerUpType.JUMP.id);
   }
 
-  get hasAIDroid () {
-    return this.isActive(PowerUpType.AI_DROID.id);
+  get hasPhantom () {
+    return this.isActive(PowerUpType.PHANTOM.id);
+  }
+
+  get hasShield () {
+    return this.shieldActive;
+  }
+
+  consumeShield () {
+    this.shieldActive = false;
+    this._emit('powerup:score', { amount: 0, label: 'SHIELD BROKEN' });
   }
 
   get hasBonusStageEarned () {

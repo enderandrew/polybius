@@ -43,12 +43,12 @@ export default class EnemyFuseball extends Enemy {
   constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
     super(surface, projectileManager, rewardCallback, laneId, zPosition, SurfaceObject.TYPE_FUSEBALL, game);
 
-	this.firstLevel = 11;
+  this.firstLevel = 11;
     this.valueInPoints = 250;
 
     this.setState(EnemyFuseball.STATE_MOVING_ALONG_LINE);
     this.setFlag(EnemyFuseball.FLAG_IMMUNE);
-	this.game = game;
+  this.game = game;
   }
 
   updateState () {
@@ -174,7 +174,7 @@ export default class EnemyFuseball extends Enemy {
 
     if (this.inState(EnemyFuseball.STATE_SWITCHING_LANE)) {
       this.zPosition = this.zTarget;
-	  this.lastLaneSwitchingProgress = this.stateProgressInTime();
+    this.lastLaneSwitchingProgress = this.stateProgressInTime();
 
       if (this.zPosition === 0) {
         this.setFlag(EnemyFuseball.FLAG_REACHED_TOP);

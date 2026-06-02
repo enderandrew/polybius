@@ -9,17 +9,23 @@ export default class AudioManager {
   static SOUND_ENEMY_DEATH = 'enemy_death';
   static SOUND_ENEMY_SHOOT = 'enemy_shoot';
   static SOUND_GAME = 'game';
+  static SOUND_GRENADE = 'grenade';
   static SOUND_GAME_OVER = 'game_over';
   static SOUND_JUMP = 'jump';
   static SOUND_KONAMI = 'Konami';
+  static SOUND_LASER = 'laser';
   static SOUND_MENU_SELECT = 'menu_select';
   static SOUND_NEXT_LEVEL = 'next_level';
+  static SOUND_MISSILE = 'missile';
   static SOUND_PAUSE = 'pause';
+  static SOUND_PHANTOM = 'phantom';
   static SOUND_PLAYER_DEATH = 'player_death';
   static SOUND_PLAYER_LANE_CHANGE = 'player_lane_change';
   static SOUND_PLAYER_SHOOT = 'player_shoot';
   static SOUND_POWERUP = 'powerup';
+  static SOUND_SHIELD = 'shield';
   static SOUND_SPOOKY = 'spooky';
+  static SOUND_SYNTH_SURGE = 'synth';
   static SOUND_YES = 'yes';
 
   static SOUND_VOLUME = 0.4;
@@ -41,8 +47,8 @@ export default class AudioManager {
       this.audio.push(new Audio(this.audioListener));
       availableAudio = this.audio[this.audio.length - 1];
     }
-	
-	//console.log(`[AUDIO_DEBUG] Requesting file: sounds/${soundName}.ogg`);
+  
+  //console.log(`[AUDIO_DEBUG] Requesting file: sounds/${soundName}.ogg`);
 
     const audioLoader = new AudioLoader();
     audioLoader.load(`sounds/${soundName}.ogg`, buffer => {
@@ -99,6 +105,9 @@ export default class AudioManager {
       case MessageBroker.MESSAGE_PAUSE:
         this.playSound(AudioManager.SOUND_PAUSE, 0.8);
         break;
+      case MessageBroker.MESSAGE_PHANTOM:
+        this.playSound(AudioManager.SOUND_PHANTOM, 0.8);
+        break;
       case MessageBroker.MESSAGE_PLAYER_CHANGED_LANE:
         this.playSound(AudioManager.SOUND_PLAYER_LANE_CHANGE);
         break;
@@ -108,11 +117,26 @@ export default class AudioManager {
       case MessageBroker.MESSAGE_PLAYER_SHOOT:
         this.playSound(AudioManager.SOUND_PLAYER_SHOOT, 0.8);
         break;
+      case MessageBroker.MESSAGE_PLAYER_SHOOT_GRENADE:
+        this.playSound(AudioManager.SOUND_GRENADE, 0.8);
+        break;
+      case MessageBroker.MESSAGE_PLAYER_SHOOT_LASER:
+        this.playSound(AudioManager.SOUND_LASER, 0.8);
+        break;
+      case MessageBroker.MESSAGE_PLAYER_SHOOT_MISSILE:
+        this.playSound(AudioManager.SOUND_MISSILE, 0.8);
+        break;
       case MessageBroker.MESSAGE_POWERUP:
         this.playSound(AudioManager.SOUND_POWERUP);
         break;
+      case MessageBroker.MESSAGE_SHIELD:
+        this.playSound(AudioManager.SOUND_SHIELD, 0.8);
+        break;
       case MessageBroker.MESSAGE_SPOOKY:
         this.playSound(AudioManager.SOUND_SPOOKY, 0.8);
+        break;
+      case MessageBroker.MESSAGE_SYNTH_SURGE:
+        this.playSound(AudioManager.SOUND_SYNTH_SURGE, 0.8);
         break;
       case MessageBroker.MESSAGE_YES:
         this.playSound(AudioManager.SOUND_YES, 0.8);

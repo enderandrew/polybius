@@ -6,7 +6,7 @@ import randomRange from '@/utils/randomRange';
 export default class EnemyDemonHead extends EnemyFlipper {
   constructor(surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
     super(surface, projectileManager, rewardCallback, laneId, zPosition, game, Enemy.TYPE_FLIPPER);
-	
+  
     this.isDemonHead = true; 
     this.valueInPoints = 150;
     this.zSpeed = -randomRange(7, 10) * 0.001; 

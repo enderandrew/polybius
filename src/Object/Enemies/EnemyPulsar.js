@@ -46,7 +46,7 @@ export default class EnemyPulsar extends Enemy {
     this.zTarget = zPosition;
 
     this.setState(EnemyPulsar.STATE_MOVING_ALONG_LINE);
-	this.game = game;
+  this.game = game;
   }
 
   updateState () {

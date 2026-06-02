@@ -33,6 +33,9 @@ It's based on vue webpack config, so it can be developed, served and built witho
      * Rapid Fire - Fire super fast!
      * Homing Missile - Locks on nearest target
      * Spread weapon - Contra?
+	 * Grenade Launcher
+	 * Synth Sync - Only fires on beat, bit fires across 5 lanes!
+	 * Weapon synergies for combining power-ups!
      * Jump - Allows you to jump, jump
      * Phantom - Allows your ship to safely phase through all damage for 12 seconds
      * Shield - No timer. Lasts until shield is damaged. Protects you from one hit.
@@ -47,6 +50,7 @@ It's based on vue webpack config, so it can be developed, served and built witho
      * Mutant Flippers
      * Stealth Flippers
      * Demon Heads
+     * Gravity Fuseballs
      * Strong variants of all enemies
      * More new enemies and variants coming soon!
 * Bonus stage - collect 3 warp tokens and get taken to a bonus stage right out of Superman 64!

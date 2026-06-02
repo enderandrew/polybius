@@ -24,15 +24,15 @@ export default class Enemy extends ShootingSurfaceObject {
     this.zPosition = zPosition;
     this.rewardCallback = rewardCallback;
     this.shootTimeoutMs = Enemy.SHOOT_TIMEOUT_MS;
-	this.game = game;
-	this.isStrong = Math.random() < 0.10;
+  this.game = game;
+  this.isStrong = Math.random() < 0.10;
     this.hitPoints = this.isStrong ? 2 : 1;
     this.hasShield = this.isStrong;
 
     if (this.constructor === Enemy) {
       throw new Error('Abstract classes can\'t be instantiated.');
     }
-	//console.log("Enemy spawned with game:", this.game);
+  //console.log("Enemy spawned with game:", this.game);
   }
 
   hitByProjectile (damage = 1) {
@@ -67,7 +67,7 @@ export default class Enemy extends ShootingSurfaceObject {
   
       // Power-up drop — runs for any enemy that grants a reward
       if (this.game && this.game.powerUpSpawner) {
-		this.game.powerUpSpawner.tryDrop(this);
+    this.game.powerUpSpawner.tryDrop(this);
       }
     }
   }

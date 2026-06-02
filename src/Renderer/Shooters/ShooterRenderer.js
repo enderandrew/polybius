@@ -31,6 +31,25 @@ export default class ShooterRenderer extends SurfaceObjectWrapper {
   }
 
   updateState () {
+    if (this.modelGroup) {
+        const isPhantom = this.object.game?.powerUpManager?.hasPhantom;
+
+        this.modelGroup.traverse((child) => {
+            if (child.isLineSegments && child.material) {
+                child.material.transparent = true;
+                child.material.opacity = isPhantom ? 0.3 : 1.0;
+                child.material.color.setHex(isPhantom ? 0xb266ff : ShooterRenderer.SHOOTER_WIREFRAME_COLOR);
+            } 
+            else if (child.isMesh && child.material) {
+                child.material.transparent = true;
+                child.material.opacity = isPhantom ? 0.3 : 1.0;
+            }
+        });
+    }
+    if (this.shieldMesh) {
+       this.shieldMesh.visible = !!this.object.game?.powerUpManager?.hasShield;
+    }
+
     if (this.object.inState(Shooter.STATE_EXPLODING)) {
       this.explodeAnimation();
 
@@ -109,6 +128,11 @@ export default class ShooterRenderer extends SurfaceObjectWrapper {
       return;
     }
 
+    if (this.shieldMesh && this.shieldMesh.visible) {
+       this.shieldMesh.rotation.y += 0.02;
+       this.shieldMesh.rotation.x += 0.01;
+    }
+
     if (Math.abs(desiredRotation - this.rotation.z) > this.rotationChangeSpeed) {
       let leftAngularDistance, rightAngularDistance;
 
@@ -136,6 +160,16 @@ export default class ShooterRenderer extends SurfaceObjectWrapper {
   loadModel () {
     let that = this;
     this.modelGroup = new Group();
+    const shieldGeo = new Three.SphereGeometry(ShooterRenderer.MODEL_SCALE * 3.5, 12, 12);
+    this.shieldMesh = new Three.Mesh(shieldGeo, new Three.MeshBasicMaterial({
+      color: 0x00ffff,      // Cyan
+      wireframe: true,
+      transparent: true,
+      opacity: 0.45
+    }));
+    
+    this.shieldMesh.visible = false;
+    this.add(this.shieldMesh);
 
     objLoader.load(
       ShooterRenderer.MODEL_PATH,

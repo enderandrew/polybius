@@ -111,8 +111,8 @@ export default class ScreenHighScores extends Canvas3d {
 
     // Polybius Parody: The fictional company from the urban legend replacing the old copyright
     this.context.textAlign = 'center';
-	this.drawText('© 1981 SINNESLÖSCHEN INC.', 512, 950, Canvas3d.COLOR_RED);
-	this.context.textAlign = 'left';
+  this.drawText('© 1981 SINNESLÖSCHEN INC.', 512, 950, Canvas3d.COLOR_RED);
+  this.context.textAlign = 'left';
     
     // Parody subliminal flash replacing normal text for 1 frame every ~60 frames
     if (this.glitchTimer % 60 === 0) {

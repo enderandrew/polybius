@@ -32,7 +32,7 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     let expectedType = object.type;
     if (object.isMutant) expectedType = 'mutant_flipper';
     if (object.isStealth) expectedType = 'stealth_flipper';
-	if (object.isDemonHead) expectedType = 'demon_head';
+    if (object.isDemonHead) expectedType = 'demon_head';
     if (object.isDemonHorn) expectedType = 'demon_horn';
     
     if (expectedType !== this.objectType) {
@@ -42,22 +42,22 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     super.setObjectRef(object);
     
     if (this.modelGroup) {
-        const isStrong = this.object.isStrong;
+      const isStrong = this.object.isStrong;
         
-        this.modelGroup.children.forEach(child => {
-            if (child.material) child.material.opacity = 1.0; 
-
-            if (isStrong) {
-                // Set the material to its original base color
-                child.material.color.setHex(child.material.userData.originalColor);
-                
-                // Rotate the Hue by 180 degrees (0.5 on a 0.0 - 1.0 scale)
-                // This creates a perfect opposite/inverted neon color!
-                child.material.color.offsetHSL(0.5, 0, 0); 
-            } else {
-                child.material.color.setHex(child.material.userData.originalColor);
-            }
-        });
+      this.modelGroup.children.forEach(child => {
+        if (child.material) child.material.opacity = 1.0;
+      
+        // Always reset to the stored original first
+        child.material.color.setHex(child.material.userData.originalColor);
+      
+        if (this.object.isGravity) {
+          // Shift hue toward red-orange — hot, aggressive, visually distinct from
+          // normal Fuseblls and from the blue isStrong tint
+          child.material.color.offsetHSL(-0.12, 0.25, 0.08);
+        } else if (isStrong) {
+          child.material.color.offsetHSL(0.5, 0, 0);
+        }
+      });
     }
     this.setVisualsToNormal();
   }
@@ -67,7 +67,7 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     if (this.explosionGroup && this.modelGroup) {
       this.explosionGroup.visible = false;
       this.modelGroup.visible = true;
-	  this.modelGroup.scale.set(1, 1, 1);
+    this.modelGroup.scale.set(1, 1, 1);
     }
   }
 
@@ -185,11 +185,11 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
 
   loadModel () {
     this.modelGroup = new Group();
-	
+  
     let lookupType = this.object.type;
     if (this.object.isMutant) lookupType = 'mutant_flipper';
     if (this.object.isStealth) lookupType = 'stealth_flipper';
-	if (this.object.isDemonHead) lookupType = 'demon_head';
+    if (this.object.isDemonHead) lookupType = 'demon_head';
     if (this.object.isDemonHorn) lookupType = 'demon_horn';
 
     let enemyDataset = enemies.find(enemy => enemy.name === lookupType);
@@ -213,8 +213,8 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     enemyDataset.coords.forEach((xyArray, i) => {
       let originalColor = Array.isArray(enemyDataset.color) ? enemyDataset.color[i] : enemyDataset.color;
       let material = new MeshBasicMaterial({
-		  //color: Array.isArray(enemyDataset.color) ? enemyDataset.color[i] : enemyDataset.color,
-		  color: originalColor,
+      //color: Array.isArray(enemyDataset.color) ? enemyDataset.color[i] : enemyDataset.color,
+      color: originalColor,
           transparent: true,
           opacity: 1.0
         }

@@ -27,7 +27,7 @@ export default class EnemyTanker extends Enemy {
    * @param {number} zPosition
    */
   constructor (surface, projectileManager, enemySpawnFunction, rewardCallback, type, laneId = 0, zPosition = 1, game) {
-	super(surface, projectileManager, rewardCallback, laneId, zPosition, type, game);
+  super(surface, projectileManager, rewardCallback, laneId, zPosition, type, game);
 
     this.enemySpawnFunction = enemySpawnFunction;
 
@@ -36,7 +36,7 @@ export default class EnemyTanker extends Enemy {
 
     this.zSpeed = -randomRange(3, 6) * 0.001;
     this.setState(EnemyTanker.STATE_IDLE);
-	this.game = game;
+  this.game = game;
   }
 
   updateState () {

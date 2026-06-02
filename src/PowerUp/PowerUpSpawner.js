@@ -66,7 +66,7 @@ export class PowerUpSpawner {
    */
   tryDrop (enemy) {
     //console.log("SPAWNER: Attempting drop. Current webGeometry is:", this._webGeometry);
-	const tier   = enemy.tier ?? 'normal';
+  const tier   = enemy.tier ?? 'normal';
     const chance = this._dropChance[tier] ?? this._dropChance.normal;
 
     if (Math.random() > chance) return null;
@@ -81,7 +81,7 @@ export class PowerUpSpawner {
     
     const powerUp = new PowerUp(type, enemy.laneId, enemy.zPosition, this._webGeometry);
     
-	//console.log("SPAWNER: PowerUp created with:", powerUp.webGeometry);
+  //console.log("SPAWNER: PowerUp created with:", powerUp.webGeometry);
 
     this._scene.add(powerUp.sprite);
     this._activePowerUps.push(powerUp);
@@ -95,10 +95,10 @@ export class PowerUpSpawner {
    */
   update (delta) {
     if (!this._webGeometry) return;
-	for (let i = this._activePowerUps.length - 1; i >= 0; i--) {
+  for (let i = this._activePowerUps.length - 1; i >= 0; i--) {
       const pu = this._activePowerUps[i];
       if (!pu.webGeometry) continue;
-	  pu.update(delta);
+    pu.update(delta);
 
       if (pu.isExpired) {
         pu.dispose(this._scene);
@@ -138,7 +138,7 @@ export class PowerUpSpawner {
       pu.dispose(this._scene);
     }
     this._activePowerUps = [];
-	this._webGeometry = null;
+  this._webGeometry = null;
   }
 
   /** Read-only count of live power-ups (useful for debug HUD). */

@@ -23,11 +23,11 @@ export default class Surface {
     this.name = name;
     this.isOpen = isOpen;
     this.rawLanesCoords = lanesCoords;
-	
-	if (!this.rawLanesCoords || !this.rawLanesCoords.length) {
+  
+  if (!this.rawLanesCoords || !this.rawLanesCoords.length) {
         console.error("Surface constructor received empty coords for:", name);
     }
-	
+  
     this.zOffset = zOffset;
     this.lanesAmount = lanesCoords.length - (isOpen ? 1 : 0);
     this.activeLaneId = 0;
@@ -73,7 +73,7 @@ export default class Surface {
   calculateLanesCenterCoords () {
     this.lanesMiddleCoords = [];
 
-	if (!this.lanesCoords || this.lanesCoords.length === 0) {
+  if (!this.lanesCoords || this.lanesCoords.length === 0) {
         console.error("Surface: Cannot calculate center coords, lanesCoords is empty!");
         return;
     }

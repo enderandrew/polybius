@@ -24,9 +24,14 @@ export default class Projectile extends SurfaceObject {
     super(surface, laneId, SurfaceObject.TYPE_PROJECTILE);
 
     this.source = source;
-	this.damage = damage;
-	this.killRadiusForward = Projectile.PROJECTILE_KILL_RADIUS_FORWARD;
+    this.damage = damage;
+    this.killRadiusForward = Projectile.PROJECTILE_KILL_RADIUS_FORWARD;
     this.killRadiusBackward = Projectile.PROJECTILE_KILL_RADIUS_BACKWARD;
+    this.isLaser = false;
+    this.isGrenade = false;
+    this.isExploding = false;     
+    this.explosionProgress = 0;   
+    this.needsAoECheck = false;
 
     if (this.source === Projectile.SOURCE_SHOOTER) {
       this.zPosition = zPosition ?? 0;
@@ -42,12 +47,31 @@ export default class Projectile extends SurfaceObject {
       return;
     }
 
+    if (this.isExploding) {
+        this.explosionProgress += 0.08; 
+        if (this.explosionProgress >= 1) this.alive = false;
+        return; 
+    }
+
+    if (this.isLaser) {
+      this.laserFrames--;
+      if (this.laserFrames <= 0) this.alive = false;
+      return; // Return early so we don't add zSpeed!
+    }
+
     this.zPosition += this.zSpeed;
 
-    this.alive = (
-      (this.source === Projectile.SOURCE_SHOOTER && this.zPosition >= 1)
-      || (this.source === Projectile.SOURCE_ENEMY && this.zPosition <= 0)
-    ) === false;
+    if (this.source === Projectile.SOURCE_SHOOTER && this.zPosition >= 1) {
+      if (this.isGrenade) this.triggerExplosion();
+      else this.alive = false;
+    } else if (this.source === Projectile.SOURCE_ENEMY && this.zPosition <= 0) {
+      this.alive = false;
+    }
+  }
+
+  triggerExplosion () {
+    this.isExploding = true;
+    this.needsAoECheck = true; // Flags the manager to run the sweep!
   }
 
   /**
@@ -55,30 +79,47 @@ export default class Projectile extends SurfaceObject {
    * @return {number} index of colliding object or -1
    */
   detectCollision (laneObjects) {
-    if (!this.alive) {
+    if (!this.alive || this.isExploding) {
       return -1;
     }
 
-    let collision = laneObjects.findIndex(object => (
-      object.hittable
-      && object.alive
-      // Need variable hitbox collision for longer lasers
-      && object.zPosition >= this.zPosition - this.killRadiusBackward
-      && object.zPosition <= this.zPosition + this.killRadiusForward
-      )
-    );
+    if (this.isLaser) {
+      // THE RAILGUN: Pierce through everything in the hitbox without dying!
+      let hitSomething = false;
+      laneObjects.forEach(object => {
+        if (
+          object.hittable && object.alive &&
+          object.zPosition >= this.zPosition - this.killRadiusBackward &&
+          object.zPosition <= this.zPosition + this.killRadiusForward
+        ) {
+          object.hitByProjectile(this.damage);
+          hitSomething = true;
+        }
+      });
+      // Return 1 so the game knows a hit occurred, but DO NOT set this.alive = false!
+      return hitSomething ? 1 : -1; 
+    } else {
+      // NORMAL WEAPONS: Hit exactly one target and die
+      let collision = laneObjects.findIndex(object => (
+        object.hittable && object.alive &&
+        object.zPosition >= this.zPosition - this.killRadiusBackward &&
+        object.zPosition <= this.zPosition + this.killRadiusForward
+      ));
 
-    if (collision >= 0) {
-      // console.log(`Hit ${laneObjects[collision].type}.`);
-      laneObjects[collision].hitByProjectile(this.damage);
-      this.alive = false;
+      if (collision >= 0) {
+        if (this.isGrenade) {
+           this.triggerExplosion(); // Blow up instead of dying!
+        } else {
+           laneObjects[collision].hitByProjectile(this.damage);
+           this.alive = false;
+        }
+      }
+      return collision;
     }
-
-    return collision;
   }
 
   hitByProjectile () {
-	// console.log('Projectile collision detected');												
+  // console.log('Projectile collision detected');                        
     this.alive = false;
   }
 

@@ -71,26 +71,34 @@ export default class Game {
 
   constructor () {
     this.isWarping = false;
-	this.bonusScoreOffset = 0;
-	this.setState(Game.STATE_SELECT_SURFACE);
+    this.bonusScoreOffset = 0;
+    this.setState(Game.STATE_SELECT_SURFACE);
     this.setupRenderer(true);
     this.setupLogic();
     this.isPaused = false;
-	this.aiDroid = null;
+    this.aiDroid = null;
     this.prevGamepadState = {};
     this.prevGamepadAxis = 0;
     this.bgmManager = new BgmManager();
 
     this.bgmManager.onBeat = () => {
-        if (this.starfield) this.starfield.pulse(1.2); //1.5
-        if (this.levelRenderer) this.levelRenderer.beatPulse = 0.15; // 40% flash
-		this.beatGlow = 0.1;
+      if (this.starfield) this.starfield.pulse(1.2); //1.5
+      if (this.levelRenderer) this.levelRenderer.beatPulse = 0.15; // 40% flash
+      this.beatGlow = 0.1;
+      // Auto-fire straight down the lane!
+      if (this.powerUpManager?.hasSynthSurge && this.shooter) {
+        this.shooter.fireSynthSurge(false);
+      }
     };
 
     this.bgmManager.onAccent = () => {
-        if (this.starfield) this.starfield.pulse(2.0); //3.5
-        if (this.levelRenderer) this.levelRenderer.beatPulse = 0.35; // 90% flash
-		this.beatGlow = 0.3;
+      if (this.starfield) this.starfield.pulse(2.0); //3.5
+      if (this.levelRenderer) this.levelRenderer.beatPulse = 0.35; // 90% flash
+      this.beatGlow = 0.3;
+      // Auto-fire a massive 5-lane spread!
+      if (this.powerUpManager?.hasSynthSurge && this.shooter) {
+        this.shooter.fireSynthSurge(true);
+      }
     };
 
     window.addEventListener('keydown', (e) => {
@@ -132,7 +140,7 @@ export default class Game {
 
         this.lives = 5;
         this.score = 0;
-		this.bonusScoreOffset = 0;
+    this.bonusScoreOffset = 0;
 
         if (this.powerUpHUD) {
             this.powerUpHUD.clear();
@@ -142,12 +150,12 @@ export default class Game {
         this.powerUpManager.reset();
         this.populateScreenContentManager();
         this.loadScreen(new ScreenSelectSurface(this.screenContentManager));
-		messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_GAME);
+    messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_GAME);
 
       } else if (this.state.equals(Game.STATE_HIGH_SCORES)) {
         this.releaseLevel();
-		if (this.powerUpHUD) this.powerUpHUD.hide();
-		messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_GAME_OVER);
+    if (this.powerUpHUD) this.powerUpHUD.hide();
+    messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_GAME_OVER);
         this.loadScreen(new ScreenHighScores(this.screenContentManager));
 
       }
@@ -172,7 +180,7 @@ startLevel (levelId, firstLevel = false) {
     this.firstLevel = firstLevel;
     this.level = levelId;
     this.screenContentManager.setLevel(this.level);
-	if (this.powerUpHUD) this.powerUpHUD.hide();
+  if (this.powerUpHUD) this.powerUpHUD.hide();
 
     // Clear out whatever screen is currently active (Menu or previous Play UI)
     this.releaseScreen();
@@ -180,8 +188,8 @@ startLevel (levelId, firstLevel = false) {
     // Clear out the previous level geometry if we are between levels
     this.releaseLevel();
 
-    // Reset the camera back to the world origin! Without this, the camera is left stranded at the end of the previous level.	
-	this.camera.position.set(0, 0, -6);
+    // Reset the camera back to the world origin! Without this, the camera is left stranded at the end of the previous level.  
+  this.camera.position.set(0, 0, -6);
     this.camera.lookAt(0, 0, 10);
 
     // Load the Parody Screen using your native screen manager
@@ -205,8 +213,8 @@ startLevel (levelId, firstLevel = false) {
     //let surface = this.surfacesCollection.find(surface => surface.id === surfaceId);
     let surfaceData = surfaces.find(s => s.id === surfaceId);
     if (!surfaceData) throw new Error("Surface data not found!");
-	
-	const vectorCoords = surfaceData.coords.map(c => new Vector2(c.x, c.y));
+  
+  const vectorCoords = surfaceData.coords.map(c => new Vector2(c.x, c.y));
 
     let surface = new Surface(
         surfaceData.id,
@@ -242,16 +250,16 @@ startLevel (levelId, firstLevel = false) {
       this.levelWonCallback.bind(this),
       this.shooterKilledCallback.bind(this),
       this.getCurrentScore.bind(this),
-	  this
+    this
     );
 
     console.log("GAME: Level loaded. New Surface:", surface);
-	this.powerUpSpawner.webGeometry = surface;
-	//console.log("GAME: Spawner webGeometry updated to:", this.powerUpSpawner.webGeometry);
-	this.levelObject.registerKeys();
+  this.powerUpSpawner.webGeometry = surface;
+  //console.log("GAME: Spawner webGeometry updated to:", this.powerUpSpawner.webGeometry);
+  this.levelObject.registerKeys();
     this.levelRenderer.bindLevel(this.levelObject);
     this.populateScreenContentManager();
-	this.shooter = this.levelObject.shooter;
+  this.shooter = this.levelObject.shooter;
     if (this.powerUpManager.hasAIDroid) {
       this._spawnAIDroid();
     }
@@ -267,23 +275,23 @@ startLevel (levelId, firstLevel = false) {
     }
 
     this.isPaused = false;
-	this.isWarping = false;
+  this.isWarping = false;
     if (this.pauseOverlay) this.pauseOverlay.style.display = 'none';
-	if (this.bonusOverlay) this.bonusOverlay.style.display = 'none';
+  if (this.bonusOverlay) this.bonusOverlay.style.display = 'none';
 
     this._disposeAIDroid();
-	this.powerUpSpawner.webGeometry = null;
+  this.powerUpSpawner.webGeometry = null;
     this.powerUpSpawner.clearAll();    
     this.levelObject.release();
     this.levelObject = null;
-	this.shooter = null;
+  this.shooter = null;
     this.levelRenderer.releaseLevel();
   }
 
   loadScreen (screen) {
     if (this.screenObject !== null) {
       this.screenObject.release();
-	  this.releaseScreen();
+    this.releaseScreen();
     }
 
     this.screenObject = screen;
@@ -359,7 +367,7 @@ startLevel (levelId, firstLevel = false) {
 
   setupRenderer (highQuality = true) {
     this.scene = new Scene();
-	this.starfield = new Starfield();
+  this.starfield = new Starfield();
     this.scene.add(this.starfield);
 
     // Get the actual pixel dimensions of the CRT screen interior
@@ -387,7 +395,7 @@ startLevel (levelId, firstLevel = false) {
     this.renderer.domElement.style.display = 'block'; 
     
     document.getElementById('display').appendChild(this.renderer.domElement);
-	
+  
     const displayContainer = document.getElementById('display');
     displayContainer.style.position = 'relative'; // Ensure absolute children stay inside
 
@@ -453,8 +461,8 @@ startLevel (levelId, firstLevel = false) {
     this.scene.add(this.screenGroup);
     this.powerUpManager = new PowerUpManager();
     this.powerUpSpawner = new PowerUpSpawner(this.scene, null);
-	this.powerUpSpawner.scene = this.scene;
-	this.powerUpHUD = new PowerUpHUD(this.powerUpManager);
+  this.powerUpSpawner.scene = this.scene;
+  this.powerUpHUD = new PowerUpHUD(this.powerUpManager);
     window.addEventListener('powerup:collected', ({ detail: { type } }) => {
       if (type.id === 'AI_DROID' && this.levelObject) {
         this._spawnAIDroid();
@@ -469,7 +477,7 @@ startLevel (levelId, firstLevel = false) {
 
   update () {
     //console.log("This shooter value:", this.shooter);
-	requestAnimationFrame(this.update.bind(this));
+  requestAnimationFrame(this.update.bind(this));
   
     // Track delta time (seconds since last frame) for physics/movement
     const now = performance.now();
@@ -482,8 +490,8 @@ startLevel (levelId, firstLevel = false) {
         // Adjust 'this.bloomPass' to whatever variable name you used for your UnrealBloomPass
         this.baseBloom = this.bloomPass ? this.bloomPass.strength : 0.5; 
     }
-	
-	this.beatGlow += (0.0 - this.beatGlow) * 0.10;
+  
+  this.beatGlow += (0.0 - this.beatGlow) * 0.10;
 
     if (this.bloomPass) {
         this.bloomPass.strength = (this.baseBloom + this.beatGlow);
@@ -527,7 +535,7 @@ startLevel (levelId, firstLevel = false) {
       // Power-up tick
       this.powerUpSpawner.update(delta);
       this.powerUpManager.update(delta);
-	  if (this.aiDroid) this.aiDroid.update(delta);
+    if (this.aiDroid) this.aiDroid.update(delta);
   
       if (this.shooter && this.shooter.laneId !== undefined) {
         // DYNAMIC DEPTH: Uses 0.1 at the rim, but perfectly tracks the ship down the tube!
@@ -556,6 +564,12 @@ startLevel (levelId, firstLevel = false) {
               // Normal audio logic
               if (collected.id === 'ONE_UP' || collected.id === 'EXTRA_LIFE') {
                   messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_1UP);
+              } else if (collected.id === 'PHANTOM') {
+                  messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PHANTOM);
+              } else if (collected.id === 'SHIELD') {
+                  messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_SHIELD);
+              } else if (collected.id === 'SYNTH_SURGE') {
+                  messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_SYNTH_SURGE);
               } else {
                   messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_POWERUP);
               }
@@ -649,8 +663,8 @@ startLevel (levelId, firstLevel = false) {
 
   togglePause () {
     // Only allow pausing if we are actually in the play state
-	messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PAUSE);
-	if (!this.state.equals(Game.STATE_PLAY)) return;
+  messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PAUSE);
+  if (!this.state.equals(Game.STATE_PLAY)) return;
     this.isPaused = !this.isPaused;
     if (this.pauseOverlay) {
       this.pauseOverlay.style.display = this.isPaused ? 'flex' : 'none';
@@ -718,7 +732,7 @@ startLevel (levelId, firstLevel = false) {
   _onBonusStageEnd (totalScore, ringsCleared) {
     if (totalScore > 0) {
       this.score += totalScore;
-	  this.bonusScoreOffset += totalScore;
+    this.bonusScoreOffset += totalScore;
       this.screenContentManager.setScore(this.score);
     }
     if (this.bonusStage) { this.bonusStage.dispose(); this.bonusStage = null; }
@@ -745,13 +759,19 @@ startLevel (levelId, firstLevel = false) {
   _getRandomBonusPowerUp(excludeType) {
     const allTypes = [
       PowerUpType.AI_DROID,
+      PowerUpType.GRENADE,
       PowerUpType.JUMP,
       PowerUpType.LASER,
       PowerUpType.ONE_UP,
       PowerUpType.LASER,
+      PowerUpType.MISSILE,
       PowerUpType.PARTICLE_BLASTER,
+      PowerUpType.PHANTOM,
       PowerUpType.RAPID_FIRE, 
-      PowerUpType.SPREAD_GUN, 
+      PowerUpType.SHIELD,
+      PowerUpType.SPREAD_GUN,
+      PowerUpType.SYNTH_SURGE,
+      PowerUpType.TIMER_EXTEND
     ];
     
     // Filter out the one they just picked up
