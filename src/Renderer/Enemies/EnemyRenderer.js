@@ -51,9 +51,11 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
         child.material.color.setHex(child.material.userData.originalColor);
       
         if (this.object.isGravity) {
-          // Shift hue toward red-orange — hot, aggressive, visually distinct from
-          // normal Fuseblls and from the blue isStrong tint
-          child.material.color.offsetHSL(-0.12, 0.25, 0.08);
+          child.material.color.offsetHSL(-0.12, 0.25, 0.08);   // Orange-red
+        } else if (this.object.isSupernova) {
+          child.material.color.offsetHSL(0.10, 0.15, 0.05);    // Slight blue shift
+        } else if (this.object.isVoid) {
+          child.material.color.offsetHSL(0.22, 0.20, -0.08);   // Purple, slightly darker
         } else if (isStrong) {
           child.material.color.offsetHSL(0.5, 0, 0);
         }

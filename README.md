@@ -26,9 +26,10 @@ It's based on vue webpack config, so it can be developed, served and built witho
 
 ## New Features in This Fork
 * Polybius theming
+* 256 levels! 32 surfaces repeated through 8 color iterations (up from 99 levels)
 * Random parody message plays between levels (spoken aloud)
 * Power-ups
-     * Particle Blaster - More powerful gun that does double damage
+     * Particle Blaster - More powerful gun that does 2.5x damage
      * Laser - No sharks attached sadly
      * Rapid Fire - Fire super fast!
      * Homing Missile - Locks on nearest target
@@ -51,6 +52,8 @@ It's based on vue webpack config, so it can be developed, served and built witho
      * Stealth Flippers
      * Demon Heads
      * Gravity Fuseballs
+	 * Supernova Fuseballs
+	 * Void Fuseballs
      * Strong variants of all enemies
      * More new enemies and variants coming soon!
 * Bonus stage - collect 3 warp tokens and get taken to a bonus stage right out of Superman 64!

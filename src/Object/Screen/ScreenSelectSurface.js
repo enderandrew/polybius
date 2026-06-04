@@ -11,7 +11,16 @@ import { Box2, Vector2 } from 'three';
 const centerTarget = new Vector2();
 
 export default class ScreenSelectSurface extends Canvas3d {
-  static SURFACE_COLORS = ['rgba(0, 0, 255, 1)', 'rgba(255, 0, 0, 1)', 'rgba(0, 255, 0, 1)'];
+  static SURFACE_COLORS = [
+    'rgba(0, 100, 255, 1)',   // 0: Blue
+    'rgba(255, 0, 0, 1)',     // 1: Red
+    'rgba(255, 255, 0, 1)',   // 2: Yellow
+    'rgba(0, 255, 0, 1)',     // 3: Green
+    'rgba(255, 128, 0, 1)',   // 4: Orange
+    'rgba(255, 0, 255, 1)',   // 5: Purple
+    'rgba(255, 255, 255, 1)', // 6: White
+    'rgba(0, 255, 255, 1)'    // 7: Rainbow (Represented by Neon Cyan on the HUD)
+  ];
 
   // Modern ES class field
   selectedLevel = 1;
@@ -132,13 +141,16 @@ export default class ScreenSelectSurface extends Canvas3d {
 
     for (let i = 0; i < levels.length - offset && i < 5; i++) {
       let level = levels[i + offset];
-      let surfaceId = ((level.id - 1) % 16) + 1;
+      
+      // The surface shape ID (1-32)
+      let surfaceId = ((level.id - 1) % 32) + 1;
 
       this.drawText(
         this.alignNumberToRight(level.id), xOffset + (i * xStep) - 40, 800, Canvas3d.COLOR_GREEN
       );
 
-      let surfaceColor = Math.floor(level.id / 16) % 3;
+      let surfaceColor = Math.floor((level.id - 1) / 32) % 8;
+      
       this.context.strokeStyle = ScreenSelectSurface.SURFACE_COLORS[surfaceColor];
       this.drawMapIcon(xOffset + (i * xStep) + 58, 845, surfaceId);
 

@@ -209,19 +209,18 @@ startLevel (levelId, firstLevel = false) {
   }
 
   loadLevel (level) {
-    let surfaceId = ((level - 1) % 16) + 1;
-    //let surface = this.surfacesCollection.find(surface => surface.id === surfaceId);
+    let surfaceId = ((level - 1) % 32) + 1;
     let surfaceData = surfaces.find(s => s.id === surfaceId);
     if (!surfaceData) throw new Error("Surface data not found!");
   
-  const vectorCoords = surfaceData.coords.map(c => new Vector2(c.x, c.y));
+    const vectorCoords = surfaceData.coords.map(c => new Vector2(c.x, c.y));
 
     let surface = new Surface(
-        surfaceData.id,
-        surfaceData.name,
-        surfaceData.isOpen,
-        vectorCoords,
-        surfaceData.zOffset
+      surfaceData.id,
+      surfaceData.name,
+      surfaceData.isOpen,
+      vectorCoords,
+      surfaceData.zOffset
     );
 
     if (surface === undefined) {
@@ -250,16 +249,16 @@ startLevel (levelId, firstLevel = false) {
       this.levelWonCallback.bind(this),
       this.shooterKilledCallback.bind(this),
       this.getCurrentScore.bind(this),
-    this
+      this
     );
 
     console.log("GAME: Level loaded. New Surface:", surface);
-  this.powerUpSpawner.webGeometry = surface;
-  //console.log("GAME: Spawner webGeometry updated to:", this.powerUpSpawner.webGeometry);
-  this.levelObject.registerKeys();
+    this.powerUpSpawner.webGeometry = surface;
+    //console.log("GAME: Spawner webGeometry updated to:", this.powerUpSpawner.webGeometry);
+    this.levelObject.registerKeys();
     this.levelRenderer.bindLevel(this.levelObject);
     this.populateScreenContentManager();
-  this.shooter = this.levelObject.shooter;
+    this.shooter = this.levelObject.shooter;
     if (this.powerUpManager.hasAIDroid) {
       this._spawnAIDroid();
     }
@@ -339,6 +338,7 @@ startLevel (levelId, firstLevel = false) {
     if (highestLevel !== null) {
       this.highestLevel = parseInt(highestLevel);
     }
+    this.highestLevel = Math.min(this.highestLevel, 256);
   }
 
   saveGameState () {
@@ -504,7 +504,7 @@ startLevel (levelId, firstLevel = false) {
         this.pollGamepads();
     }
 
-    if (this.state.equals(Game.STATE_PLAY) && !this.isLoadingLevel) {
+    if (this.state.equals(Game.STATE_PLAY) && !this.isLoadingLevel && !this.bonusStage) {
         this.bgmManager.playForLevel(this.level);
     } else {
         this.bgmManager.stop();
@@ -732,8 +732,13 @@ startLevel (levelId, firstLevel = false) {
   _onBonusStageEnd (totalScore, ringsCleared) {
     if (totalScore > 0) {
       this.score += totalScore;
-    this.bonusScoreOffset += totalScore;
+      this.bonusScoreOffset += totalScore;
       this.screenContentManager.setScore(this.score);
+    }
+    if (ringsCleared >= BonusStage.RING_COUNT) {
+      this.lives++;
+      this.screenContentManager.set(ScreenContentManager.KEY_LIVES, this.lives);
+      messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_1UP);
     }
     if (this.bonusStage) { this.bonusStage.dispose(); this.bonusStage = null; }
   

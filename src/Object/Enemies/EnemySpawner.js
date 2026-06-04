@@ -10,6 +10,8 @@ import EnemyMutantFlipper from '@/Object/Enemies/EnemyMutantFlipper';
 import EnemyStealthFlipper from '@/Object/Enemies/EnemyStealthFlipper';
 import EnemyDemonHead from '@/Object/Enemies/EnemyDemonHead';
 import EnemyGravityFuseball from '@/Object/Enemies/EnemyGravityFuseball';
+import EnemySupernovaFuseball from '@/Object/Enemies/EnemySupernovaFuseball';
+import EnemyVoidFuseball from '@/Object/Enemies/EnemyVoidFuseball';
 import randomRange from '@/utils/randomRange';
 
 export default class EnemySpawner {
@@ -18,7 +20,7 @@ export default class EnemySpawner {
     { type: Enemy.TYPE_FLIPPER, level: 1, chanceOfSpawning: 1 },
     { type: Enemy.TYPE_FLIPPER_TANKER, level: 3, chanceOfSpawning: 0.5 },
     { type: Enemy.TYPE_SPIKER, level: 4, chanceOfSpawning: 1 },
-  { type: Enemy.TYPE_DEMON_HEAD, level: 10, chanceOfSpawning: 0.6 },
+    { type: Enemy.TYPE_DEMON_HEAD, level: 10, chanceOfSpawning: 0.6 },
     { type: Enemy.TYPE_FUSEBALL, level: 11, chanceOfSpawning: 0.8 },
     { type: Enemy.TYPE_PULSAR, level: 17, chanceOfSpawning: 0.8 },
     { type: Enemy.TYPE_FUSEBALL_TANKER, level: 33, chanceOfSpawning: 0.5 },
@@ -213,33 +215,37 @@ export default class EnemySpawner {
    * @param {number} zPosition
    */
   spawnFuseball (lane, zPosition = 1) {
-    const gravityChance = this.currentLevel >= 21
-      ? Math.min(0.50, (this.currentLevel - 20) * 0.04)  // 4% per level, caps at 50%
-      : 0;
-    const isGravity = Math.random() < gravityChance;
-	
-	if (isGravity) { console.log("SPAWN: Gravity Fuseball") }
-  
+    const level = this.currentLevel;
+    const gravityChance   = level >= 21 ? Math.min(0.45, (level - 20) * 0.04) : 0;
+    const supernovaChance = level >= 27 ? Math.min(0.30, (level - 26) * 0.03) : 0;
+    const voidChance      = level >= 32 ? Math.min(0.25, (level - 31) * 0.05) : 0;
+    const roll = Math.random();
+    
+    let EnemyClass = EnemyFuseball;
+    if (roll < voidChance) {
+      EnemyClass = EnemyVoidFuseball;
+ 	 console.log("SPAWN: Void Fuseball");
+    }
+    else if (roll < voidChance + supernovaChance) {
+      EnemyClass = EnemySupernovaFuseball;
+ 	 console.log("SPAWN: Supernova Fuseball");
+    }
+    else if (roll < voidChance + supernovaChance + gravityChance) {
+      EnemyClass = EnemyGravityFuseball;
+ 	 console.log("SPAWN: Gravity Fuseball");
+    }
+   
     return this.surfaceObjectsManager.addEnemy(
-      isGravity
-        ? new EnemyGravityFuseball(
-            this.surfaceObjectsManager.surface,
-            this.projectileManager,
-            this.rewardCallback,
-            lane,
-            zPosition,
-            this.game
-          )
-        : new EnemyFuseball(
-            this.surfaceObjectsManager.surface,
-            this.projectileManager,
-            this.rewardCallback,
-            lane,
-            zPosition,
-            this.game
-          )
-    );
-  }
+    new EnemyClass(
+      this.surfaceObjectsManager.surface,
+      this.projectileManager,
+      this.rewardCallback,
+      lane,
+      zPosition,
+      this.game
+    )
+  );
+}
 
   /**
    * @param {number} lane

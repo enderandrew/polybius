@@ -70,6 +70,8 @@ export default class LevelRenderer extends Group {
     this.camera.lookAt(this.camera.position.x, this.camera.position.y, this.camera.position.z + 10);
   }
 
+  // LevelRenderer.js -> replace your update() method
+
   update () {
     if (this.level !== null) {
       if (this.beatPulse === undefined) {
@@ -79,17 +81,44 @@ export default class LevelRenderer extends Group {
       
       // Smoothly decay the pulse back to 0
       this.beatPulse += (0.0 - this.beatPulse) * 0.10; 
+
+      // --- CALCULATE CURRENT PALETTE TIER (0-7) ---
+      // Level 1-32 = 0, 33-64 = 1, etc.
+      const colorIndex = Math.floor((this.level.currentLevel - 1) / 32) % 8;
     
-      // Find wherever you store the material for your web lines (e.g., this.webMaterial)
       if (this.surfaceRenderer) {
           this.surfaceRenderer.traverse((child) => {
               if (child.material && child.material.color) {
-                  // Save the original base color the very first time
+                  
+                  // --- SET STATIC BASE COLORS ONCE ---
                   if (!child.material.userData.baseColor) {
-                      child.material.userData.baseColor = child.material.color.clone();
+                      child.material.userData.baseColor = new Color();
+                      
+                      // Map the 7 static colors to exactly match the Select Screen UI
+                      const staticColors = [
+                        0x0064ff, // 0: Blue
+                        0xff0000, // 1: Red
+                        0xffff00, // 2: Yellow
+                        0x00ff00, // 3: Green
+                        0xff8000, // 4: Orange
+                        0xff00ff, // 5: Purple
+                        0xffffff  // 6: White
+                      ];
+                      
+                      if (colorIndex < 7) {
+                          child.material.userData.baseColor.setHex(staticColors[colorIndex]);
+                      }
                   }
                   
-                  // Blend between the base color and pure white based on the beat!
+                  // --- RAINBOW MODE OVERRIDE ---
+                  // If we are in the 8th tier, continuously shift the Hue!
+                  if (colorIndex === 7) {
+                      // Date.now() % 2000 creates a seamless 2-second loop from 0.0 to 1.0
+                      child.material.userData.baseColor.setHSL((Date.now() % 2000) / 2000, 1.0, 0.5);
+                  }
+                  
+                  // --- APPLY THE BEAT PULSE ---
+                  // Blend between the base color and pure white based on the music beat!
                   child.material.color.copy(child.material.userData.baseColor).lerp(this.whiteColor, this.beatPulse);
               }
           });
