@@ -4,7 +4,7 @@ import Enemy from '@/Object/Enemies/Enemy';
 export default class EnemyStealthFlipper extends EnemyFlipper {
   constructor(surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
     // Disguise it as a normal flipper for the core engine!
-    super(surface, projectileManager, rewardCallback, laneId, zPosition, game, Enemy.TYPE_FLIPPER);
+    super(surface, projectileManager, rewardCallback, laneId, zPosition, Enemy.TYPE_FLIPPER, game);
 
     this.valueInPoints = 250;
     this.isStealth = true; // Flag for the Renderer

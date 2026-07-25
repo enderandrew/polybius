@@ -41,12 +41,16 @@ export default class ScreenSelectSurface extends Canvas3d {
     keyboardInput.register('KeyA', () => { this.moveLeft(); });
     keyboardInput.register('KeyD', () => { this.moveRight(); });
     keyboardInput.register('Space', () => { this.selectLevel(); });
+	keyboardInput.register('ArrowLeft',  () => { this.moveLeft(); });
+    keyboardInput.register('ArrowRight', () => { this.moveRight(); });
   }
 
   unregisterKeys () {
     keyboardInput.unregister('KeyA');
     keyboardInput.unregister('KeyD');
     keyboardInput.unregister('Space');
+    keyboardInput.unregister('ArrowLeft');
+    keyboardInput.unregister('ArrowRight');
   }
 
   selectLevel () {

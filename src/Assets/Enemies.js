@@ -283,6 +283,33 @@ const enemies = ([
       ]
     ]
   },
+  {
+    name: 'mirror',
+    color: [
+      0xffffff,   // outer perimeter — bright white
+      0xffffff,   // spoke → top vertex
+      0xeeeeee,   // spoke → upper-right vertex
+      0xcccccc,   // spoke → lower-right vertex
+      0xaaaaaa,   // spoke → bottom vertex (darkest)
+      0xcccccc,   // spoke → lower-left vertex
+      0xeeeeee,   // spoke → upper-left vertex
+    ],
+    coords: [
+      // Outer hexagon perimeter (closed loop)
+      [
+        {x:0.500, y:0.900}, {x:0.846, y:0.700}, {x:0.846, y:0.300},
+        {x:0.500, y:0.100}, {x:0.154, y:0.300}, {x:0.154, y:0.700},
+        {x:0.500, y:0.900},
+      ],
+      // Spokes: center → each vertex
+      [{x:0.500, y:0.500}, {x:0.500, y:0.900}],   // top
+      [{x:0.500, y:0.500}, {x:0.846, y:0.700}],   // upper-right
+      [{x:0.500, y:0.500}, {x:0.846, y:0.300}],   // lower-right
+      [{x:0.500, y:0.500}, {x:0.500, y:0.100}],   // bottom
+      [{x:0.500, y:0.500}, {x:0.154, y:0.300}],   // lower-left
+      [{x:0.500, y:0.500}, {x:0.154, y:0.700}],   // upper-left
+    ],
+  },
 ]);
 
 export default enemies;

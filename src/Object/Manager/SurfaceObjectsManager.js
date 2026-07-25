@@ -60,13 +60,40 @@ export default class SurfaceObjectsManager extends FIFOManager {
         this.spikesMap[enemy.laneId].length === 0
         || this.spikesMap[enemy.laneId].length === this.spikesMap[enemy.laneId].filter(spike => !spike.alive).length
       ) {
-        this.addSpike(new EnemySpike(enemy.surface, enemy.projectileManager, enemy.rewardCallback, enemy.laneId));
+        const spike = new EnemySpike(enemy.surface, enemy.projectileManager, enemy.rewardCallback, enemy.laneId);
+        if (enemy.isPhantom) spike.isPhantom = true;  // Propagate to the spike it creates
+        this.addSpike(spike);
       }
     }
   }
 
+  _pendingSpawns = [];
+
+  /**
+   * Queue a spawn to happen safely at the start of the next update tick.
+   * @param {Function} factoryFn  () => EnemyInstance — called during drain
+   */
+  queueSpawn (factoryFn) {
+    this._pendingSpawns.push(factoryFn);
+  }
+
+  _drainPendingSpawns () {
+    if (this._pendingSpawns.length === 0) return;
+    const queue = this._pendingSpawns;
+    this._pendingSpawns = [];
+    queue.forEach(factoryFn => {
+      try {
+        factoryFn();
+      } catch (e) {
+        console.error('SurfaceObjectsManager: queued spawn failed', e);
+      }
+    });
+  }
+
   update () {
-    this.shooters.forEach(shooter => shooter.update());
+    this._drainPendingSpawns();
+	
+	this.shooters.forEach(shooter => shooter.update());
     this.enemies.forEach(enemy => enemy.update());
 
     this.spikes.forEach(spike => {

@@ -25,6 +25,9 @@ import { PowerUpHUD } from '@/PowerUp/PowerUpHUD';
 import { AIDroid } from '@/PowerUp/AIDroid';
 import Starfield from '@/Renderer/Background/Starfield';
 import { BonusStage } from '@/Object/BonusStage/BonusStage';
+import ScreenAttractMode from '@/Object/Screen/ScreenAttractMode';
+import { BossFight } from '@/Object/BossFight/BossFight';
+import { initVoiceCache } from '@/utils/voiceCache';
 
 export default class Game {
   // Removed legacy @readonly decorators
@@ -68,6 +71,12 @@ export default class Game {
   screenObject = null;
   screenContentManager;
   surfacesCollection;
+  
+  _lastMenuActivity = 0;
+  _inAttractMode    = false;
+  
+  bossFight = null;
+  _bossFightNextLevel = null;
 
   constructor () {
     this.isWarping = false;
@@ -75,6 +84,7 @@ export default class Game {
     this.setState(Game.STATE_SELECT_SURFACE);
     this.setupRenderer(true);
     this.setupLogic();
+	initVoiceCache(); 
     this.isPaused = false;
     this.aiDroid = null;
     this.prevGamepadState = {};
@@ -140,7 +150,7 @@ export default class Game {
 
         this.lives = 5;
         this.score = 0;
-    this.bonusScoreOffset = 0;
+        this.bonusScoreOffset = 0;
 
         if (this.powerUpHUD) {
             this.powerUpHUD.clear();
@@ -150,14 +160,15 @@ export default class Game {
         this.powerUpManager.reset();
         this.populateScreenContentManager();
         this.loadScreen(new ScreenSelectSurface(this.screenContentManager));
-    messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_GAME);
+		this._lastMenuActivity = Date.now();
+        this._inAttractMode    = false;
+        messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_GAME);
 
       } else if (this.state.equals(Game.STATE_HIGH_SCORES)) {
         this.releaseLevel();
-    if (this.powerUpHUD) this.powerUpHUD.hide();
-    messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_GAME_OVER);
+        if (this.powerUpHUD) this.powerUpHUD.hide();
+        messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_GAME_OVER);
         this.loadScreen(new ScreenHighScores(this.screenContentManager));
-
       }
 
       this.saveGameState();
@@ -269,21 +280,25 @@ startLevel (levelId, firstLevel = false) {
       this.bonusStage.dispose();
       this.bonusStage = null;
     }
+    if (this.bossFight) {
+        this.bossFight.dispose();
+        this.bossFight = null;
+    }
     if (this.levelObject === null) {
       return;
     }
 
     this.isPaused = false;
-  this.isWarping = false;
+    this.isWarping = false;
     if (this.pauseOverlay) this.pauseOverlay.style.display = 'none';
-  if (this.bonusOverlay) this.bonusOverlay.style.display = 'none';
+    if (this.bonusOverlay) this.bonusOverlay.style.display = 'none';
 
     this._disposeAIDroid();
-  this.powerUpSpawner.webGeometry = null;
+    this.powerUpSpawner.webGeometry = null;
     this.powerUpSpawner.clearAll();    
     this.levelObject.release();
     this.levelObject = null;
-  this.shooter = null;
+    this.shooter = null;
     this.levelRenderer.releaseLevel();
   }
 
@@ -461,8 +476,8 @@ startLevel (levelId, firstLevel = false) {
     this.scene.add(this.screenGroup);
     this.powerUpManager = new PowerUpManager();
     this.powerUpSpawner = new PowerUpSpawner(this.scene, null);
-  this.powerUpSpawner.scene = this.scene;
-  this.powerUpHUD = new PowerUpHUD(this.powerUpManager);
+    this.powerUpSpawner.scene = this.scene;
+    this.powerUpHUD = new PowerUpHUD(this.powerUpManager);
     window.addEventListener('powerup:collected', ({ detail: { type } }) => {
       if (type.id === 'AI_DROID' && this.levelObject) {
         this._spawnAIDroid();
@@ -473,15 +488,21 @@ startLevel (levelId, firstLevel = false) {
         this._disposeAIDroid();
       }
     });
+    window.addEventListener('keydown', () => {
+      if (this.state?.equals(Game.STATE_SELECT_SURFACE) && !this._inAttractMode) {
+        this._lastMenuActivity = Date.now();
+      }
+    });
   }
 
   update () {
     //console.log("This shooter value:", this.shooter);
-  requestAnimationFrame(this.update.bind(this));
-  
-    // Track delta time (seconds since last frame) for physics/movement
+    requestAnimationFrame(this.update.bind(this));
+    
     const now = performance.now();
-    const delta = this._lastTime ? (now - this._lastTime) / 1000 : 0;
+    // Clamp to 100ms (10fps floor) — prevents huge jumps when the tab was
+    // backgrounded and requestAnimationFrame paused for seconds/minutes.
+    const delta = this._lastTime ? Math.min(0.1, (now - this._lastTime) / 1000) : 0;
     this._lastTime = now;
 
     if (this.beatGlow === undefined) {
@@ -491,7 +512,7 @@ startLevel (levelId, firstLevel = false) {
         this.baseBloom = this.bloomPass ? this.bloomPass.strength : 0.5; 
     }
   
-  this.beatGlow += (0.0 - this.beatGlow) * 0.10;
+    this.beatGlow += (0.0 - this.beatGlow) * 0.10;
 
     if (this.bloomPass) {
         this.bloomPass.strength = (this.baseBloom + this.beatGlow);
@@ -526,7 +547,9 @@ startLevel (levelId, firstLevel = false) {
       return; 
     }
   
-    if (this.bonusStage) {
+    if (this.bossFight) {
+      this.bossFight.update(delta);
+    } else if (this.bonusStage) {
       this.bonusStage.update(delta);
     } else if (this.levelObject !== null && this.levelRenderer !== null) {
       this.levelObject.update();
@@ -535,7 +558,7 @@ startLevel (levelId, firstLevel = false) {
       // Power-up tick
       this.powerUpSpawner.update(delta);
       this.powerUpManager.update(delta);
-    if (this.aiDroid) this.aiDroid.update(delta);
+      if (this.aiDroid) this.aiDroid.update(delta);
   
       if (this.shooter && this.shooter.laneId !== undefined) {
         // DYNAMIC DEPTH: Uses 0.1 at the rim, but perfectly tracks the ship down the tube!
@@ -581,7 +604,14 @@ startLevel (levelId, firstLevel = false) {
       }
     }
   
-    this.audioManager.update();
+    if (
+      this.state?.equals(Game.STATE_SELECT_SURFACE) &&
+      !this._inAttractMode &&
+      Date.now() - this._lastMenuActivity > 8000
+    ) {
+      this._startAttractMode();
+    }
+	this.audioManager.update();
     this.composer.render();
   }
 
@@ -599,6 +629,11 @@ startLevel (levelId, firstLevel = false) {
     this.screenContentManager.setScore(this.score);
   }
 
+  requestWarp () {
+    // Treat an instant warp exactly like beating the level natively
+    this.levelWonCallback();
+  }
+
   levelWonCallback () {
     if (this.firstLevel && this.levelData.selectable) {
       this.score += this.levelData.scoreBonus;
@@ -611,15 +646,17 @@ startLevel (levelId, firstLevel = false) {
     }
 
     this.firstLevel = false;
-
-    const nextLevel = this.level + 1;
+    const nextLevel       = this.level + 1;
+    const isBossLevel     = this.level % 32 === 0;
     this.releaseLevel();
-    
-    if (this.powerUpManager.hasBonusStageEarned) {
-      this.powerUpManager.resetBonusStageEarned();
-      this._startBonusStageSequence(nextLevel);
+
+    if (isBossLevel) {
+        this._startBossFightSequence(nextLevel);
+    } else if (this.powerUpManager.hasBonusStageEarned) {
+        this.powerUpManager.resetBonusStageEarned();
+        this._startBonusStageSequence(nextLevel);
     } else {
-      this.startLevel(nextLevel);
+        this.startLevel(nextLevel);
     }
   }
 
@@ -678,6 +715,10 @@ startLevel (levelId, firstLevel = false) {
   
   _spawnAIDroid () {
     this._disposeAIDroid();  // Clear any existing one first
+    if (!this.shooter || !this.levelObject) {
+      console.warn('AI Droid: no active shooter/level — skipping spawn.');
+      return;
+    }
     this.aiDroid = new AIDroid(
       this.scene,
       this.levelObject.surface,
@@ -718,12 +759,15 @@ startLevel (levelId, firstLevel = false) {
       window.speechSynthesis.speak(utt);
     } catch (e) { /* TTS unavailable */ }
   
+    const emeralds = Math.min(7, Math.floor((this.level - 1) / 32));
+
     setTimeout(() => {
       this.releaseScreen();
       this.bonusStage    = new BonusStage(
         this.scene,
         this.camera,
-        this._onBonusStageEnd.bind(this)
+        this._onBonusStageEnd.bind(this),
+        emeralds 
       );
       this.isLoadingLevel = false;
     }, 3500);
@@ -843,5 +887,123 @@ startLevel (levelId, firstLevel = false) {
       this.prevGamepadState[i] = isPressed(i);
     }
     this.prevGamepadAxis = gp.axes[0];
+  }
+
+  _startAttractMode () {
+      this._inAttractMode = true;
+      this.screenGroup.remove(this.screenObject);
+      this.screenObject = null;
+      this.loadScreen(new ScreenAttractMode(
+          this.screenContentManager,
+          this.highScores,
+          () => this._endAttractMode()
+      ));
+  }
+  
+  _endAttractMode () {
+    this._inAttractMode    = false;
+    this._lastMenuActivity = Date.now();
+    this.screenGroup.remove(this.screenObject);
+    this.screenObject = null;
+    // Reload menu without resetting lives/score
+    this.populateScreenContentManager();
+    this.loadScreen(new ScreenSelectSurface(this.screenContentManager));
+  }
+
+  _startBossFightSequence (nextLevel) {
+      this._bossFightNextLevel = nextLevel;
+      // Snapshot bonus stage state before the fight starts
+      this._bossFightHasBonus  = this.powerUpManager.hasBonusStageEarned;
+      this.isLoadingLevel      = true;
+      if (this.powerUpHUD) this.powerUpHUD.hide();
+  
+      this.camera.position.set(0, 0, -6);
+      this.camera.lookAt(0, 0, 10);
+  
+      const loopCount   = Math.floor(this.level / 32);
+      const emeraldCount = Math.min(7, loopCount);
+      const colors      = ['BLUE', 'RED', 'YELLOW', 'GREEN', 'ORANGE', 'PURPLE', 'WHITE', 'RAINBOW'];
+      const nextColor   = colors[loopCount % 8];
+  
+      this.loadScreen(new ScreenParodySurface(
+          this.screenContentManager,
+          `CHAOS EMERALD ${emeraldCount} DETECTED. DEFEAT THE SYNTHETIC OVERLORD TO CLAIM IT.`
+      ));
+      this.screenObject.position.z = 0.1;
+  
+      try {
+          window.speechSynthesis.cancel();
+          const utt = new SpeechSynthesisUtterance(
+              `Warning. Synthetic Overlord detected. Defeat it to claim Chaos Emerald ${emeraldCount}.`
+          );
+          utt.rate = 0.85; utt.pitch = 0.9;
+          window.speechSynthesis.speak(utt);
+      } catch (_) {}
+  
+      setTimeout(() => {
+          this.releaseScreen();
+          this.bossFight = new BossFight(
+              this.scene, this.camera,
+              loopCount,
+              (victory, score) => this._onBossFightComplete(victory, score, emeraldCount, nextColor)
+          );
+          this.isLoadingLevel = false;
+      }, 4500);
+  }
+  
+  _onBossFightComplete (victory, score, emeraldCount, nextColor) {
+      if (this._bossFightNextLevel > 256) {
+          if (score > 0) {
+              this.score += score;
+              this.screenContentManager.setScore(this.score);
+          }
+          if (this.bossFight) { this.bossFight.dispose(); this.bossFight = null; }
+          if (this.powerUpHUD) this.powerUpHUD.hide();
+	  
+          this.camera.position.set(0, 0, -6);
+          this.camera.lookAt(0, 0, 10);
+	  
+          this.loadScreen(new ScreenGameEnd(this.screenContentManager));
+          this.screenObject.position.z = 0.1;
+          this.isLoadingLevel = true;  // Never reset — soft-lock
+          return;
+      }
+      if (score > 0) {
+          this.score += score;
+          this.screenContentManager.setScore(this.score);
+      }
+      if (this.bossFight) { this.bossFight.dispose(); this.bossFight = null; }
+  
+      this.camera.position.set(0, 0, -6);
+      this.camera.lookAt(0, 0, 10);
+  
+      const msg = victory
+          ? `CLEARED 32 SURFACES. COLLECTED CHAOS EMERALD ${emeraldCount}. STARTING ${nextColor} PHASE.`
+          : `OVERLORD SURVIVED. CHAOS EMERALD ${emeraldCount} LOST. STARTING ${nextColor} PHASE ANYWAY.`;
+  
+      this.loadScreen(new ScreenParodySurface(this.screenContentManager, msg));
+      this.screenObject.position.z = 0.1;
+  
+      try {
+          window.speechSynthesis.cancel();
+          const utt = new SpeechSynthesisUtterance(
+              victory
+                  ? `Cleared 32 surfaces. Collected Chaos Emerald ${emeraldCount}. Starting ${nextColor} Phase.`
+                  : `Overlord survived. Starting ${nextColor} Phase.`
+          );
+          utt.rate = 0.85; utt.pitch = 0.9;
+          window.speechSynthesis.speak(utt);
+      } catch (_) {}
+  
+      setTimeout(() => {
+          this.releaseScreen();
+          if (this._bossFightHasBonus) {
+              this.powerUpManager.resetBonusStageEarned();
+              this._startBonusStageSequence(this._bossFightNextLevel);
+          } else {
+              this.isLoadingLevel = false;
+              this.startLevel(this._bossFightNextLevel);
+          }
+      }, 4500);
   }
 }

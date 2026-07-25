@@ -142,7 +142,9 @@ export default class ProjectileManager extends FIFOManager {
       
       if (projectile.isMissile && projectile.alive) {
           
-          // FIX 1: Initialize a secret decimal tracker the very first time!
+          // Dynamically read the true lane count of the current surface!
+          const laneCount = this.surfaceObjectsManager.surface.lanesAmount;
+
           if (projectile.exactLane === undefined) {
               projectile.exactLane = projectile.laneId;
           }
@@ -161,20 +163,18 @@ export default class ProjectileManager extends FIFOManager {
           });
       
           if (nearestTarget) {
-              // Calculate difference using the exact decimal
               let diff = nearestTarget.laneId - projectile.exactLane;
               
-              if (diff > 8) diff -= 16;
-              if (diff < -8) diff += 16;
+              // Use laneCount instead of hardcoded 8s and 16s!
+              if (diff > laneCount / 2) diff -= laneCount;
+              if (diff < -laneCount / 2) diff += laneCount;
               
-              // Smoothly steer our secret tracker
               projectile.exactLane += diff * steeringSpeed;
               
-              if (projectile.exactLane < 0) projectile.exactLane += 16;
-              if (projectile.exactLane >= 16) projectile.exactLane -= 16;
+              if (projectile.exactLane < 0) projectile.exactLane += laneCount;
+              if (projectile.exactLane >= laneCount) projectile.exactLane -= laneCount;
 
-              // FIX 2: Give the core engine a perfectly rounded whole number!
-              projectile.laneId = Math.round(projectile.exactLane) % 16;
+              projectile.laneId = Math.round(projectile.exactLane) % laneCount;
           }
       }
 

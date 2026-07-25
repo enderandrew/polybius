@@ -79,7 +79,7 @@ export default class Projectile extends SurfaceObject {
    * @return {number} index of colliding object or -1
    */
   detectCollision (laneObjects) {
-    if (!this.alive || this.isExploding) {
+    if (!this.alive || this.isExploding || !laneObjects) {
       return -1;
     }
 

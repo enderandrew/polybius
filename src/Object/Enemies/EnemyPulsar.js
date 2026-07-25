@@ -60,7 +60,7 @@ export default class EnemyPulsar extends Enemy {
       );
 
       if (this.inState(EnemyPulsar.STATE_PULSATING)) {
-        this.surface.shortLane(this.laneId);
+        this.getShortedLanes().forEach(lane => this.surface.shortLane(lane));
       }
 
       this.unsetFlag(EnemyPulsar.FLAG_MOVING_TARGET_CHOSEN);
@@ -68,7 +68,7 @@ export default class EnemyPulsar extends Enemy {
     } else if (this.inState(EnemyPulsar.STATE_WARNING)) {
       this.setState(EnemyPulsar.STATE_PULSATING);
 
-      this.surface.shortLane(this.laneId);
+      this.getShortedLanes().forEach(lane => this.surface.shortLane(lane));
 
     } else if (this.inState(EnemyPulsar.STATE_PULSATING)) {
       this.setState(
@@ -80,7 +80,7 @@ export default class EnemyPulsar extends Enemy {
       );
 
       if (!this.inState(EnemyPulsar.STATE_PULSATING)) {
-        this.surface.unshortLane(this.laneId);
+        this.getShortedLanes().forEach(lane => this.surface.unshortLane(lane));
       }
 
     } else if (this.inState(EnemyPulsar.STATE_ROTATING_BEGIN)) {
@@ -173,13 +173,17 @@ export default class EnemyPulsar extends Enemy {
     this.hittable = false;
   }
 
+  getShortedLanes() {
+    return [this.laneId]; // The default pulsar just returns its own lane
+  }
+
   disappear () {
     if (this.inState(EnemyPulsar.STATE_EXPLODING) || this.inState(EnemyPulsar.STATE_DEAD)) {
       return;
     }
 
     if (this.inState(EnemyPulsar.STATE_PULSATING)) {
-      this.surface.unshortLane(this.laneId);
+      this.getShortedLanes().forEach(lane => this.surface.unshortLane(lane));
     }
 
     this.setState(EnemyPulsar.STATE_DISAPPEARING);
@@ -192,7 +196,7 @@ export default class EnemyPulsar extends Enemy {
     }
 
     if (this.inState(EnemyPulsar.STATE_PULSATING)) {
-      this.surface.unshortLane(this.laneId);
+      this.getShortedLanes().forEach(lane => this.surface.unshortLane(lane));
     }
 
     this.setState(EnemyPulsar.STATE_EXPLODING);

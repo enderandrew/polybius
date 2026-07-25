@@ -20,12 +20,12 @@ export default class Enemy extends ShootingSurfaceObject {
    * @param {string} type
    */
   constructor (surface, projectileManager, rewardCallback, laneId, zPosition, type, game) {
-    super(surface, projectileManager, laneId, type);
+    super(surface, projectileManager, laneId, type, game);
     this.zPosition = zPosition;
     this.rewardCallback = rewardCallback;
     this.shootTimeoutMs = Enemy.SHOOT_TIMEOUT_MS;
-  this.game = game;
-  this.isStrong = Math.random() < 0.10;
+    this.game = game;
+    this.isStrong = Math.random() < 0.10;
     this.hitPoints = this.isStrong ? 2 : 1;
     this.hasShield = this.isStrong;
 

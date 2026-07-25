@@ -16,6 +16,7 @@ export default class EnemyTanker extends Enemy {
   // Modern ES class fields replacing JSDoc @var comments
   enemySpawnFunction;
   zSpeed;
+  _hasReleasedEnemies = false;
 
   /**
    * @param {Surface} surface
@@ -27,16 +28,13 @@ export default class EnemyTanker extends Enemy {
    * @param {number} zPosition
    */
   constructor (surface, projectileManager, enemySpawnFunction, rewardCallback, type, laneId = 0, zPosition = 1, game) {
-  super(surface, projectileManager, rewardCallback, laneId, zPosition, type, game);
-
+    super(surface, projectileManager, rewardCallback, laneId, zPosition, type, game);
     this.enemySpawnFunction = enemySpawnFunction;
-
     this.firstLevel = 3;
     this.valueInPoints = 100;
-
     this.zSpeed = -randomRange(3, 6) * 0.001;
     this.setState(EnemyTanker.STATE_IDLE);
-  this.game = game;
+    //this.game = game;
   }
 
   updateState () {
@@ -66,8 +64,8 @@ export default class EnemyTanker extends Enemy {
     }
 
     if (this.zPosition <= 0) {
-      this.alive = false;
-      this.createEnemies();
+        this.alive = false;
+        this._releaseEnemiesOnce();
     }
 
     if (this.inState(EnemyTanker.STATE_SHOOTING) && this.isFlagNotSet(EnemyTanker.FLAG_SHOOTS_FIRED)) {
@@ -83,7 +81,7 @@ export default class EnemyTanker extends Enemy {
   hitByProjectile () {
     this.reward = true;
     this.die();
-    this.createEnemies();
+    this._releaseEnemiesOnce();
   }
 
   disappear () {
@@ -106,5 +104,11 @@ export default class EnemyTanker extends Enemy {
 
   createEnemies () {
     throw new Error('Method \'createEnemies()\' must be implemented.');
+  }
+
+  _releaseEnemiesOnce () {
+      if (this._hasReleasedEnemies) return;
+      this._hasReleasedEnemies = true;
+      this.createEnemies();
   }
 }

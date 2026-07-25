@@ -17,6 +17,7 @@ export default class SurfaceObject {
   static TYPE_STEALTH_FLIPPER = 'stealth_flipper';
   static TYPE_DEMON_HEAD = 'demon_head';
   static TYPE_DEMON_HORN = 'demon_horn';
+  static TYPE_MIRROR = 'mirror';
 
   // Modern ES class fields replacing JSDoc @var comments
   surface;

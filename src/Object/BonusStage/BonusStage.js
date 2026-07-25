@@ -73,11 +73,13 @@ export class BonusStage {
    * @param {THREE.Scene}   scene
    * @param {THREE.Camera}  camera
    * @param {Function}      onComplete  - (totalScore: number, ringsCleared: number) => void
+   * @param {number}        chaosEmeralds - Current 32-level loop iteration
    */
-  constructor (scene, camera, onComplete) {
+  constructor (scene, camera, onComplete, chaosEmeralds = 0) {
     this.scene      = scene;
     this.camera     = camera;
     this.onComplete = onComplete;
+    this.chaosEmeralds = chaosEmeralds;
 
     // Player state
     this.playerX    = 0;
@@ -201,7 +203,9 @@ export class BonusStage {
         this.bgm.setBuffer(buffer);
         this.bgm.setLoop(true);
         this.bgm.setVolume(0.6);
-        if (this.isActive) this.bgm.play();
+        if (this.isActive && !this.bgm.isPlaying) {
+            this.bgm.play();
+        }
     });
   }
 
@@ -344,11 +348,19 @@ export class BonusStage {
     this._hudRings  = document.createElement('div');
     this._hudScore  = document.createElement('div');
     this._hudSpeed  = document.createElement('div');
+    this._hudChao   = document.createElement('div'); 
+
     this._hudSpeed.style.color  = '#88ffaa';
     this._hudSpeed.style.fontSize = '11px';
     this._hudSpeed.style.marginTop = '4px';
+    
+    // Give the emerald tracker a distinct gold/yellow color to stand out
+    this._hudChao.style.color = '#ffff00';
+    this._hudChao.style.textShadow = '0 0 8px #ffff00';
+    this._hudChao.style.fontSize = '11px';
+    this._hudChao.style.marginTop = '4px';
 
-    this.hud.append(this._hudRings, this._hudScore, this._hudSpeed);
+    this.hud.append(this._hudRings, this._hudScore, this._hudSpeed, this._hudChao);
     document.getElementById('screen').appendChild(this.hud);
     this._updateHUD();
   }
@@ -358,6 +370,7 @@ export class BonusStage {
     this._hudRings.textContent = `RINGS: ${this.ringsCleared} / ${BonusStage.RING_COUNT}`;
     this._hudScore.textContent = `BONUS: +${this.totalScore.toLocaleString()}`;
     this._hudSpeed.textContent = `SPEED: ${this.speed.toFixed(1)}`;
+    this._hudChao.textContent  = `CHAOS EMERALDS: ${this.chaosEmeralds}`; // <-- Display the count!
   }
 
   // ── Private — update ───────────────────────────────────────────────────────

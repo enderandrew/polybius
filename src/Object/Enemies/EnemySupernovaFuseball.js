@@ -56,35 +56,32 @@ export default class EnemySupernovaFuseball extends EnemyFuseball {
   // EnemyFuseball is already imported (via extends) — no circular dependency.
   // ---------------------------------------------------------------------------
   die () {
-    // Guard: EnemyFuseball.die() → STATE_EXPLODING → updateState() → STATE_DEAD
-    // calls die() again on transition.  Only split on the first call.
     if (this._hasSplit || this.inState(EnemyFuseball.STATE_DEAD)) {
       super.die();
       return;
     }
-
+  
     this._hasSplit = true;
-
+  
     if (this.game?.levelObject) {
-      const mgr = this.game.levelObject.surfaceObjectsManager;
-      const pm  = this.game.levelObject.projectileManager;
-
-      // Adjacent lanes, wrapping around the tube correctly.
+      const mgr  = this.game.levelObject.surfaceObjectsManager;
+      const zPos = this.zPosition;   // Capture before deferred execution
+  
       const leftLane  = this.surface.getActualLaneIdFromProjectedMovement(this.laneId - 1);
       const rightLane = this.surface.getActualLaneIdFromProjectedMovement(this.laneId + 1);
-
+  
       [leftLane, rightLane].forEach(lane => {
-        mgr.addEnemy(new EnemyFuseball(
+        mgr.queueSpawn(() => mgr.addEnemy(new EnemyFuseball(
           this.surface,
-          pm,
+          this.game.levelObject.projectileManager,
           this.rewardCallback,
           lane,
-          this.zPosition,
+          zPos,
           this.game
-        ));
+        )));
       });
     }
-
+  
     super.die();
   }
 }

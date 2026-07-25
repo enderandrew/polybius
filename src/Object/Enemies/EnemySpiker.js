@@ -29,7 +29,7 @@ export default class EnemySpiker extends Enemy {
   constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
     super(surface, projectileManager, rewardCallback, laneId, zPosition, SurfaceObject.TYPE_SPIKER, game);
 
-    this.firstLevel = 4;
+    this.firstLevel = 5;
     this.valueInPoints = 150;
 
     this.zSpeed = -randomRange(3, 6) * 0.001;
