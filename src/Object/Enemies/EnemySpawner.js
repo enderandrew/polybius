@@ -330,15 +330,23 @@ export default class EnemySpawner {
   // ── Type-specific factories ───────────────────────────────────────────────
 
   _makeFlipperFamily (VariantClass, lane, zPosition) {
-    const Class  = VariantClass ?? EnemyFlipper;
-    const enemy  = this.surfaceObjectsManager.addEnemy(
-      new Class(
-        this.surfaceObjectsManager.surface,
-        this.projectileManager,
-        this.rewardCallback,
-        lane, zPosition, this.game
-      )
-    );
+    const S  = this.surfaceObjectsManager.surface;
+    const PM = this.projectileManager;
+    const RC = this.rewardCallback;
+    const G  = this.game;
+
+    // EnemyFlipper's own constructor takes an explicit `type` parameter
+    // (defaulted to Enemy.TYPE_FLIPPER) positioned *before* `game`:
+    //   (surface, projectileManager, rewardCallback, laneId, zPosition, type, game)
+    // Its variant subclasses (MutantFlipper, StealthFlipper, DemonHead) don't
+    // expose that slot — they hardcode the type internally and take:
+    //   (surface, projectileManager, rewardCallback, laneId, zPosition, game)
+    // Calling the base class with the 6-arg variant shape silently shifts
+    // `game` into the `type` slot, corrupting `enemy.type`. Match each shape.
+    const enemy = VariantClass
+      ? this.surfaceObjectsManager.addEnemy(new VariantClass(S, PM, RC, lane, zPosition, G))
+      : this.surfaceObjectsManager.addEnemy(new EnemyFlipper(S, PM, RC, lane, zPosition, Enemy.TYPE_FLIPPER, G));
+
     // Level 1: flippers cannot flip — ease the player in
     if (this.currentLevel === 1) enemy.cannotFlip();
     return enemy;
