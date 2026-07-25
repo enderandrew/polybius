@@ -61,6 +61,7 @@ export class AIDroid {
   /** Call once per game tick. delta is elapsed seconds since last frame. */
   update (delta) {
     if (!this.isAlive) return;
+	if (!this.shooter || !this.surface) return;
 
     // Animate
     this._bobTime       += delta * AIDroid.BOB_SPEED;

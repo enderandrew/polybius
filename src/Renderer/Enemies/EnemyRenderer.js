@@ -1,6 +1,7 @@
 import { BufferGeometry, Group, IcosahedronGeometry, Line, MeshBasicMaterial, Mesh, Vector2, Vector3, Box2, AdditiveBlending } from 'three';
 import SurfaceObjectWrapper from '@/Renderer/Surface/SurfaceObjectWrapper';
 import enemies from '@/Assets/Enemies';
+import Enemy from '@/Object/Enemies/Enemy';  
 
 export default class EnemyRenderer extends SurfaceObjectWrapper {
   // Removed legacy @readonly decorator
@@ -56,6 +57,24 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
           child.material.color.offsetHSL(0.10, 0.15, 0.05);    // Slight blue shift
         } else if (this.object.isVoid) {
           child.material.color.offsetHSL(0.22, 0.20, -0.08);   // Purple, slightly darker
+        } else if (this.object.isMega) {
+          child.material.color.setHex(0xffff00);               // Bright Yellow
+        } else if (this.object.isInverse) {
+          child.material.color.setHex(0x00ffff);               // Cyan
+        } else if (this.object.isChaos) {
+          child.material.color.setHex(0xff00ff);               // Magenta
+        } else if (this.object.isPhantom) {
+          // Tanker: more visible — the horror is what it releases, not the tanker itself
+          // Spiker: near-invisible — finding the spike by dying is the horror
+          const opacity = this.object.type === Enemy.TYPE_FLIPPER_TANKER ? 0.55 : 0.28;
+          child.material.opacity = opacity;
+          child.material.color.offsetHSL(0.18, 0.15, -0.05);   // Purple-grey
+        } else if (this.object.isBomb) {
+          child.material.color.offsetHSL(-0.06, 0.35, 0.08);   // Deep orange-red
+        } else if (this.object.isHydra) {
+          child.material.color.offsetHSL(-0.08, 0.30, 0.10);   // Amber
+        } else if (this.object.isOverdrive) {
+          child.material.color.offsetHSL(0.15, 0.25, 0.18);    // Electric blue-white
         } else if (isStrong) {
           child.material.color.offsetHSL(0.5, 0, 0);
         }
@@ -122,6 +141,14 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
         this.modelGroup.children.forEach(child => {
             if (child.material) child.material.opacity = this.object.opacity;
         });
+    }
+	
+    // Bomb Tanker pulses with warning urgency while alive
+    if (this.object.isBomb && this.modelGroup) {
+      const pulse = 0.65 + 0.35 * Math.abs(Math.sin(performance.now() / 350));
+      this.modelGroup.children.forEach(child => {
+        if (child.material) child.material.opacity = pulse;
+      });
     }
 
     if (this.shieldMesh && this.object) {
@@ -224,11 +251,13 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
       // Save the original color so we can reset it when the enemy is pooled
       material.userData.originalColor = originalColor; 
 
+      const flipY = this.object.isDemonHead || this.object.isDemonHorn;
+      
       let geometry = new BufferGeometry().setFromPoints(
         xyArray
-          .map(xyArray => new Vector2(xyArray.x, xyArray.y))
-          .map(vector2 => vector2.sub(center))
-          .map(vector2 => new Vector3(vector2.x, vector2.y, 0))
+          .map(p => new Vector2(p.x, p.y))
+          .map(v => v.sub(center))
+          .map(v => new Vector3(v.x, flipY ? -v.y : v.y, 0))
       );
 
       this.modelGroup.add(new Line(geometry, material));

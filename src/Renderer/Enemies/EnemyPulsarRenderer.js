@@ -1,6 +1,6 @@
+import { BufferGeometry, Group, Line, MeshBasicMaterial, Vector2, Vector3 } from 'three';
 import EnemyRenderer from '@/Renderer/Enemies/EnemyRenderer';
 import EnemyPulsar from '@/Object/Enemies/EnemyPulsar';
-import { MeshBasicMaterial, Vector2 } from 'three';
 import Enemy from '@/Object/Enemies/Enemy';
 
 export default class EnemyPulsarRenderer extends EnemyRenderer {
@@ -123,5 +123,77 @@ export default class EnemyPulsarRenderer extends EnemyRenderer {
 
       this.colorHelperPrevState = this.object.state.id;
     }
+  }
+
+  loadModel () {
+    super.loadModel();
+
+    this._chaosGlitch = this._buildChaosGlitch();
+    this._chaosGlitch.visible = false;
+    this.add(this._chaosGlitch);
+  }
+
+  setObjectRef (object) {
+    super.setObjectRef(object);
+    this._applyVariantVisuals();
+  }
+
+  setVisualsToNormal () {
+    super.setVisualsToNormal();
+    this._applyVariantVisuals();
+  }
+
+  _applyVariantVisuals () {
+    if (!this.object) return;
+
+    if (this._chaosGlitch) this._chaosGlitch.visible = !!this.object.isChaos;
+
+    if (this.modelGroup) {
+      if (this.object.isMega) {
+        // Stretch it massively across the X-axis so it physically touches adjacent lanes!
+        this.modelGroup.scale.set(2.2, 1.0, 1.0); 
+      } else if (this.object.isInverse) {
+        // Flip the model backward on the Z-axis, since it's flying in reverse
+        this.modelGroup.scale.set(1.0, 1.0, -1.0); 
+      } else {
+        this.modelGroup.scale.setScalar(1.0);
+      }
+    }
+  }
+
+  rotate () {
+    super.rotate();
+    
+    // Tumble the Chaos Pulsar's glitch aura randomly
+    if (this._chaosGlitch && this._chaosGlitch.visible) {
+      this._chaosGlitch.rotation.x += 0.08;
+      this._chaosGlitch.rotation.y -= 0.05;
+      this._chaosGlitch.rotation.z += 0.12;
+      
+      // Flash opacity rapidly to look "broken"
+      const t = performance.now();
+      this._chaosGlitch.children.forEach(child => {
+         child.material.opacity = 0.2 + (Math.random() * 0.6);
+      });
+    }
+  }
+
+  _buildChaosGlitch () {
+    const group = new Group();
+    const radius = 0.4;
+    // Creates a jagged, sharp diamond cage
+    const pts = [
+        new Vector3(0, radius, 0), new Vector3(radius, 0, 0),
+        new Vector3(0, -radius, 0), new Vector3(-radius, 0, 0),
+        new Vector3(0, radius, 0), new Vector3(0, 0, radius),
+        new Vector3(0, -radius, 0), new Vector3(0, 0, -radius),
+        new Vector3(0, radius, 0)
+    ];
+    const cage = new Line(
+        new BufferGeometry().setFromPoints(pts),
+        new MeshBasicMaterial({ color: 0xff00ff, transparent: true })
+    );
+    group.add(cage);
+    return group;
   }
 }

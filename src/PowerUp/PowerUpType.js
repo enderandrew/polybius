@@ -172,7 +172,7 @@ export const PowerUpType = Object.freeze({
     shape:       'warp',              // Spinning double-arrow
     duration:    null,
     isWeapon:    false,
-    scoreBonus:  5000,
+    scoreBonus:  3000,
     warpsToNext: true,
     dropWeight:  1,                   // Very rare
     description: '+5,000 points and warp to next stage',
