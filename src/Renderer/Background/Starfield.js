@@ -1,7 +1,6 @@
 import { Group, BufferGeometry, BufferAttribute, PointsMaterial, Points, MathUtils } from 'three';
 
 export default class Starfield extends Group {
-  // Modern ES class fields guarantee these are never undefined!
   numStars;
   size;
   speed;

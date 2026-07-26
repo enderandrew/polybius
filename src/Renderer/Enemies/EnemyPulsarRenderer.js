@@ -4,14 +4,12 @@ import EnemyPulsar from '@/Object/Enemies/EnemyPulsar';
 import Enemy from '@/Object/Enemies/Enemy';
 
 export default class EnemyPulsarRenderer extends EnemyRenderer {
-  // Removed legacy @readonly decorators
   static NEUTRAL_COLOR = 0x00ffff;
   static PULSE_COLOR = 0xffffff;
 
   static BASE_Y_SCALE = 0.2;
   static PULSE_Y_SCALE = 0.8;
 
-  // Modern ES class fields replacing JSDoc @var comments
   colorHelperPrevState = -1;
 
   /**

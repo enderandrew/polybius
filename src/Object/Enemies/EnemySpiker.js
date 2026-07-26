@@ -4,7 +4,6 @@ import SurfaceObject from '@/Object/Surface/SurfaceObject';
 import randomRange from '@/utils/randomRange';
 
 export default class EnemySpiker extends Enemy {
-  // Removed legacy @readonly decorators
   static TURNAROUND_HEIGHT = 0.1;
 
   static STATE_IDLE = new State(100, 1, 'idle');
@@ -16,7 +15,6 @@ export default class EnemySpiker extends Enemy {
   static FLAG_REACHED_TOP = 0x1;
   static FLAG_SHOOTS_FIRED = 0x2;
 
-  // Modern ES class fields
   zSpeed;
 
   /**

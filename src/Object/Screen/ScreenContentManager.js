@@ -1,7 +1,6 @@
 import ContentManager from '@/Helpers/ContentManager';
 
 export default class ScreenContentManager extends ContentManager {
-  // Removed legacy @readonly decorators
   static KEY_PLAYER_ID = 'player_id';
   static KEY_SCORE = 'score';
   static KEY_HIGHEST_SCORE = 'highest_score';

@@ -5,10 +5,8 @@ import ProjectileRendererManager from '@/Renderer/Surface/ProjectileRendererMana
 import EnemyRendererManager from '@/Renderer/Surface/EnemyRendererManager';
 
 export default class LevelRenderer extends Group {
-  // Removed legacy @readonly decorator
   static CAMERA_TO_SHOOTER_DISTANCE = 6;
 
-  // Modern ES class fields replacing JSDoc @var comments
   level = null;
   camera;
   surfaceRenderer;

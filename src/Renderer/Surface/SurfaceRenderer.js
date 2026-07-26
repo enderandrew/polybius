@@ -3,13 +3,11 @@ import Surface from '@/Object/Surface/Surface';
 import Angle from '@/utils/Angle';
 
 export default class SurfaceRenderer extends Group {
-  // Removed legacy @readonly decorators
   static WIREFRAME_LINE_WIDTH = 2;
   static ACTIVE_LANE_COLOR = 0xffff00;
   static DEFAULT_LANE_COLOR = [0x0000ff, 0xff0000, 0x00ff00];
   static SHORTED_LANE_COLOR = 0xffffff;
 
-  // Modern ES class fields replacing JSDoc @var comments
   type = 'Group';
   surface;
   level;

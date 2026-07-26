@@ -3,7 +3,6 @@ import Enemy from '@/Object/Enemies/Enemy';
 import { BufferGeometry, Line, MeshBasicMaterial, Vector3 } from 'three';
 
 export default class EnemySpikeRenderer extends EnemyRenderer {
-  // Removed legacy @readonly decorator
   static SPIKE_COLOR = 0x00ff00;
 
   /**

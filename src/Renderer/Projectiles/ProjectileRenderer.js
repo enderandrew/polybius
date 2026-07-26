@@ -3,7 +3,6 @@ import SurfaceObjectWrapper from '@/Renderer/Surface/SurfaceObjectWrapper';
 import Projectile from '@/Object/Projectiles/Projectile';
 
 export default class ProjectileRenderer extends SurfaceObjectWrapper {
-  // Removed legacy @readonly decorators
   static PROJECTILE_SIZE = 0.1;
   static PROJECTILE_SHOOTER_COLOR = 0xffff00;
   static PROJECTILE_ENEMY_COLOR = 0xff00ff;

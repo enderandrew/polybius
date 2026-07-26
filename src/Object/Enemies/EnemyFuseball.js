@@ -4,7 +4,6 @@ import randomRange from '@/utils/randomRange';
 import State from '@/Object/State';
 
 export default class EnemyFuseball extends Enemy {
-  // Removed all legacy @readonly decorators
   static MIN_Z_POSITION = 0.1;
   static MAX_Z_POSITION = 0.9;
   static MIN_AMOUNT_OF_LANE_CHANGES_UNTIL_TOP = 2;
@@ -27,7 +26,6 @@ export default class EnemyFuseball extends Enemy {
   static FLAG_IMMUNE = 0x100;
   static FLAG_REACHED_SHOOTER = 0x200;
 
-  // Modern ES class fields replacing JSDoc comments
   zBase = 0;
   zTarget = 0;
   laneChanges = 0;

@@ -7,7 +7,6 @@ import EnemyFuseball from '@/Object/Enemies/EnemyFuseball';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
 export default class Shooter extends ShootingSurfaceObject {
-  // Removed legacy @readonly decorators
   static LANE_CHANGE_TIMEOUT_MS = 50;
   static SHOOT_TIMEOUT_MS = 80;
   static BURST_PENALTY_MS = 500;
@@ -31,7 +30,6 @@ export default class Shooter extends ShootingSurfaceObject {
   static FLAG_ITS_ALREADY_TOO_LATE = 0x1;
   static FLAG_SUPERZAPPER_USED = 0x2;
 
-  // Modern ES class fields replacing JSDoc @var comments
   penaltyTimestamp = 0;
   jumpTimestamp = 0;
   lastLaneChangeTimestamp;

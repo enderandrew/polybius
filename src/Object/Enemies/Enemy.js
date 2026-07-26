@@ -2,10 +2,8 @@ import ShootingSurfaceObject from '@/Object/Surface/ShootingSurfaceObject';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
 export default class Enemy extends ShootingSurfaceObject {
-  // Removed legacy @readonly decorator
   static SHOOT_TIMEOUT_MS = 100;
 
-  // Modern ES class fields replacing JSDoc @var comments
   firstLevel;
   valueInPoints;
   rewardCallback;

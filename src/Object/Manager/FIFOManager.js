@@ -1,8 +1,6 @@
 export default class FIFOManager {
-  // Removed legacy @readonly decorator
   static GARBAGE_COLLECTION_TIMEOUT_MS = 200;
 
-  // Modern ES class fields replacing JSDoc @var comments
   lastGarbageCollectorExecutionTimestamp = 0;
   forceMapsUpdate = false;
 

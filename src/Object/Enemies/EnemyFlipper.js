@@ -3,7 +3,6 @@ import randomRange from '@/utils/randomRange';
 import State from '@/Object/State';
 
 export default class EnemyFlipper extends Enemy {
-  // Removed all legacy @readonly decorators
   static STATE_IDLE = new State(100, 1, 'idle');
   static STATE_ROTATING_BEGIN = new State(175, 0.2, 'rotate_begin');
   static STATE_ROTATING_END = new State(175, 1, 'rotate_end');
@@ -23,7 +22,6 @@ export default class EnemyFlipper extends Enemy {
   static FLAG_REACHED_SHOOTER = 0x80;
   static FLAG_CANNOT_FLIP = 0x100;
 
-  // Modern ES class fields
   firstLevel;
   valueInPoints;
   zSpeed;

@@ -200,14 +200,19 @@ export default class ScreenSelectSurface extends Canvas3d {
       return;
     }
 
-    let boundingBox2 = new Box2().setFromPoints(surface.coords);
+    // Convert raw {x, y} coordinates to Three.js Vector2 objects
+    let vectorCoords = surface.coords.map(c => new Vector2(c.x, c.y));
+    let boundingBox2 = new Box2().setFromPoints(vectorCoords);
+    
+    // Calculate center ONCE, before the loop
+    boundingBox2.getCenter(centerTarget);
+
     this.context.beginPath();
 
-    for (let i = 0; i < surface.coords.length + (surface.isOpen ? 0 : 1); i++) {
-      boundingBox2.getCenter(centerTarget);
-
-      let cx = x + (centerTarget.x - surface.coords[i % 16].x) * unit;
-      let cy = y + (centerTarget.y - surface.coords[i % 16].y) * unit;
+    const len = surface.coords.length;
+    for (let i = 0; i < len + (surface.isOpen ? 0 : 1); i++) {
+      let cx = x + (centerTarget.x - surface.coords[i % len].x) * unit;
+      let cy = y + (centerTarget.y - surface.coords[i % len].y) * unit;
 
       if (i !== 0) {
         this.context.lineTo(cx, cy);

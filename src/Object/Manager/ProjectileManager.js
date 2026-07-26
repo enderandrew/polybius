@@ -2,11 +2,9 @@ import Projectile from '@/Object/Projectiles/Projectile';
 import FIFOManager from '@/Object/Manager/FIFOManager';
 
 export default class ProjectileManager extends FIFOManager {
-  // Removed legacy @readonly decorators
   static MAX_AMOUNT_OF_SHOOTER_PROJECTILES = 48;
   static MAX_AMOUNT_OF_ENEMY_PROJECTILES = 32;
 
-  // Modern ES class fields replacing JSDoc @var comments
   surfaceObjectsManager;
   shooterProjectiles = [];
   enemyProjectiles = [];

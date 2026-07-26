@@ -414,7 +414,6 @@ export default class ScreenParodySurface extends Canvas3d {
     "YOUR THOUGHTS WILL BE AVAILABLE AS DLC.",
   ];
 
-  // Modern ES class fields
   currentMessage = '';
 
   constructor (screenContentManager, customMessage = null, width = 8, height = 8, canvasResX = 1024, canvasResY = 1024) {

@@ -1,10 +1,8 @@
 import { Vector2, Vector3, Box2 } from 'three';
 
 export default class Surface {
-  // Removed legacy @readonly decorator for Vite compatibility
   static LINES_AMOUNT = 16;
 
-  // Modern ES class fields replacing JSDoc @var
   id;
   name;
   isOpen;

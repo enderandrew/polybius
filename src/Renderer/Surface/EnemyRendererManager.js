@@ -128,4 +128,23 @@ export default class EnemyRendererManager extends Group {
         throw new Error(`Can't find constructor for enemy of type ${enemy.type}`);
     }
   }
+
+  /**
+   * Safely disposes of all pooled and active renderers when the level ends.
+   */
+  dispose () {
+    // Trigger the custom dispose on every renderer we created
+    this.enemyRenderers.forEach(renderer => {
+      if (typeof renderer.dispose === 'function') {
+        renderer.dispose();
+      }
+    });
+
+    // Clear our tracking arrays
+    this.enemyRenderers = [];
+    this.enemyRenderersAvailabilityMap = [];
+
+    // Remove all children from this Three.js Group
+    this.clear();
+  }
 }

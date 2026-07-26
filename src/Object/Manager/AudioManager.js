@@ -2,7 +2,6 @@ import { Audio, AudioLoader } from 'three';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
 export default class AudioManager {
-  // Removed legacy @readonly decorators
   static SOUND_1UP = '1up';
   static SOUND_ACHIEVEMENT = 'achievement';
   static SOUND_BIGFOOT = 'bigfoot';
@@ -30,7 +29,6 @@ export default class AudioManager {
 
   static SOUND_VOLUME = 0.4;
 
-  // Modern ES class fields replacing JSDoc comments
   audioListener;
   audio = [];
   audioBuffer;

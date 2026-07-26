@@ -3,7 +3,6 @@ import enemies from '@/Assets/Enemies';
 import explosions from '@/Assets/Explosions';
 
 export default class SurfaceObjectWrapper extends Group {
-  // Modern ES class fields replacing JSDoc @var comments
   object;
   surface;
   modelGroup;

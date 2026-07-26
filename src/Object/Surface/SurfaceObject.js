@@ -2,7 +2,6 @@ import ObjectIdManager from '@/Helpers/UniqueIdFactory';
 import State from '@/Object/State';
 
 export default class SurfaceObject {
-  // Removed legacy @readonly decorators
   static TYPE_SHOOTER = 'shooter';
   static TYPE_PULSAR = 'pulsar';
   static TYPE_SPIKER = 'spiker';
@@ -19,7 +18,6 @@ export default class SurfaceObject {
   static TYPE_DEMON_HORN = 'demon_horn';
   static TYPE_MIRROR = 'mirror';
 
-  // Modern ES class fields replacing JSDoc @var comments
   surface;
   objectId;
   laneId = 0;

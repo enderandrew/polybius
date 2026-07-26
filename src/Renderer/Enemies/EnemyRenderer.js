@@ -5,11 +5,11 @@ import Enemy from '@/Object/Enemies/Enemy';
 
 const scratchVector = new Vector2();
 
+const sharedGeometries = new Map();
+
 export default class EnemyRenderer extends SurfaceObjectWrapper {
-  // Removed legacy @readonly decorator
   static EXPLOSION_ROTATION_SPEED = 0.03;
 
-  // Modern ES class fields replacing JSDoc @var comments
   geometry;
   materials;
   positionBase = new Vector2();
@@ -241,62 +241,97 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     if (this.object.isDemonHead) lookupType = 'demon_head';
     if (this.object.isDemonHorn) lookupType = 'demon_horn';
 
-    let enemyDataset = enemies.find(enemy => enemy.name === lookupType);
-    
-    if (enemyDataset === undefined) {
-      throw new Error('Unknown object: ' + lookupType);
+    if (!sharedGeometries.has(lookupType)) {
+      let enemyDataset = enemies.find(enemy => enemy.name === lookupType);
+      
+      if (enemyDataset === undefined) {
+        throw new Error('Unknown object: ' + lookupType);
+      }
+
+      let flatCoords = [].concat(...enemyDataset.coords);
+      let vectorPoints = flatCoords.map(p => new Vector2(p.x, p.y));
+
+      let boundingBox = new Box2().setFromPoints(vectorPoints);
+      let center = new Vector2();
+      boundingBox.getCenter(center);
+      
+      let size = new Vector2();
+      boundingBox.getSize(size);
+      let shieldRadius = Math.max(size.x, size.y) * 0.75;
+
+      const flipY = lookupType === 'demon_head' || lookupType === 'demon_horn';
+
+      // Map out the BufferGeometries for the lines
+      const lineGeometries = enemyDataset.coords.map(xyArray => {
+        return new BufferGeometry().setFromPoints(
+          xyArray
+            .map(p => new Vector2(p.x, p.y))
+            .map(v => v.sub(center))
+            .map(v => new Vector3(v.x, flipY ? -v.y : v.y, 0))
+        );
+      });
+
+      // Map out the original colors so instances know what material to build
+      const colors = enemyDataset.coords.map((_, i) => 
+        Array.isArray(enemyDataset.color) ? enemyDataset.color[i] : enemyDataset.color
+      );
+
+      const shieldGeometry = new IcosahedronGeometry(shieldRadius, 0);
+
+      // Save the computed geometries to the cache
+      sharedGeometries.set(lookupType, {
+        lineGeometries,
+        shieldGeometry,
+        colors
+      });
     }
 
-    let flatCoords = [].concat(...enemyDataset.coords);
-    let vectorPoints = flatCoords.map(p => new Vector2(p.x, p.y));
+    // Fetch the shared data from the cache
+    const cachedData = sharedGeometries.get(lookupType);
 
-    let boundingBox = new Box2().setFromPoints(vectorPoints);
-    let center = new Vector2();
-    boundingBox.getCenter(center);
-    
-    // Calculate the size of the enemy to properly scale the shield
-    let size = new Vector2();
-    boundingBox.getSize(size);
-    let shieldRadius = Math.max(size.x, size.y) * 0.75; // 75% larger than the widest dimension
-
-    enemyDataset.coords.forEach((xyArray, i) => {
-      let originalColor = Array.isArray(enemyDataset.color) ? enemyDataset.color[i] : enemyDataset.color;
+    // Construct the meshes using shared geometry and instance-specific materials
+    cachedData.lineGeometries.forEach((geometry, i) => {
+      let originalColor = cachedData.colors[i];
       let material = new MeshBasicMaterial({
-      //color: Array.isArray(enemyDataset.color) ? enemyDataset.color[i] : enemyDataset.color,
-      color: originalColor,
-          transparent: true,
-          opacity: 1.0
-        }
-      );
-      // Save the original color so we can reset it when the enemy is pooled
+        color: originalColor,
+        transparent: true,
+        opacity: 1.0
+      });
       material.userData.originalColor = originalColor; 
-
-      const flipY = this.object.isDemonHead || this.object.isDemonHorn;
-      
-      let geometry = new BufferGeometry().setFromPoints(
-        xyArray
-          .map(p => new Vector2(p.x, p.y))
-          .map(v => v.sub(center))
-          .map(v => new Vector3(v.x, flipY ? -v.y : v.y, 0))
-      );
 
       this.modelGroup.add(new Line(geometry, material));
     });
 
-    // Create the dynamically sized, glowing shield
-    const shieldGeo = new IcosahedronGeometry(shieldRadius, 0); 
     const shieldMat = new MeshBasicMaterial({
         color: 0x00ffff,
         wireframe: true,
         transparent: true,
-        opacity: 0.15,                 // Softer transparency
-        blending: AdditiveBlending,    // Creates a glowing "energy" effect
-        depthWrite: false              // Prevents weird clipping with the enemy lines
+        opacity: 0.15,
+        blending: AdditiveBlending,
+        depthWrite: false
     });
     
-    this.shieldMesh = new Mesh(shieldGeo, shieldMat);
+    this.shieldMesh = new Mesh(cachedData.shieldGeometry, shieldMat);
     
     this.add(this.modelGroup);
     this.add(this.shieldMesh);
+  }
+
+  /**
+   * Safely disposes of instance-specific GPU resources (materials).
+   * Geometries are preserved because they are globally cached.
+   */
+  dispose () {
+    this.traverse((child) => {
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach(m => m.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
+    });
+    
+    this.clear();
   }
 }

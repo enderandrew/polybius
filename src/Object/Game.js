@@ -31,7 +31,6 @@ import { BossFight } from '@/Object/BossFight/BossFight';
 import { initVoiceCache } from '@/utils/voiceCache';
 
 export default class Game {
-  // Removed legacy @readonly decorators
   static BONUS_EVERY = 20000;
 
   static HIGH_SCORES_STORAGE_KEY = 'high_scores';
@@ -43,7 +42,6 @@ export default class Game {
 
   static FLAG_LOAD_NEXT_LEVEL = 0x1;
 
-  // Modern ES class fields replacing JSDoc comments
   state;
   prevState;
   screenStateUpdated = false;
@@ -316,7 +314,7 @@ export default class Game {
       this
     );
 
-    console.log("GAME: Level loaded. New Surface:", surface);
+    //console.log("GAME: Level loaded. New Surface:", surface);
     this.powerUpSpawner.webGeometry = surface;
     //console.log("GAME: Spawner webGeometry updated to:", this.powerUpSpawner.webGeometry);
     this.levelObject.registerKeys();
@@ -343,8 +341,8 @@ export default class Game {
 
     this.isPaused = false;
     this.isWarping = false;
-    if (this.pauseOverlay) this.pauseOverlay.style.display = 'none';
-    if (this.bonusOverlay) this.bonusOverlay.style.display = 'none';
+    if (this.pauseOverlay) this.pauseOverlay.classList.remove('is-active');
+    if (this.bonusOverlay) this.bonusOverlay.classList.remove('is-active');
 
     this._disposeAIDroid();
     this.powerUpSpawner.webGeometry = null;
@@ -487,42 +485,13 @@ export default class Game {
     displayContainer.style.position = 'relative'; // Ensure absolute children stay inside
 
     this.pauseOverlay = document.createElement('div');
-    this.pauseOverlay.style.position = 'absolute';
-    this.pauseOverlay.style.top = '0';
-    this.pauseOverlay.style.left = '0';
-    this.pauseOverlay.style.width = '100%';
-    this.pauseOverlay.style.height = '100%';
-    this.pauseOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.65)'; // Dims the screen
-    this.pauseOverlay.style.display = 'none'; // Hidden by default
-    this.pauseOverlay.style.justifyContent = 'center';
-    this.pauseOverlay.style.alignItems = 'center';
-    this.pauseOverlay.style.color = '#00ffff'; 
-    this.pauseOverlay.style.fontFamily = '"Courier New", Courier, monospace';
-    this.pauseOverlay.style.fontSize = '5rem';
-    this.pauseOverlay.style.fontWeight = 'bold';
-    this.pauseOverlay.style.textShadow = '0 0 20px #00ffff';
-    this.pauseOverlay.style.letterSpacing = '10px';
-    this.pauseOverlay.style.zIndex = '1000';
-    this.pauseOverlay.style.pointerEvents = 'none'; // Prevents blocking clicks
+    this.pauseOverlay.className = 'pause-overlay';
     this.pauseOverlay.innerHTML = 'PAUSE';
-
     displayContainer.appendChild(this.pauseOverlay);
 
     this.bonusOverlay = document.createElement('div');
-    this.bonusOverlay.style.position = 'absolute';
-    this.bonusOverlay.style.top = '40%';
-    this.bonusOverlay.style.width = '100%';
-    this.bonusOverlay.style.textAlign = 'center';
-    this.bonusOverlay.style.color = '#ffff00';
-    this.bonusOverlay.style.fontFamily = '"Courier New", Courier, monospace';
-    this.bonusOverlay.style.fontSize = '4rem';
-    this.bonusOverlay.style.fontWeight = 'bold';
-    this.bonusOverlay.style.textShadow = '0 0 15px #ffff00';
-    this.bonusOverlay.style.zIndex = '1000';
-    this.bonusOverlay.style.pointerEvents = 'none';
-    this.bonusOverlay.style.display = 'none';
-    this.bonusOverlay.innerHTML = 'YES<br/><span style="font-size: 2rem">BONUS POWERUP!</span>';
-
+    this.bonusOverlay.className = 'bonus-overlay';
+    this.bonusOverlay.innerHTML = 'YES<br/><span class="bonus-overlay-text">BONUS POWERUP!</span>';
     displayContainer.appendChild(this.bonusOverlay);
 
     this.composer = new EffectComposer(this.renderer);
@@ -696,8 +665,7 @@ export default class Game {
               messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_YES);
               
               // Flash the overlay
-              this.bonusOverlay.style.display = 'block';
-			  
+              this.bonusOverlay.classList.add('is-active');
 			  
               if (this.bonusOverlayTimeout) {
                   clearTimeout(this.bonusOverlayTimeout);
@@ -705,7 +673,7 @@ export default class Game {
 	          
               this.bonusOverlayTimeout = setTimeout(() => {
                 if (this.bonusOverlay) {
-                  if(this.bonusOverlay) this.bonusOverlay.style.display = 'none';
+                  this.bonusOverlay.classList.remove('is-active');
                 }
                 this.bonusOverlayTimeout = null;
               }, 2000);
@@ -795,7 +763,7 @@ export default class Game {
   shooterKilledCallback () {
     this.lives--;
     this.isWarping = false; 
-    if (this.bonusOverlay) this.bonusOverlay.style.display = 'none';
+    if (this.bonusOverlay) this.bonusOverlay.classList.remove('is-active');
 
     this.screenContentManager.setLives(this.lives);
 
@@ -832,12 +800,14 @@ export default class Game {
 
   togglePause () {
     // Only allow pausing if we are actually in the play state
-  messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PAUSE);
-  if (!this.state.equals(Game.STATE_PLAY)) return;
+    messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PAUSE);
+    if (!this.state.equals(Game.STATE_PLAY)) return;
     this.isPaused = !this.isPaused;
+    
     if (this.pauseOverlay) {
-      this.pauseOverlay.style.display = this.isPaused ? 'flex' : 'none';
+      this.pauseOverlay.classList.toggle('is-active', this.isPaused);
     }
+    
     if (this.isPaused) {
         this.bgmManager.pause();
     } else {

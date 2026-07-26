@@ -1,6 +1,4 @@
 export class MessageBroker {
-  // Removed legacy @readonly decorators. 
-  // Standard ALL_CAPS naming convention designates these as static constants.
   static TOPIC_AUDIO = 'topic_audio';
   static TOPIC_SCREEN = 'topic_screen';
 
@@ -61,7 +59,6 @@ export class MessageBroker {
 }
 
 export class Message {
-  // Modern ES class fields replacing JSDoc @var comments
   topic;
   message;
   context;

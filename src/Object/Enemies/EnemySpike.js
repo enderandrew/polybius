@@ -4,7 +4,6 @@ import SurfaceObject from '@/Object/Surface/SurfaceObject';
 import EnemySpiker from '@/Object/Enemies/EnemySpiker';
 
 export default class EnemySpike extends Enemy {
-  // Removed all legacy @readonly decorators
   static HEIGHT_LIMIT = 0.9;
   static HUNK_LENGTH = 0.02;
   static HIT_DESTROYED_LENGTH = 0.1;
@@ -12,7 +11,6 @@ export default class EnemySpike extends Enemy {
   static STATE_ALIVE = new State(500, 1, 'alive');
   static STATE_DEAD = new State(0, 1, 'dead');
 
-  // Modern ES class fields replacing JSDoc comments
   rendererHelperZPositionChanged = false;
 
   /**

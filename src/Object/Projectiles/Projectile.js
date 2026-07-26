@@ -1,7 +1,6 @@
 import SurfaceObject from '@/Object/Surface/SurfaceObject';
 
 export default class Projectile extends SurfaceObject {
-  // Removed legacy @readonly decorators
   static PROJECTILE_SPEED = 0.028;
   static PROJECTILE_KILL_RADIUS_FORWARD = 0.02;
   static PROJECTILE_KILL_RADIUS_BACKWARD = 0.08;
@@ -9,7 +8,6 @@ export default class Projectile extends SurfaceObject {
   static SOURCE_SHOOTER = 1;
   static SOURCE_ENEMY = -1;
 
-  // Modern ES class fields replacing JSDoc comments
   canExplode = false;
   damage = 1;
   source;

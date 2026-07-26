@@ -6,7 +6,6 @@ import SurfaceObjectWrapper from '@/Renderer/Surface/SurfaceObjectWrapper';
 import Shooter from '@/Object/Shooters/Shooter';
 
 export default class ShooterRenderer extends SurfaceObjectWrapper {
-  // Removed legacy @readonly decorators
   static MODEL_PATH = './models/player.obj';
   static MODEL_SCALE = 0.15;
   static MODEL_ROTATION = -Math.PI / 2;
@@ -14,7 +13,6 @@ export default class ShooterRenderer extends SurfaceObjectWrapper {
   static SHOOTER_WIREFRAME_COLOR = 0xffff00;
   static EXPLOSION_ROTATION_SPEED = 0.03;
 
-  // Modern ES class fields replacing JSDoc comments
   positionChangeSpeed = 0.3;
   rotationChangeSpeed = 0.2;
 

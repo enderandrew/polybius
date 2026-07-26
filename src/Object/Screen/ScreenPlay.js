@@ -3,7 +3,6 @@ import ScreenContentManager from '@/Object/Screen/ScreenContentManager';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
 export default class ScreenPlay extends Canvas3d {
-  // Modern ES class fields (no need for @var comments in Vite/ES2022)
   score = 0;
   targetScore = 0;
   scoreRisingSpeed = 10;

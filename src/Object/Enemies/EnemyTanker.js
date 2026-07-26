@@ -3,7 +3,6 @@ import State from '@/Object/State';
 import randomRange from '@/utils/randomRange';
 
 export default class EnemyTanker extends Enemy {
-  // Removed legacy @readonly decorators
   static STATE_IDLE = new State(100, 1, 'idle');
   static STATE_SHOOTING = new State(100, 0.1, 'shooting');
   static STATE_DISAPPEARING = new State(1000, 1, 'disappearing');
@@ -12,7 +11,6 @@ export default class EnemyTanker extends Enemy {
 
   static FLAG_SHOOTS_FIRED = 0x1;
 
-  // Modern ES class fields replacing JSDoc @var comments
   enemySpawnFunction;
   zSpeed;
   _hasReleasedEnemies = false;

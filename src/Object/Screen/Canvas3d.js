@@ -7,7 +7,6 @@ const fontLoadPromise = new FontFace('VectorBattle', 'url(VectorBattle.ttf)').lo
 }).catch(err => console.warn('VectorBattle font failed to load:', err));
 
 export default class Canvas3d extends Mesh {
-  // Modern ES static fields (no @readonly decorators needed)
   static KEY_INPUT_DELAY = 200;
 
   static COLOR_RED = 'rgba(255, 0, 0, 1)';
@@ -17,7 +16,6 @@ export default class Canvas3d extends Mesh {
   static COLOR_YELLOW = 'rgb(255,255,0)';
   static COLOR_CYAN = 'rgb(100,255,200)';
 
-  // Modern ES class fields
   context;
   texture;
   fontName = 'VectorBattle';

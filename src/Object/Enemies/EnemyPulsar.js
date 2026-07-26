@@ -4,7 +4,6 @@ import randomRange from '@/utils/randomRange';
 import State from '@/Object/State';
 
 export default class EnemyPulsar extends Enemy {
-  // Removed all legacy @readonly decorators
   static MIN_Z_POSITION = 0.1;
   static MAX_Z_POSITION = 0.9;
 
@@ -25,7 +24,6 @@ export default class EnemyPulsar extends Enemy {
   static FLAG_MOVING_TARGET_CHOSEN = 0x20;
   static FLAG_NO_WARNING = 0x40;
 
-  // Modern ES class fields replacing JSDoc comments
   zBase = 0;
   zTarget = 0;
   rendererHelperLaneChangesAmount = 0;
