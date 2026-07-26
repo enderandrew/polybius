@@ -172,10 +172,20 @@ export default class SurfaceRenderer extends Group {
    * @param {boolean} visible
    */
   setLinesAppearance (lineId, material, visible = true) {
-    lineId %= this.surface.lanesAmount;
+    // Open surfaces have an extra boundary line (lanesAmount + 1), 
+    // so we don't want to wrap around using modulo.
+    const maxIndex = this.lanesLines.length - 1;
+    
+    if (this.surface.isOpen) {
+      if (lineId < 0 || lineId > maxIndex) return;
+    } else {
+      lineId = ((lineId % this.surface.lanesAmount) + this.surface.lanesAmount) % this.surface.lanesAmount;
+    }
 
-    this.lanesLines[lineId].material = material;
-    this.lanesLines[lineId].visible = visible;
+    if (this.lanesLines[lineId]) {
+      this.lanesLines[lineId].material = material;
+      this.lanesLines[lineId].visible = visible;
+    }
   }
 
   /**

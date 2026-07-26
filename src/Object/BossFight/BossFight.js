@@ -963,7 +963,7 @@ export class BossFight {
   
           const wireframe = new THREE.LineSegments(
             new THREE.WireframeGeometry(child.geometry),
-            new THREE.LineBasicMaterial({ color: 0x00ffcc })
+            new THREE.LineBasicMaterial({ color: 0xffff00 })
           );
           child.add(wireframe);
           this._shipWireframeMats.push(wireframe.material);
@@ -1026,7 +1026,7 @@ export class BossFight {
     // Flicker on hit
     this._shipGroup.visible = this._invincible <= 0 || Math.floor(performance.now() / 80) % 2 === 0;
   
-    const shipColor = this._shield > 0 ? 0x00ccff : 0x00ffcc;
+    const shipColor = this._shield > 0 ? 0xffff00 : 0xffff00;
     this._shipWireframeMats.forEach(mat => mat.color.setHex(shipColor));
   
     if (this._shieldMesh) {

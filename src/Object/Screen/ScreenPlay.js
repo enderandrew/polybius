@@ -12,6 +12,10 @@ export default class ScreenPlay extends Canvas3d {
   // Polybius Parody: Sanity Meter mechanic
   sanityLevel = 100;
 
+  lastGlitchTimestamp = 0;
+  isGlitchingScore = false;
+  isGlitchingHint = false;
+
   constructor (screenContentManager, width = 8, height = 8, canvasResX = 1024, canvasResY = 1024) {
     super(screenContentManager, width, height, canvasResX, canvasResY);
     this.score = this.screenContentManager.get(ScreenContentManager.KEY_SCORE);
@@ -20,17 +24,40 @@ export default class ScreenPlay extends Canvas3d {
   update () {
     this.targetScore = this.screenContentManager.get(ScreenContentManager.KEY_SCORE);
 
+    // Track score changes
     if (this.score !== this.targetScore) {
       this.score += this.scoreRisingSpeed;
 
       if (this.score > this.targetScore) {
         this.score = this.targetScore;
       }
+      this._dirty = true;
     }
 
-    // Gradually drain sanity to trigger parody visual glitches
+    // Gradually drain sanity
     if (this.sanityLevel > 0 && Math.random() > 0.98) {
       this.sanityLevel -= 1;
+    }
+
+    // --- GLITCH TIMER LOGIC ---
+    const isLosingSanity = this.sanityLevel < 50;
+    if (isLosingSanity) {
+      const now = Date.now();
+      // Only recalculate glitches every 100ms (10 times a second)
+      if (now - this.lastGlitchTimestamp > 100) {
+        this.lastGlitchTimestamp = now;
+        
+        // Cache the visual state to be used by draw()
+        this.isGlitchingScore = Math.random() > 0.8;
+        this.isGlitchingHint = Math.random() > 0.9;
+        
+        this._dirty = true; // Force redraw to show the flicker
+      }
+    } else if (this.isGlitchingScore || this.isGlitchingHint) {
+      // Clean up glitches immediately if sanity is restored
+      this.isGlitchingScore = false;
+      this.isGlitchingHint = false;
+      this._dirty = true;
     }
 
     this.messageBrokerScreenTopicConsumer();
@@ -46,6 +73,7 @@ export default class ScreenPlay extends Canvas3d {
 
     if (message.isMessage(MessageBroker.MESSAGE_PLAYER_SUPERZAPPER_USED)) {
       this.displaySuperzapperHint = false;
+      this._dirty = true;
     }
   }
 
@@ -54,7 +82,7 @@ export default class ScreenPlay extends Canvas3d {
 
     // Determine if graphics should alter based on player status
     const isLosingSanity = this.sanityLevel < 50;
-    const scoreColor = isLosingSanity && Math.random() > 0.8 ? Canvas3d.COLOR_RED : Canvas3d.COLOR_BLUE;
+    const scoreColor = this.isGlitchingScore ? Canvas3d.COLOR_RED : Canvas3d.COLOR_BLUE;
 
     this.setFontSizePx(60);
     this.drawText(
@@ -71,8 +99,8 @@ export default class ScreenPlay extends Canvas3d {
 
     if (this.displaySuperzapperHint) {
       if (this.screenContentManager.get(ScreenContentManager.KEY_SUPERZAPPER_USED) === false) {
-        // Subliminal parody messaging replaces the hint when sanity is low
-        const hintText = isLosingSanity && Math.random() > 0.9 ? 'OBEY' : 'Press E to use SuperZapper';
+        // Use the cached glitch state for the subliminal hint
+        const hintText = this.isGlitchingHint ? 'OBEY' : 'Press E to use SuperZapper';
         
         this.drawText(
           hintText,

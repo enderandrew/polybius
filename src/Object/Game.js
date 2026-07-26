@@ -83,14 +83,18 @@ export default class Game {
     this.isWarping = false;
     this.bonusScoreOffset = 0;
     this.setState(Game.STATE_SELECT_SURFACE);
-    this.setupRenderer(true);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const highQuality = !isMobile; 
+    this.setupRenderer(highQuality, isMobile);
     this.setupLogic();
 	initVoiceCache(); 
+	this.bootAudio();
     this.isPaused = false;
     this.aiDroid = null;
     this.prevGamepadState = {};
     this.prevGamepadAxis = 0;
     this.bgmManager = new BgmManager();
+	this.gamepadButtonStates = {};
 
     this.bgmManager.onBeat = () => {
       if (this.starfield) this.starfield.pulse(1.2); //1.5
@@ -132,6 +136,44 @@ export default class Game {
         this.levelWonCallback();
       }
     }, true);
+  }
+
+  async bootAudio () {
+    const allSoundEffects = [
+      '1up',
+      'achievement',
+      'bigfoot',
+      'crt',
+      'enemy_death',
+      'enemy_shoot',
+      'game',
+      'game_over',
+      'grenade',
+      'jump',
+      'knob',
+      'Konami',
+      'laser',
+      'menu_select',
+      'missile',
+      'next_level',
+      'pause',
+      'phantom',
+      'player_death',
+      'player_lane_change',
+      'player_shoot',
+      'powerup',
+      'shield',
+      'spooky',
+      'synth',
+      'yes'
+    ];
+
+    try {
+        await this.audioManager.preload(allSoundEffects);
+        console.log('[Game] All audio pre-decoded and ready!');
+    } catch (error) {
+        console.warn('[Game] Audio preloading encountered an error:', error);
+    }
   }
 
   handleState () {
@@ -179,12 +221,16 @@ export default class Game {
   }
 
   setState (state) {
+    if (this.levelStartTimeout) {
+      clearTimeout(this.levelStartTimeout);
+      this.levelStartTimeout = null;
+    }
     this.prevState = this.state;
     this.state = state;
     this.screenStateUpdated = false;
   }
 
-startLevel (levelId, firstLevel = false) {
+  startLevel (levelId, firstLevel = false) {
     // Prevent double-triggering! If we are already loading, ignore input.
     if (this.isLoadingLevel) return;
     this.isLoadingLevel = true;
@@ -192,7 +238,7 @@ startLevel (levelId, firstLevel = false) {
     this.firstLevel = firstLevel;
     this.level = levelId;
     this.screenContentManager.setLevel(this.level);
-  if (this.powerUpHUD) this.powerUpHUD.hide();
+    if (this.powerUpHUD) this.powerUpHUD.hide();
 
     // Clear out whatever screen is currently active (Menu or previous Play UI)
     this.releaseScreen();
@@ -201,7 +247,7 @@ startLevel (levelId, firstLevel = false) {
     this.releaseLevel();
 
     // Reset the camera back to the world origin! Without this, the camera is left stranded at the end of the previous level.  
-  this.camera.position.set(0, 0, -6);
+    this.camera.position.set(0, 0, -6);
     this.camera.lookAt(0, 0, 10);
 
     // Load the Parody Screen using your native screen manager
@@ -211,19 +257,25 @@ startLevel (levelId, firstLevel = false) {
     this.screenObject.position.z = 0.1;
 
     // Wait 3 seconds, then trigger the native play state
-    setTimeout(() => {
-      this.isLoadingLevel = false;
-      
-      // This single line tells your game loop's handleState() to automatically 
-      // destroy the parody screen, load the ScreenPlay UI, and instantiate the level!
+    if (this.levelStartTimeout) {
+        clearTimeout(this.levelStartTimeout);
+    }
+
+    this.levelStartTimeout = setTimeout(() => {
       this.setState(Game.STATE_PLAY);
+	  this.isLoadingLevel = false;
+      this.levelStartTimeout = null;
     }, 4000);
   }
 
   loadLevel (level) {
     let surfaceId = ((level - 1) % 32) + 1;
     let surfaceData = surfaces.find(s => s.id === surfaceId);
-    if (!surfaceData) throw new Error("Surface data not found!");
+    if (!surfaceData) {
+      console.warn(`[Game] Can't find surface level with id === ${surfaceId}! Returning to menu.`);
+      this.setState(Game.STATE_SELECT_SURFACE);
+      return; // Stop execution here
+    }
   
     const vectorCoords = surfaceData.coords.map(c => new Vector2(c.x, c.y));
 
@@ -309,11 +361,18 @@ startLevel (levelId, firstLevel = false) {
     this.releaseScreen();
     }
 
+    this.releaseScreen();
     this.screenObject = screen;
     this.screenGroup.add(this.screenObject);
   }
 
   releaseScreen () {
+    if (this.screenObject === null) return;
+    if (this.bonusOverlayTimeout) {
+      clearTimeout(this.bonusOverlayTimeout);
+      this.bonusOverlayTimeout = null;
+    }
+    this.screenObject.release();
     this.screenGroup.remove(this.screenObject);
     this.screenObject = null;
   }
@@ -328,7 +387,6 @@ startLevel (levelId, firstLevel = false) {
   }
 
   loadGameState () {
-    console.log('STATE LOADED');
     this.highScores = [
         { name: 'NWO', score: 524288 },
         { name: 'MKU', score: 262144 },
@@ -340,20 +398,32 @@ startLevel (levelId, firstLevel = false) {
         { name: 'FOT', score: 4096 }
     ];
 
-    let highScores = localStorage.getItem(Game.HIGH_SCORES_STORAGE_KEY);
-    if (highScores !== null) {
-      highScores = JSON.parse(highScores);
-
-      if (highScores.length === 8) {
-        this.highScores = highScores;
+    const storedScores = localStorage.getItem(Game.HIGH_SCORES_STORAGE_KEY);
+    if (storedScores !== null) {
+      try {
+        const parsedScores = JSON.parse(storedScores);
+        
+        // Ensure it is actually an array and has exactly 8 records
+        if (Array.isArray(parsedScores) && parsedScores.length === 8) {
+          this.highScores = parsedScores;
+        } else {
+          console.warn('[Game] Invalid high score structure. Reverting to defaults.');
+        }
+      } catch (error) {
+        console.warn('[Game] Corrupted high scores in localStorage. Reverting to defaults.');
       }
     }
 
     this.highestLevel = 1;
-    let highestLevel = localStorage.getItem(Game.HIGHEST_LEVEL);
-    if (highestLevel !== null) {
-      this.highestLevel = parseInt(highestLevel);
+    const storedLevel = localStorage.getItem(Game.HIGHEST_LEVEL);
+    if (storedLevel !== null) {
+      const parsedLevel = parseInt(storedLevel, 10);
+      
+      if (!isNaN(parsedLevel)) {
+        this.highestLevel = parsedLevel;
+      }
     }
+    
     this.highestLevel = Math.min(this.highestLevel, 256);
   }
 
@@ -381,9 +451,9 @@ startLevel (levelId, firstLevel = false) {
     this.screenContentManager.setCloseHighScoresScreenCallback(() => { this.setState(Game.STATE_SELECT_SURFACE); });
   }
 
-  setupRenderer (highQuality = true) {
+  setupRenderer (highQuality = true, isMobile = false) {
     this.scene = new Scene();
-  this.starfield = new Starfield();
+    this.starfield = new Starfield();
     this.scene.add(this.starfield);
 
     // Get the actual pixel dimensions of the CRT screen interior
@@ -402,7 +472,8 @@ startLevel (levelId, firstLevel = false) {
     this.audioManager = new AudioManager(this.audioListener);
 
     this.renderer = new WebGLRenderer({ antialias: true });
-    this.renderer.setPixelRatio(window.devicePixelRatio); 
+    const maxDpr = isMobile ? 2 : 3;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxDpr));
     
     // Size the Canvas to the bezel, not the whole browser window!
     this.renderer.setSize(width, height);
@@ -492,8 +563,47 @@ startLevel (levelId, firstLevel = false) {
     window.addEventListener('keydown', () => {
       if (this.state?.equals(Game.STATE_SELECT_SURFACE) && !this._inAttractMode) {
         this._lastMenuActivity = Date.now();
+        if (this.screenObject) {
+            this.screenObject._dirty = true;
+        }
       }
     });
+
+    let resizeTimeout;
+    const onResize = () => {
+      // Debounce to prevent heavy GPU reallocation while actively dragging the window
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        // Find your main container. Check your index.html to ensure 'screen' is the correct ID.
+        const el = document.getElementById('screen'); 
+        if (!el) return;
+
+        const w = el.clientWidth;
+        const h = el.clientHeight;
+
+        // 1. Update the Camera's aspect ratio so the geometry doesn't stretch
+        if (this.camera) {
+            this.camera.aspect = w / h;
+            this.camera.updateProjectionMatrix();
+        }
+
+        // 2. Update the main WebGL Renderer
+        if (this.renderer) {
+            this.renderer.setSize(w, h);
+        }
+
+        // 3. Update the Post-Processing Composer and Passes
+        if (this.composer) {
+            this.composer.setSize(w, h);
+        }
+        if (this.bloomPass) {
+            this.bloomPass.setSize(w, h);
+        }
+      }, 150); // 150ms delay is usually the sweet spot for smooth debouncing
+    };
+
+    // Attach the listener to the window
+    window.addEventListener('resize', onResize);
   }
 
   update () {
@@ -514,6 +624,16 @@ startLevel (levelId, firstLevel = false) {
     }
   
     this.beatGlow += (0.0 - this.beatGlow) * 0.10;
+
+    if (this.levelRenderer) {
+      const pulseScale = 1.0 + (this.beatGlow * 0.1); 
+      this.levelRenderer.scale.set(pulseScale, pulseScale, 1.0);
+    }
+
+    //if (this.camera) {
+    //  this.camera.fov = 75 - (this.beatGlow * 2.5);
+    //  this.camera.updateProjectionMatrix();
+    //}
 
     if (this.bloomPass) {
         this.bloomPass.strength = (this.baseBloom + this.beatGlow);
@@ -577,7 +697,18 @@ startLevel (levelId, firstLevel = false) {
               
               // Flash the overlay
               this.bonusOverlay.style.display = 'block';
-              setTimeout(() => { if(this.bonusOverlay) this.bonusOverlay.style.display = 'none'; }, 2000);
+			  
+			  
+              if (this.bonusOverlayTimeout) {
+                  clearTimeout(this.bonusOverlayTimeout);
+              }
+	          
+              this.bonusOverlayTimeout = setTimeout(() => {
+                if (this.bonusOverlay) {
+                  if(this.bonusOverlay) this.bonusOverlay.style.display = 'none';
+                }
+                this.bonusOverlayTimeout = null;
+              }, 2000);
               
               // Grant the random bonus
               const bonusType = this._getRandomBonusPowerUp(collected);
@@ -758,7 +889,7 @@ startLevel (levelId, firstLevel = false) {
       utt.rate    = 0.85;
       utt.pitch   = 0.9;
       window.speechSynthesis.speak(utt);
-    } catch (e) { /* TTS unavailable */ }
+    } catch (error) { console.debug('[Game] Speech synthesis failed in bonus stage sequence:', error); }
   
     const emeralds = Math.min(7, Math.floor((this.level - 1) / 32));
 
@@ -837,53 +968,69 @@ startLevel (levelId, firstLevel = false) {
     
     if (!gp) return;
 
+    // Edge-detection helpers for buttons
     const isPressed = (idx) => gp.buttons[idx] && gp.buttons[idx].pressed;
     const wasPressed = (idx) => this.prevGamepadState[idx];
     const justPressed = (idx) => isPressed(idx) && !wasPressed(idx);
+    const justReleased = (idx) => !isPressed(idx) && wasPressed(idx); // The falling edge!
 
-    // Helper to send native keyboard events to the menu screens
-    const sendKey = (code) => {
-      document.dispatchEvent(new KeyboardEvent('keydown', { code }));
-      // Fire a keyup shortly after so the keyboard manager doesn't think it's permanently stuck!
-      setTimeout(() => {
-        document.dispatchEvent(new KeyboardEvent('keyup', { code }));
-      }, 50); 
+    // Edge-detection helpers for the thumbstick
+    const isLeft = gp.axes[0] < -0.5;
+    const wasLeft = this.prevGamepadAxis < -0.5;
+    const justLeft = isLeft && !wasLeft;
+    const releasedLeft = !isLeft && wasLeft;
+
+    const isRight = gp.axes[0] > 0.5;
+    const wasRight = this.prevGamepadAxis > 0.5;
+    const justRight = isRight && !wasRight;
+    const releasedRight = !isRight && wasRight;
+
+    // Helper to send native keyboard events instantly without timeouts
+    const dispatchKey = (code, type) => {
+      document.dispatchEvent(new KeyboardEvent(type, { code }));
     };
 
-    // Pause / Start Button (Index 9)
+    // Pause Button (Index 9)
     if (justPressed(9)) {
         if (this.state.equals(Game.STATE_PLAY)) {
             this.togglePause();
-        } else {
-            // If in menu, "Start" will act like hitting Space/Enter to select a level
-            sendKey('Space');
-            sendKey('Enter');
         }
     }
 
     // Play State Controls
     if (this.state.equals(Game.STATE_PLAY)) {
         if (!this.isPaused && this.shooter) {
-          if (justPressed(14) || (gp.axes[0] < -0.5 && this.prevGamepadAxis >= -0.5)) this.shooter.moveLeft();
-          if (justPressed(15) || (gp.axes[0] > 0.5 && this.prevGamepadAxis <= 0.5)) this.shooter.moveRight();
+          if (justPressed(14) || justLeft) this.shooter.moveLeft();
+          if (justPressed(15) || justRight) this.shooter.moveRight();
           if (justPressed(12) || justPressed(1) || justPressed(3)) this.shooter.jump();
           if (justPressed(13) || justPressed(2)) this.shooter.fireSuperzapper();
+          
+          // Continuous fire uses isPressed (triggers every frame held)
           if (isPressed(0) || isPressed(7)) this.shooter.fire();
         }
     } 
     // Menu State Controls
     else {
-        // Left D-Pad or Left Stick
-        if (justPressed(14) || (gp.axes[0] < -0.5 && this.prevGamepadAxis >= -0.5)) sendKey('ArrowLeft');
-        // Right D-Pad or Right Stick
-        if (justPressed(15) || (gp.axes[0] > 0.5 && this.prevGamepadAxis <= 0.5)) sendKey('ArrowRight');
-        // 'A' Button to Select Level
-        if (justPressed(0)) {
-            sendKey('Space');
-            sendKey('Enter');
+        // 'A' Button or 'Start' Button to Select Level
+        if (justPressed(0) || justPressed(9)) {
+            dispatchKey('Space', 'keydown');
+            dispatchKey('Enter', 'keydown');
         }
+        if (justReleased(0) || justReleased(9)) {
+            dispatchKey('Space', 'keyup');
+            dispatchKey('Enter', 'keyup');
+        }
+
+        // Left D-Pad or Left Stick
+        if (justPressed(14) || justLeft) dispatchKey('ArrowLeft', 'keydown');
+        if (justReleased(14) || releasedLeft) dispatchKey('ArrowLeft', 'keyup');
+
+        // Right D-Pad or Right Stick
+        if (justPressed(15) || justRight) dispatchKey('ArrowRight', 'keydown');
+        if (justReleased(15) || releasedRight) dispatchKey('ArrowRight', 'keyup');
     }
 
+    // Update state history for the next frame
     for (let i = 0; i < gp.buttons.length; i++) {
       this.prevGamepadState[i] = isPressed(i);
     }
@@ -892,8 +1039,6 @@ startLevel (levelId, firstLevel = false) {
 
   _startAttractMode () {
       this._inAttractMode = true;
-      this.screenGroup.remove(this.screenObject);
-      this.screenObject = null;
       this.loadScreen(new ScreenAttractMode(
           this.screenContentManager,
           this.highScores,
@@ -904,9 +1049,6 @@ startLevel (levelId, firstLevel = false) {
   _endAttractMode () {
     this._inAttractMode    = false;
     this._lastMenuActivity = Date.now();
-    this.screenGroup.remove(this.screenObject);
-    this.screenObject = null;
-    // Reload menu without resetting lives/score
     this.populateScreenContentManager();
     this.loadScreen(new ScreenSelectSurface(this.screenContentManager));
   }
@@ -939,7 +1081,7 @@ startLevel (levelId, firstLevel = false) {
           );
           utt.rate = 0.85; utt.pitch = 0.9;
           window.speechSynthesis.speak(utt);
-      } catch (_) {}
+      } catch (error) { console.debug('[Game] Speech synthesis failed in boss fight sequence:', error); }
   
       setTimeout(() => {
           this.releaseScreen();
@@ -994,7 +1136,7 @@ startLevel (levelId, firstLevel = false) {
           );
           utt.rate = 0.85; utt.pitch = 0.9;
           window.speechSynthesis.speak(utt);
-      } catch (_) {}
+      } catch (error) { console.debug('[Game] Speech synthesis failed in boss complete sequence:', error); }
   
       setTimeout(() => {
           this.releaseScreen();

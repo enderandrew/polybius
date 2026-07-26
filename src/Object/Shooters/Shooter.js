@@ -254,10 +254,14 @@ export default class Shooter extends ShootingSurfaceObject {
     if (powerUps && powerUps.hasSpreadGun) {
        if (primaryWeapon === 'GRENADE') {
            // Spread + Grenade = exactly 2 grenades overlapping AoE from the sides
-           primaryLanes = [(this.laneId - 1 + 16) % 16, (this.laneId + 1) % 16];
+           primaryLanes = [-1, 1]
+               .map(offset => this.surface.getTargetLaneId(this.laneId, offset))
+               .filter(lane => lane !== null);
        } else {
            // Spread + Laser/Normal = 3 projectiles (Left, Center, Right)
-           primaryLanes = [(this.laneId - 1 + 16) % 16, this.laneId, (this.laneId + 1) % 16];
+           primaryLanes = [-1, 0, 1]
+               .map(offset => this.surface.getTargetLaneId(this.laneId, offset))
+               .filter(lane => lane !== null);
        }
     }
 
@@ -281,7 +285,9 @@ export default class Shooter extends ShootingSurfaceObject {
            let missileLanes = [this.laneId];
            if (powerUps.hasSpreadGun) {
                // Shoot missiles out of the left/right wingmen lanes!
-               missileLanes = [(this.laneId - 1 + 16) % 16, (this.laneId + 1) % 16]; 
+               missileLanes = [-1, 1]
+                   .map(offset => this.surface.getTargetLaneId(this.laneId, offset))
+                   .filter(lane => lane !== null); 
            }
            
            let capacity = maxMissiles - activeMissiles.length;
@@ -378,6 +384,10 @@ export default class Shooter extends ShootingSurfaceObject {
   }
 
   disappear () {
+    if (this.shieldTimeout) {
+      clearTimeout(this.shieldTimeout);
+      this.shieldTimeout = null;
+    }
     if (this.inState(Shooter.STATE_EXPLODING) || this.inState(Shooter.STATE_DEAD)) {
       return;
     }
@@ -423,13 +433,9 @@ export default class Shooter extends ShootingSurfaceObject {
     
     if (isAccent) {
         // On an Accent/Chorus beat, fire a massive 5-lane spread wrapped around the cylinder!
-        lanesToFire = [
-            (this.laneId - 2 + 16) % 16,
-            (this.laneId - 1 + 16) % 16,
-            this.laneId,
-            (this.laneId + 1) % 16,
-            (this.laneId + 2) % 16
-        ];
+        lanesToFire = [-2, -1, 0, 1, 2]
+            .map(offset => this.surface.getTargetLaneId(this.laneId, offset))
+            .filter(lane => lane !== null);
     }
 
     let fired = false;
@@ -467,11 +473,14 @@ export default class Shooter extends ShootingSurfaceObject {
       this.hittable = false;
       this.isShieldInvincible = true;
       
-      setTimeout(() => {
-        this.isShieldInvincible = false; 
-        if (this.inState(Shooter.STATE_ALIVE) && !powerUps.hasPhantom) {
-            this.hittable = true;
-        }
+      if (this.shieldTimeout) {
+        clearTimeout(this.shieldTimeout);
+      }
+      
+      this.shieldTimeout = setTimeout(() => {
+        this.hittable = true;
+	    this.isShieldInvincible = false;
+        this.shieldTimeout = null; 
       }, 1500);
 
       return true; // The player survives!

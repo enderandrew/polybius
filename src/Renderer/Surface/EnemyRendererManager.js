@@ -34,17 +34,22 @@ export default class EnemyRendererManager extends Group {
 
   update () {
     if (this.surfaceObjectsManager.rendererHelperNewObjectsIds.length !== 0) {
-      this.surfaceObjectsManager.enemies
-        .filter(enemy => this.surfaceObjectsManager.rendererHelperNewObjectsIds.includes(enemy.objectId))
-        .forEach(enemy => {
-          this.pushEnemy(enemy);
-        });
-
-      this.surfaceObjectsManager.spikes
-        .filter(spike => this.surfaceObjectsManager.rendererHelperNewObjectsIds.includes(spike.objectId))
-        .forEach(spike => {
-          this.pushEnemy(spike);
-        });
+      const newIds = this.surfaceObjectsManager.rendererHelperNewObjectsIds;
+      if (newIds.length > 0) {
+        for (let i = 0; i < this.surfaceObjectsManager.enemies.length; i++) {
+          const enemy = this.surfaceObjectsManager.enemies[i];
+          if (newIds.includes(enemy.objectId)) {
+            this.pushEnemy(enemy);
+          }
+        }
+        
+        for (let i = 0; i < this.surfaceObjectsManager.spikes.length; i++) {
+          const spike = this.surfaceObjectsManager.spikes[i];
+          if (newIds.includes(spike.objectId)) {
+            this.pushEnemy(spike);
+          }
+        }
+      }
 
       this.surfaceObjectsManager.rendererHelperNewObjectsIds.length = 0;
     }

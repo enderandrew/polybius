@@ -61,7 +61,6 @@ export default class Surface {
 }
 
   calculateCenteredLanesCoords () {
-    // Replaced BoundingBox2 with native Three.js Box2
     let box = new Box2().setFromPoints(this.rawLanesCoords);
     let center = new Vector2();
     box.getCenter(center);
@@ -173,5 +172,26 @@ export default class Surface {
         data.zOffset
       )
     );
+  }
+
+  /**
+   * Calculates a target lane ID for projectiles and targeting.
+   * Unlike movement functions, this does NOT clamp. 
+   * It returns null for out-of-bounds lanes on open surfaces.
+   */
+  getTargetLaneId(baseLaneId, offset) {
+    const targetLane = baseLaneId + offset;
+    
+    if (this.isOpen) {
+      // Strict boundary check: If it's off the edge, it goes into the void.
+      if (targetLane < 0 || targetLane >= this.lanesAmount) {
+        return null; 
+      }
+      return targetLane;
+    }
+    
+    // Closed surfaces wrap normally using standard modulo math
+    const n = this.lanesAmount;
+    return ((targetLane % n) + n) % n;
   }
 }

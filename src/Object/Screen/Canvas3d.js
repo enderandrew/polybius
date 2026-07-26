@@ -1,6 +1,10 @@
 import * as THREE from 'three';
-import { DoubleSide, Mesh, MeshBasicMaterial, PlaneGeometry } from 'three';
+import { Mesh, PlaneGeometry, MeshBasicMaterial, CanvasTexture, DoubleSide } from 'three';
 import randomRange from '@/utils/randomRange';
+
+const fontLoadPromise = new FontFace('VectorBattle', 'url(VectorBattle.ttf)').load().then(font => {
+    document.fonts.add(font);
+}).catch(err => console.warn('VectorBattle font failed to load:', err));
 
 export default class Canvas3d extends Mesh {
   // Modern ES static fields (no @readonly decorators needed)
@@ -24,6 +28,7 @@ export default class Canvas3d extends Mesh {
   screenContentManager;
   lastKeyInputTimestamp = 0;
   debug = false;
+  _dirty = true;
 
   /**
    * @param {ScreenContentManager} screenContentManager
@@ -32,13 +37,15 @@ export default class Canvas3d extends Mesh {
    * @param {number} canvasResX
    * @param {number} canvasResY
    */
-  constructor (screenContentManager, width = 8, height = 8, canvasResX = 1024, canvasResY = 1024) {
+  constructor (screenContentManager, width = 8, height = 6, canvasResX = 1024, canvasResY = 768) {
     const contextRef = document.createElement('canvas').getContext('2d');
-    contextRef.canvas.width = 1024;
-    contextRef.canvas.height = 1024;
+    
+    // Use the dynamic variables for a 4:3 aspect ratio instead of hardcoding 1024
+    contextRef.canvas.width = canvasResX;
+    contextRef.canvas.height = canvasResY;
 
     const texture = new THREE.CanvasTexture(contextRef.canvas);
-    texture.minFilter = THREE.LinearFilter;
+    texture.minFilter = THREE.LinearFilter; // Kept to ensure smooth text rendering
 
     super(
       new PlaneGeometry(width, height),
@@ -57,19 +64,33 @@ export default class Canvas3d extends Mesh {
     this.setLineWidth();
     this.setFontSizePx(60);
 
-    // noinspection JSUnresolvedFunction
-    this.vectorBattleFont = new FontFace('VectorBattle', 'url(VectorBattle.ttf)');
-    // noinspection JSUnresolvedFunction
-    this.vectorBattleFont.load().then(font => {
-      document.fonts.add(font);
+    // Wait for the hoisted global font promise to resolve
+    fontLoadPromise.then(() => {
       this.fontReady = true;
+      this.queueTextureUpdate(); // Force a draw once the font is actually ready
     });
 
     this.screenContentManager = screenContentManager;
   }
 
   release () {
+    // Dispose of Three.js GPU resources
+    if (this.texture) this.texture.dispose();
+    if (this.geometry) this.geometry.dispose();
+    
+    if (this.material) {
+      if (Array.isArray(this.material)) {
+        this.material.forEach(m => m.dispose());
+      } else {
+        this.material.dispose();
+      }
+    }
 
+    // Free the 2D canvas CPU backing store by zeroing dimensions
+    if (this.context && this.context.canvas) {
+      this.context.canvas.width = 0;
+      this.context.canvas.height = 0;
+    }
   }
 
   keyInputDelay () {
@@ -175,10 +196,11 @@ export default class Canvas3d extends Mesh {
   }
 
   update () {
-    if (!this.fontReady) {
+    if (!this.fontReady || !this._dirty) {
       return;
     }
 
+    this._dirty = false;
     this.draw();
 
     if (this.debug) {

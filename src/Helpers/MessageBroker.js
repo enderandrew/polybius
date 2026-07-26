@@ -34,14 +34,16 @@ export class MessageBroker {
   // Initialized as a standard object rather than an array for proper key-value topic mapping
   messages = {};
 
-  publish (topic, message, context = []) {
-    if (!(topic in this.messages)) {
+  publish (topic, message, payload = null) {
+    if (this.messages[topic] === undefined) {
       this.messages[topic] = [];
     }
 
-    this.messages[topic].push(new Message(topic, message, context));
+    this.messages[topic].push(new Message(topic, message, payload));
 
-    // console.log(`Published ${message} under ${topic}`);
+    if (this.messages[topic].length > 50) {
+        this.messages[topic].shift(); 
+    }
   }
 
   consume (topic) {

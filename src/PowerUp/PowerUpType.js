@@ -187,7 +187,7 @@ export const PowerUpType = Object.freeze({
     duration:     null,
     isWeapon:     false,
     isWarpToken:  true,
-    dropWeight:   10,
+    dropWeight:   15,
     description:  'Collect 3 to unlock bonus stage',
   },
 

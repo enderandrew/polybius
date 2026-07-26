@@ -1,7 +1,9 @@
 import { BufferGeometry, Group, IcosahedronGeometry, Line, MeshBasicMaterial, Mesh, Vector2, Vector3, Box2, AdditiveBlending } from 'three';
 import SurfaceObjectWrapper from '@/Renderer/Surface/SurfaceObjectWrapper';
 import enemies from '@/Assets/Enemies';
-import Enemy from '@/Object/Enemies/Enemy';  
+import Enemy from '@/Object/Enemies/Enemy';
+
+const scratchVector = new Vector2();
 
 export default class EnemyRenderer extends SurfaceObjectWrapper {
   // Removed legacy @readonly decorator
@@ -29,7 +31,7 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     this.setLaneOffset();
   }
 
- setObjectRef (object) {
+  setObjectRef (object) {
     let expectedType = object.type;
     if (object.isMutant) expectedType = 'mutant_flipper';
     if (object.isStealth) expectedType = 'stealth_flipper';
@@ -41,6 +43,22 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
     }
 
     super.setObjectRef(object);
+
+    // --- GUARD: Only reset if the object is being recycled from the pool! ---
+    // During the initial super() call, class fields are not initialized yet.
+    if (this.positionOffset) {
+      this.positionOffset.set(0, 0);
+      this.zRotationOffset = 0;
+      this.invalidateRotationStateCache();
+      
+      if (this.modelGroup) {
+        this.modelGroup.scale.set(1, 1, 1);
+        this.modelGroup.rotation.set(0, 0, 0);
+      }
+      
+      // Recalculate lane offset for the new object's lane!
+      this.setLaneOffset();
+    }
     
     if (this.modelGroup) {
       const isStrong = this.object.isStrong;
@@ -164,13 +182,15 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
   }
 
   setLaneOffset (offset = 0.5) {
-    let laneCoords = this.surface.lanesCoords[this.object.laneId].clone();
-    let laneCenterCoords = this.surface.lanesMiddleCoords[this.object.laneId].clone();
+    const laneCoords = this.surface.lanesCoords[this.object.laneId];
+    const laneCenterCoords = this.surface.lanesMiddleCoords[this.object.laneId];
+    const scalar = (offset - 0.5) * 2;
 
-    let scalar = (offset - 0.5) * 2;
-    laneCenterCoords.sub(laneCoords).multiplyScalar(scalar);
+    // Calculate delta offset across the lane width
+    scratchVector.subVectors(laneCenterCoords, laneCoords).multiplyScalar(scalar);
 
-    this.positionOffset = laneCenterCoords;
+    // Copy ONLY the scalar offset delta, NOT the absolute lane position!
+    this.positionOffset.copy(scratchVector);
   }
 
   calculateRotationStateCacheVariables (rotationDirection) {

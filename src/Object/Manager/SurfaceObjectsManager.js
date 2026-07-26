@@ -96,10 +96,20 @@ export default class SurfaceObjectsManager extends FIFOManager {
 	this.shooters.forEach(shooter => shooter.update(delta));
     this.enemies.forEach(enemy => enemy.update(delta));
 
-    this.spikes.forEach(spike => {
-      spike.extendToLowestSpiker(this.enemiesMap[spike.laneId].filter(enemy => enemy.type === Enemy.TYPE_SPIKER));
+    for (let i = 0; i < this.spikes.length; i++) {
+      const spike = this.spikes[i];
+      const enemiesInLane = this.enemiesMap[spike.laneId];
+      const validSpikers = [];
+      for (let j = 0; j < enemiesInLane.length; j++) {
+        const enemy = enemiesInLane[j];
+        if (enemy.type === Enemy.TYPE_SPIKER) {
+          validSpikers.push(enemy);
+        }
+      }
+      
+      spike.extendToLowestSpiker(validSpikers);
       spike.update(delta);
-    });
+    }
 
     this.runGarbageCollector();
     this.updateObjectsMap();
@@ -163,6 +173,10 @@ export default class SurfaceObjectsManager extends FIFOManager {
   }
 
   getAmountOfAliveEnemies () {
-    return this.enemies.filter(enemy => enemy.alive).length;
+    let count = 0;
+    for (let i = 0; i < this.enemies.length; i++) {
+      if (this.enemies[i].alive) count++;
+    }
+    return count;
   }
 }

@@ -107,13 +107,8 @@ export default class SurfaceObjectWrapper extends Group {
       throw new Error('Unknown explosion: ' + this.object.type);
     }
 
-    // 1. Flatten the raw coordinate objects
-    let flatCoords = [].concat(...explosionDataset.coords);
-    
-    // 2. Convert raw points into Three.js Vector2 instances so Box2 can parse them
+    let flatCoords = [].concat(...explosionDataset.coords);  
     let vectorPoints = flatCoords.map(p => new Vector2(p.x, p.y));
-
-    // 3. Replaced BoundingBox2 with native Three.js Box2 and zero-allocation target vector extraction
     let boundingBox = new Box2().setFromPoints(vectorPoints);
     let center = new Vector2();
     boundingBox.getCenter(center);
