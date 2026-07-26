@@ -9,7 +9,7 @@
 	<link rel="icon" type="image/svg+xml" href="./favicon.svg" />
 	<link rel="shortcut icon" href="./favicon.ico" />
 	<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
-	<meta name="apple-mobile-web-app-title" content="Oregon Trail" />
+	<meta name="apple-mobile-web-app-title" content="Polybius" />
 	<link rel="manifest" href="./site.webmanifest" />
 	<!-- Google tag (gtag.js) -->
 	<meta name="google-site-verification" content="Fw32VtOfNNMYuxwq-LDxGbzuY7QIxjvQmLuWnv6FTGY" />
@@ -21,7 +21,6 @@
 		
 		gtag('config', 'G-C7FZLTKS4Q');
 	</script>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
 
     <style>
@@ -68,7 +67,7 @@
 	</div>
 	<!-- built files will be auto injected -->
 	<script type="module">
-		document.addEventListener("DOMContentLoaded",()=>{const t=document.getElementById("screen"),e=document.querySelector(".led"),s=document.querySelector(".switch"),o=document.querySelector('.knob[title="Brightness"]'),n=document.querySelector('.knob[title="Contrast"]');let c=!0;s.addEventListener("click",()=>{c?(e.classList.add("off"),t.classList.remove("crt-turn-on"),t.classList.add("turn-off"),c=!1):(e.classList.remove("off"),t.classList.remove("turn-off"),t.offsetWidth,t.classList.add("crt-turn-on"),c=!0)});let r=0;const l=["","brt-high","brt-low"],d=[0,45,-45];o.addEventListener("click",()=>{r=(r+1)%l.length,o.style.transform=`rotate(${d[r]}deg)`,t.classList.remove("brt-high","brt-low"),l[r]&&t.classList.add(l[r])});let i=1;const a=["","con-high","con-low"],L=[0,45,-45];n.addEventListener("click",()=>{i=(i+1)%a.length,n.style.transform=`rotate(${L[i]}deg)`,t.classList.remove("con-high","con-low"),a[i]&&t.classList.add(a[i])})});
+		document.addEventListener("DOMContentLoaded",()=>{const e=document.getElementById("screen"),t=document.querySelector(".led"),o=document.querySelector(".switch"),n=document.querySelector('.knob[title="Brightness"]'),s=document.querySelector('.knob[title="Contrast"]'),c=new Audio("./sounds/crt.ogg"),r=new Audio("./sounds/knob.ogg");let d=!0;o.addEventListener("click",()=>{c.currentTime=0,c.play().catch(e=>console.warn("Audio play prevented:",e)),d?(t.classList.add("off"),e.classList.remove("crt-turn-on"),e.classList.add("turn-off"),d=!1):(t.classList.remove("off"),e.classList.remove("turn-off"),e.offsetWidth,e.classList.add("crt-turn-on"),d=!0)});let l=0;const a=["","brt-high","brt-low"],i=[0,45,-45];n.addEventListener("click",()=>{r.currentTime=0,r.play().catch(e=>console.warn("Audio play prevented:",e)),l=(l+1)%a.length,n.style.transform=`rotate(${i[l]}deg)`,e.classList.remove("brt-high","brt-low"),a[l]&&e.classList.add(a[l])});let u=1;const m=["","con-high","con-low"],h=[0,45,-45];s.addEventListener("click",()=>{r.currentTime=0,r.play().catch(e=>console.warn("Audio play prevented:",e)),u=(u+1)%m.length,s.style.transform=`rotate(${h[u]}deg)`,e.classList.remove("con-high","con-low"),m[u]&&e.classList.add(m[u])})});
 	</script>
 </body>
 </html>

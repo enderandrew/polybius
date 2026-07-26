@@ -217,3 +217,51 @@ body {
 #screen.brt-low { filter: brightness(0.7); }
 #screen.con-high { filter: contrast(1.7) saturate(2.0); }
 #screen.con-low { filter: contrast(0.6) sepia(0.8); opacity: 0.7; }
+
+/* --- Overlay UI --- */
+.pause-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.65);
+  display: none; /* Hidden by default */
+  justify-content: center;
+  align-items: center;
+  color: #00ffff;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 5rem;
+  font-weight: bold;
+  text-shadow: 0 0 20px #00ffff;
+  letter-spacing: 10px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.pause-overlay.is-active {
+  display: flex;
+}
+
+.bonus-overlay {
+  position: absolute;
+  top: 40%;
+  width: 100%;
+  text-align: center;
+  color: #ffff00;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 4rem;
+  font-weight: bold;
+  text-shadow: 0 0 15px #ffff00;
+  z-index: 1000;
+  pointer-events: none;
+  display: none; /* Hidden by default */
+}
+
+.bonus-overlay.is-active {
+  display: block;
+}
+
+.bonus-overlay-text {
+  font-size: 2rem;
+}
