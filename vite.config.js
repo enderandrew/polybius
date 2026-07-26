@@ -1,11 +1,7 @@
 import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import babel from 'vite-plugin-babel'
 
 export default defineConfig({
   plugins: [
-    vue(),
-    babel() // Automatically loads your root babel.config.js settings
   ],
   
   base: process.env.NODE_ENV === 'production' ? './' : '/',

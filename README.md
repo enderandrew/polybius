@@ -27,6 +27,8 @@ It's based on vue webpack config, so it can be developed, served and built witho
 ## New Features in This Fork
 * Polybius theming
 * 256 levels! 32 surfaces repeated through 8 color iterations (up from 99 levels)
+* Boss fights after each 32-stage phase
+* End game!
 * Random parody message plays between levels (spoken aloud)
 * Power-ups
      * Particle Blaster - More powerful gun that does 2.5x damage
@@ -48,26 +50,40 @@ It's based on vue webpack config, so it can be developed, served and built witho
 * Enemy hit points and damage system
 * Enemies have a 10% chance of having a shield
 * New Enemies:
+     * Demon Heads
      * Mutant Flippers
      * Stealth Flippers
-     * Demon Heads
      * Gravity Fuseballs
 	 * Supernova Fuseballs
 	 * Void Fuseballs
+	 * Mega Pulsar
+	 * Inverse Pulsar
+	 * Chaos Pulsar
+	 * Phantom Spiker
+	 * Hydra Spiker
+	 * Overdrive Spiker
+	 * Pulsar Tanker
+	 * Phantom Tanker
+	 * Bomb Tanker
+	 * Mirror
      * Strong variants of all enemies
      * More new enemies and variants coming soon!
 * Bonus stage - collect 3 warp tokens and get taken to a bonus stage right out of Superman 64!
 * YES EFFECT - pick up a power-up while warping out of a level to trigger an additional bonus power-up
 * New controls and gamepad support
 * Background music
-* Game elements pulse to the beat (bloom + glow)
+* Game elements pulse to the beat (size + bloom + glow)
+* Standard 60 FPS
 * CRT bezel with working power button, contrast knob and brightness knob
 * Pause screen
+* Chaos Emeralds? What game is this?
 * Starfield!
 * New sound effects
 * Updated to latest Three.js and removed old decorators
 * Updated Vite build system
 * Added in a sanity system and glitches.
+* Attract mode
+* Responsive design with live resize
 
 ## Licensing
 All sounds and music used in Polybius are published on free-to-use licences or are AI generated.
