@@ -516,7 +516,8 @@ export class BonusStage {
 
         // 2. Are we safely inside the Ring boundaries?
         if (dist <= BonusStage.RING_RADIUS * 0.9) {
-          this._ringCleared(ring, i);
+          //this._ringCleared(ring, i);
+		  this._ringCleared(ring);
         } else {
           this._ringMissed(ring);
           return;
@@ -568,7 +569,8 @@ export class BonusStage {
 
   // ── Private — ring events ──────────────────────────────────────────────────
 
-  _ringCleared (ring, index) {
+  //_ringCleared (ring, index) {
+  _ringCleared (ring) {
     this.ringsCleared++;
     const points = BonusStage.BASE_RING_SCORE * this.ringsCleared;
     this.totalScore += points;

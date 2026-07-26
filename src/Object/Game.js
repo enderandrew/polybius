@@ -409,7 +409,7 @@ export default class Game {
         } else {
           console.warn('[Game] Invalid high score structure. Reverting to defaults.');
         }
-      } catch (error) {
+      } catch {
         console.warn('[Game] Corrupted high scores in localStorage. Reverting to defaults.');
       }
     }

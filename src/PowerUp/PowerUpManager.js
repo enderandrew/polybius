@@ -63,7 +63,7 @@ export class PowerUpManager {
 
     if (type.refillsTimers) {
       let refilled = false;
-      for (const [id, entry] of this._active) {
+      for (const [, entry] of this._active) {
         if (entry.type.duration) {
           // Reset the timer back to maximum! The HUD will automatically snap back to 100%.
           entry.remaining = entry.type.duration / 1000;

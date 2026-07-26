@@ -74,11 +74,11 @@ class PlayerProjectile {
 class EnemyProjectile {
   static RADIUS = 0.8;
 
-  constructor (scene, origin, playerPos, speed = 9) {
+  constructor (scene, origin, _playerPos, speed = 9) {
     this.alive  = true;
     this.radius = EnemyProjectile.RADIUS;
     this._pos   = origin.clone();
-    const dir   = new THREE.Vector3().subVectors(playerPos, origin).normalize();
+    const dir   = new THREE.Vector3().subVectors(_playerPos, origin).normalize();
     this._vel   = dir.multiplyScalar(speed);
 
     const geo = new THREE.IcosahedronGeometry(0.6, 0);
@@ -109,7 +109,7 @@ class EnemyProjectile {
 // ── EyeBeam ────────────────────────────────────────────────────────────────
 
 class EyeBeam {
-  constructor (scene, leftPos, rightPos, sweepTime, playerPos) {
+  constructor (scene, leftPos, rightPos, sweepTime, _playerPos) {
     this.alive      = true;
     this._timer     = sweepTime;
     this._maxTime   = sweepTime;
@@ -695,7 +695,7 @@ export class BossFight {
     });
   }
 
-  _spawnEnemyProjectile (atk, playerPos) {
+  _spawnEnemyProjectile (atk, _playerPos) {
     const target = new THREE.Vector3(atk.targetX, atk.targetY, atk.targetZ);
     this._enemyProj.push(new EnemyProjectile(this.scene, atk.origin, target, atk.speed ?? 9));
   }

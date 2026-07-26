@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Mesh, PlaneGeometry, MeshBasicMaterial, CanvasTexture, DoubleSide } from 'three';
+import { Mesh, PlaneGeometry, MeshBasicMaterial, DoubleSide } from 'three';
 import randomRange from '@/utils/randomRange';
 
 const fontLoadPromise = new FontFace('VectorBattle', 'url(VectorBattle.ttf)').load().then(font => {

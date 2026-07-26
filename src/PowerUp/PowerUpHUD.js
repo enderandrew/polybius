@@ -232,7 +232,7 @@ export class PowerUpHUD {
 
   clear () {
     // Wipes all active timer bars visually
-    for (const [id, entry] of this.strips) {
+    for (const entry of this.strips.values()) {
       entry.el.remove();
     }
     this.strips.clear();

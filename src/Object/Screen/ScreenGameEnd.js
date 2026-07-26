@@ -114,12 +114,11 @@ export default class ScreenGameEnd extends Canvas3d {
 
   release () {
     window.removeEventListener('keydown', this._keyHandler);
-    try { window.speechSynthesis.cancel(); } catch (_) {}
+    try { window.speechSynthesis.cancel(); } catch (error) { console.debug('[ScreenGameEnd] Speech cancel failed:', error); }
   }
 
   update () {
     const now   = Date.now();
-    const delta = (now - this._lastUpdate) / 1000;
     this._lastUpdate = now;
 
     // Reveal next line when its hold time has elapsed
@@ -163,26 +162,26 @@ export default class ScreenGameEnd extends Canvas3d {
   // ── WebSpeech ──────────────────────────────────────────────────────────────
 
   _speakTruth () {
-      try {
-          window.speechSynthesis.cancel();
-          const text = [
-              'The Chaos Emeralds attuned your brainwaves',
-              'to the truth frequency.',
-              'And only now can you be told',
-              'the greatest truth.',
-              '... Insert Coin. To Continue.',
-          ].join(' ');
-  
-          const utt   = new SpeechSynthesisUtterance(text);
-          utt.rate    = 0.62;
-          utt.pitch   = 0.55;
-          utt.volume  = 1.0;
-  
-          const deep = findVoice(/daniel|google uk|alex|thomas|french/i);
-          if (deep) utt.voice = deep;
-  
-          window.speechSynthesis.speak(utt);
-      } catch (_) {}
+    try {
+      window.speechSynthesis.cancel();
+      const text = [
+          'The Chaos Emeralds attuned your brainwaves',
+          'to the truth frequency.',
+          'And only now can you be told',
+          'the greatest truth.',
+          '... Insert Coin. To Continue.',
+      ].join(' ');
+      
+      const utt   = new SpeechSynthesisUtterance(text);
+      utt.rate    = 0.62;
+      utt.pitch   = 0.55;
+      utt.volume  = 1.0;
+      
+      const deep = findVoice(/daniel|google uk|alex|thomas|french/i);
+      if (deep) utt.voice = deep;
+      
+      window.speechSynthesis.speak(utt);
+    } catch (error) { console.debug('[ScreenGameEnd] Speech synthesis failed:', error); }
   }
 
   // ── Rendering ──────────────────────────────────────────────────────────────

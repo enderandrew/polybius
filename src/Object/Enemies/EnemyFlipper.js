@@ -1,5 +1,4 @@
 import Enemy from '@/Object/Enemies/Enemy';
-import SurfaceObject from '@/Object/Surface/SurfaceObject';
 import randomRange from '@/utils/randomRange';
 import State from '@/Object/State';
 

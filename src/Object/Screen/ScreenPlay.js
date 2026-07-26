@@ -82,6 +82,24 @@ export default class ScreenPlay extends Canvas3d {
 
     // Determine if graphics should alter based on player status
     const isLosingSanity = this.sanityLevel < 50;
+    if (isLosingSanity) {
+      const now = Date.now();
+      // Only recalculate glitches every 100ms (10 times a second)
+      if (now - this.lastGlitchTimestamp > 100) {
+        this.lastGlitchTimestamp = now;
+        
+        // Cache the visual state to be used by draw()
+        this.isGlitchingScore = Math.random() > 0.8;
+        this.isGlitchingHint = Math.random() > 0.9;
+        
+        this._dirty = true; // Force redraw to show the flicker
+      }
+    } else if (this.isGlitchingScore || this.isGlitchingHint) {
+      // Clean up glitches immediately if sanity is restored
+      this.isGlitchingScore = false;
+      this.isGlitchingHint = false;
+      this._dirty = true;
+    }
     const scoreColor = this.isGlitchingScore ? Canvas3d.COLOR_RED : Canvas3d.COLOR_BLUE;
 
     this.setFontSizePx(60);

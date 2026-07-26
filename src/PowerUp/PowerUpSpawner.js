@@ -19,7 +19,7 @@
  *   pickWeightedRandom (re-exported from PowerUpType)
  */
 
-import { PowerUpType, pickWeightedRandom } from '@/PowerUp/PowerUpType';
+import { pickWeightedRandom } from '@/PowerUp/PowerUpType';
 import { PowerUp } from '@/PowerUp/PowerUp';
 
 // Base drop chance per enemy tier (0–1)

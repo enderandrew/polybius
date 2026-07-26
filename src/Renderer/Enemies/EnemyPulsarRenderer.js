@@ -171,7 +171,6 @@ export default class EnemyPulsarRenderer extends EnemyRenderer {
       this._chaosGlitch.rotation.z += 0.12;
       
       // Flash opacity rapidly to look "broken"
-      const t = performance.now();
       this._chaosGlitch.children.forEach(child => {
          child.material.opacity = 0.2 + (Math.random() * 0.6);
       });
