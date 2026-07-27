@@ -28,6 +28,7 @@ import { PowerUpHUD } from '@/PowerUp/PowerUpHUD';
 import { AIDroid } from '@/PowerUp/AIDroid';
 import Starfield from '@/Renderer/Background/Starfield';
 import CyberGrid from '@/Renderer/Background/CyberGrid';
+import DataCascades from '@/Renderer/Background/DataCascades';
 import ScreenAttractMode from '@/Object/Screen/ScreenAttractMode';
 import { initVoiceCache } from '@/utils/voiceCache';
 import { ModeManager } from '@/Object/Manager/ModeManager';
@@ -822,24 +823,31 @@ export default class Game {
   }
 
   _getRandomBonusPowerUp(excludeType) {
+    // Hand-maintained list, so a type removed from PowerUpType would silently
+    // become `undefined` here and throw on the .id access below. The filter
+    // tolerates that rather than crashing the warp bonus.
     const allTypes = [
       PowerUpType.AI_DROID,
       PowerUpType.GRENADE,
-      PowerUpType.JUMP,
       PowerUpType.ONE_UP,
       PowerUpType.LASER,
       PowerUpType.MISSILE,
       PowerUpType.PARTICLE_BLASTER,
       PowerUpType.PHANTOM,
+      PowerUpType.PHASE_DASH,
       PowerUpType.RAPID_FIRE,
       PowerUpType.SHIELD,
       PowerUpType.SPREAD_GUN,
       PowerUpType.SYNTH_SURGE,
       PowerUpType.TIMER_EXTEND,
-    ];
+    ].filter(Boolean);
 
     // Filter out the one they just picked up
-    const available = allTypes.filter((t) => t.id !== excludeType.id);
+    const available = allTypes.filter((t) => t.id !== excludeType?.id);
+
+    if (available.length === 0) {
+      return null;
+    }
 
     // Pick a random one from the remaining pool
     return available[Math.floor(Math.random() * available.length)];
@@ -961,7 +969,10 @@ export default class Game {
       case 2:
         this.currentBackground = new CyberGrid();
         break;
-      // Future phases (3-8) will be added here
+      case 3:
+        this.currentBackground = new DataCascades();
+        break;
+      // Future phases (4-8) will be added here
       default:
         this.currentBackground = new Starfield();
         break;

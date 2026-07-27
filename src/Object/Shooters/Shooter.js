@@ -41,12 +41,23 @@ export default class Shooter extends ShootingSurfaceObject {
   static DASH_LANES = 3;
   static DASH_COOLDOWN_MS = 600;
 
+  // Phase Dash power-up overrides. The i-frame window MUST stay shorter than
+  // the cooldown, or spamming dash would chain the windows together into
+  // permanent invulnerability — the same trap the jump cooldown exists to
+  // avoid. The gap between them is the player's exposed time.
+  static PHASE_DASH_LANES = 5;
+  static PHASE_DASH_COOLDOWN_MS = 400;
+  static PHASE_DASH_IFRAME_MS = 220;
+
   static FLAG_ITS_ALREADY_TOO_LATE = 0x1;
   static FLAG_SUPERZAPPER_USED = 0x2;
 
   penaltyTimestamp = 0;
   jumpTimestamp = 0;
   dashTimestamp = 0;
+
+  /** Wall-clock ms until which Phase Dash i-frames are active. */
+  phaseUntil = 0;
 
   // Lane lock is held from two independent sources that are polled at
   // different points in the frame; tracking them separately avoids one input
@@ -123,12 +134,16 @@ export default class Shooter extends ShootingSurfaceObject {
       if (!this.isShieldInvincible) {
         const gameRef =
           this.game || (this.projectileManager && this.projectileManager.game);
-        this.hittable = !gameRef?.powerUpManager?.hasPhantom;
+        // Recomputed every frame, so when the phase window lapses hittability
+        // restores itself on the next tick — no timer to leak or cancel.
+        this.hittable =
+          !gameRef?.powerUpManager?.hasPhantom && !this.isPhasing;
       }
     }
     if (
       this.isFlagNotSet(Shooter.FLAG_ITS_ALREADY_TOO_LATE) &&
-      !this.inState(Shooter.STATE_JUMPING)
+      !this.inState(Shooter.STATE_JUMPING) &&
+      !this.isPhasing
     ) {
       this.handleShortedLanes();
 
@@ -432,12 +447,45 @@ export default class Shooter extends ShootingSurfaceObject {
     return Math.min(1, elapsed / Shooter.DASH_COOLDOWN_MS);
   }
 
+  /**
+   * Resolves the active PowerUpManager. Shooter is constructed before `game`
+   * is attached in some paths, and ProjectileManager carries a `game` ref too,
+   * so both are checked — this mirrors the fallback already used in
+   * updateEntity() and _checkAndConsumeShield().
+   *
+   * @return {?PowerUpManager}
+   */
+  get powerUps() {
+    const gameRef =
+      this.game || (this.projectileManager && this.projectileManager.game);
+    return gameRef?.powerUpManager ?? null;
+  }
+
+  /** True during the brief intangible window after a Phase Dash. */
+  get isPhasing() {
+    return Date.now() < this.phaseUntil;
+  }
+
+  /** Lanes covered by a single dash, upgraded by Phase Dash. */
+  get dashLaneCount() {
+    return this.powerUps?.hasPhaseDash
+      ? Shooter.PHASE_DASH_LANES
+      : Shooter.DASH_LANES;
+  }
+
+  /** Dash recharge time, shortened by Phase Dash. */
+  get dashCooldownMs() {
+    return this.powerUps?.hasPhaseDash
+      ? Shooter.PHASE_DASH_COOLDOWN_MS
+      : Shooter.DASH_COOLDOWN_MS;
+  }
+
   dashLeft() {
-    this.dash(Shooter.DASH_LANES);
+    this.dash(this.dashLaneCount);
   }
 
   dashRight() {
-    this.dash(-Shooter.DASH_LANES);
+    this.dash(-this.dashLaneCount);
   }
 
   /**
@@ -462,7 +510,7 @@ export default class Shooter extends ShootingSurfaceObject {
     }
 
     const now = Date.now();
-    if (now - this.dashTimestamp < Shooter.DASH_COOLDOWN_MS) {
+    if (now - this.dashTimestamp < this.dashCooldownMs) {
       return;
     }
 
@@ -486,6 +534,12 @@ export default class Shooter extends ShootingSurfaceObject {
     // Dashing also consumes the normal lane-change budget so a dash can't be
     // immediately followed by a free single step.
     this.lastLaneChangeTimestamp = now;
+
+    // Phase Dash: arrive intangible for a moment, so the destination lane's
+    // hazards can be dashed *into* and not just over.
+    if (this.powerUps?.hasPhaseDash) {
+      this.phaseUntil = now + Shooter.PHASE_DASH_IFRAME_MS;
+    }
 
     messageBroker.publish(
       MessageBroker.TOPIC_AUDIO,

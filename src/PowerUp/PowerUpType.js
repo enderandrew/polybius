@@ -110,22 +110,25 @@ export const PowerUpType = Object.freeze({
     description: 'Companion cube droid that auto-targets enemies',
   },
 
-  // Jump is a core move now, always available with a cooldown, so this drop
-  // would grant nothing. Left defined rather than deleted so the slot is easy
-  // to repurpose — set a dropWeight and change the grant to bring it back
-  // (e.g. as a jump-cooldown reducer or an extended-hang "HOVER").
-  // NOTE: pickWeightedRandom() subtracts dropWeight, so 0 means never selected.
-  JUMP: {
-    id: 'JUMP',
-    label: 'JUMP',
-    color: '#88ffff',
-    glowColor: 'rgba(136,255,255,0.6)',
-    shape: 'star',
-    duration: 20000,
+  // Upgrades the dash rather than adding a new verb: further, faster to
+  // recharge, and briefly intangible on arrival. That last part specifically
+  // covers the base dash's one designed weakness — the destination lane is
+  // normally still lethal, so an ordinary dash can't be used to escape *into*
+  // a shorted band. Phase Dash can.
+  //
+  // Distinct from PHANTOM: this grants a short window earned by using the
+  // mechanic, not several seconds of passive immunity.
+  PHASE_DASH: {
+    id: 'PHASE_DASH',
+    label: 'PHASE\nDASH',
+    color: '#00e5ff',
+    glowColor: 'rgba(0,229,255,0.6)',
+    shape: 'beam',
+    duration: 18000,
     isWeapon: false,
-    grantsJump: true,
-    dropWeight: 0,
-    description: 'Press W to jump over enemies',
+    grantsPhaseDash: true,
+    dropWeight: 7,
+    description: 'Dash farther and faster, phasing through hazards on arrival',
   },
 
   PHANTOM: {

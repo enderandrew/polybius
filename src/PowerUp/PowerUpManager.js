@@ -268,8 +268,8 @@ export class PowerUpManager {
     return this.isActive(PowerUpType.AI_DROID.id);
   }
 
-  get hasJump() {
-    return this.isActive(PowerUpType.JUMP.id);
+  get hasPhaseDash() {
+    return this.isActive(PowerUpType.PHASE_DASH.id);
   }
 
   get hasPhantom() {
