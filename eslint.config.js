@@ -8,12 +8,12 @@ export default [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
-      globals: { ...globals.browser }
+      globals: { ...globals.browser },
     },
     rules: {
       'no-undef': 'error',
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-      'no-empty': ['error', { allowEmptyCatch: false }]
-    }
-  }
+      'no-empty': ['error', { allowEmptyCatch: false }],
+    },
+  },
 ];
