@@ -5,6 +5,7 @@ export class MessageBroker {
   static MESSAGE_1UP = '1up';
   static MESSAGE_ACHIEVEMENT = 'achievement';
   static MESSAGE_BIGFOOT = 'bigfoot';
+  static MESSAGE_DASH = 'dash';
   static MESSAGE_ENEMY_DEATH = 'message_enemy_death';
   static MESSAGE_ENEMY_SHOOT = 'message_enemy_shoot';
   static MESSAGE_GAME = 'game';

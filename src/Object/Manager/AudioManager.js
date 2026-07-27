@@ -5,6 +5,7 @@ export default class AudioManager {
   static SOUND_1UP = '1up';
   static SOUND_ACHIEVEMENT = 'achievement';
   static SOUND_BIGFOOT = 'bigfoot';
+  static SOUND_DASH = 'dash';
   static SOUND_ENEMY_DEATH = 'enemy_death';
   static SOUND_ENEMY_SHOOT = 'enemy_shoot';
   static SOUND_GAME = 'game';
@@ -107,6 +108,9 @@ export default class AudioManager {
           break;
         case MessageBroker.MESSAGE_BIGFOOT:
           this.playSound(AudioManager.SOUND_BIGFOOT, 0.8);
+          break;
+        case MessageBroker.MESSAGE_DASH:
+          this.playSound(AudioManager.SOUND_DASH);
           break;
         case MessageBroker.MESSAGE_ENEMY_DEATH:
           this.playSound(AudioManager.SOUND_ENEMY_DEATH);

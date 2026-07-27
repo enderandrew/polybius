@@ -165,6 +165,7 @@ export default class Game {
       'achievement',
       'bigfoot',
       'crt',
+	  'dash',
       'enemy_death',
       'enemy_shoot',
       'game',
