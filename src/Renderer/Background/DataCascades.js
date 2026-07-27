@@ -9,7 +9,8 @@ import {
   PlaneGeometry,
   MeshBasicMaterial,
   CanvasTexture,
-  AdditiveBlending
+  AdditiveBlending,
+  DoubleSide
 } from 'three';
 
 export default class DataCascades extends Group {
@@ -122,7 +123,8 @@ export default class DataCascades extends Group {
       map: tex, 
       transparent: true, 
       blending: AdditiveBlending,
-      depthWrite: false
+      depthWrite: false,
+	  side: DoubleSide,
     });
     
     // Create a tall, thin plane for the text column

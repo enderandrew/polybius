@@ -29,7 +29,12 @@ import { AIDroid } from '@/PowerUp/AIDroid';
 import Starfield from '@/Renderer/Background/Starfield';
 import CyberGrid from '@/Renderer/Background/CyberGrid';
 import DataCascades from '@/Renderer/Background/DataCascades';
+import EtherealNebula from '@/Renderer/Background/EtherealNebula';
 import ScreenAttractMode from '@/Object/Screen/ScreenAttractMode';
+import SolarRibbons from '@/Renderer/Background/SolarRibbons';
+import FracturedMonoliths from '@/Renderer/Background/FracturedMonoliths';
+import SignalDegradation from '@/Renderer/Background/SignalDegradation';
+import KaleidoscopicWormhole from '@/Renderer/Background/KaleidoscopicWormhole';
 import { initVoiceCache } from '@/utils/voiceCache';
 import { ModeManager } from '@/Object/Manager/ModeManager';
 import MenuMode from '@/Object/Modes/MenuMode';
@@ -972,7 +977,21 @@ export default class Game {
       case 3:
         this.currentBackground = new DataCascades();
         break;
-      // Future phases (4-8) will be added here
+      case 4:
+        this.currentBackground = new EtherealNebula();
+        break;
+      case 5:
+        this.currentBackground = new SolarRibbons();
+        break;
+      case 6:
+        this.currentBackground = new FracturedMonoliths();
+        break;
+      case 7:
+        this.currentBackground = new SignalDegradation();
+        break;
+      case 8:
+        this.currentBackground = new KaleidoscopicWormhole();
+        break;
       default:
         this.currentBackground = new Starfield();
         break;

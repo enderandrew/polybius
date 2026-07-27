@@ -1,7 +1,6 @@
 import { GameMode } from '@/Object/Manager/ModeManager';
 import { BonusStage } from '@/Object/BonusStage/BonusStage';
 import ScreenContentManager from '@/Object/Screen/ScreenContentManager';
-import PlayMode from '@/Object/Modes/PlayMode';
 import ScreenParodySurface from '@/Object/Screen/ScreenParodySurface';
 import keyboardInput from '@/utils/KeyboardInput';
 import Sequencer from '@/utils/Sequencer';
@@ -175,10 +174,9 @@ export default class BonusMode extends GameMode {
     game.loadScreen(new ScreenParodySurface(game.screenContentManager, msg));
     if (game.screenObject) game.screenObject.position.z = 0.1;
 
-    // --- REPLACED setTimeout ---
     this.sequencer.add(2500, () => {
       game.releaseScreen();
-      game.modeManager.switchMode(new PlayMode(this.nextLevel));
+      game.startLevel(this.nextLevel);
     });
   }
 
