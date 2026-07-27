@@ -150,13 +150,25 @@ export default class PlayMode extends GameMode {
     const wasRight = game.prevGamepadAxis > 0.5;
     const justRight = isRight && !wasRight;
 
+    // Lane lock — L2 (6) / R2 (7). Held, so polled rather than edge-detected.
+    // This is the main reason lock exists on pad: analog stick drift near the
+    // 0.5 deadzone nudges the player between lanes unintentionally.
+    game.shooter.laneLockGamepad = isPressed(6) || isPressed(7);
+
+    // Dash — L1 (4) / R1 (5). Edge-detected so holding won't repeat-dash.
+    if (justPressed(4)) game.shooter.dashLeft();
+    if (justPressed(5)) game.shooter.dashRight();
+
     if (justPressed(14) || justLeft) game.shooter.moveLeft();
     if (justPressed(15) || justRight) game.shooter.moveRight();
     if (justPressed(12) || justPressed(1) || justPressed(3))
       game.shooter.jump();
     if (justPressed(13) || justPressed(2)) game.shooter.fireSuperzapper();
 
-    if (isPressed(0) || isPressed(7)) game.shooter.fire();
+    // Fire is now A (0) only. R2 previously doubled as fire, but it is the
+    // lane-lock trigger now — holding position to line up a shot would
+    // otherwise have also been holding the fire button.
+    if (isPressed(0)) game.shooter.fire();
   }
 
   exit(game) {

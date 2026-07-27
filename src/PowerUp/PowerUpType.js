@@ -110,6 +110,11 @@ export const PowerUpType = Object.freeze({
     description: 'Companion cube droid that auto-targets enemies',
   },
 
+  // Jump is a core move now, always available with a cooldown, so this drop
+  // would grant nothing. Left defined rather than deleted so the slot is easy
+  // to repurpose — set a dropWeight and change the grant to bring it back
+  // (e.g. as a jump-cooldown reducer or an extended-hang "HOVER").
+  // NOTE: pickWeightedRandom() subtracts dropWeight, so 0 means never selected.
   JUMP: {
     id: 'JUMP',
     label: 'JUMP',
@@ -119,7 +124,7 @@ export const PowerUpType = Object.freeze({
     duration: 20000,
     isWeapon: false,
     grantsJump: true,
-    dropWeight: 10,
+    dropWeight: 0,
     description: 'Press W to jump over enemies',
   },
 

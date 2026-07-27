@@ -133,7 +133,7 @@ export default class ScreenPlay extends Canvas3d {
         // Use the cached glitch state for the subliminal hint
         const hintText = this.isGlitchingHint
           ? 'OBEY'
-          : 'Press E to use SuperZapper';
+          : 'Press F to use SuperZapper';
 
         this.drawText(hintText, 240, 1000, Canvas3d.COLOR_BLUE);
       }

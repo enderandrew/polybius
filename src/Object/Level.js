@@ -111,24 +111,35 @@ export default class Level {
   }
 
   registerKeys() {
-    // Player 1 - WASD
+    // Continuous (held) — movement repeats while the key is down.
     keyboardInput.register('KeyA', () => {
       this.shooter.moveLeft();
     });
     keyboardInput.register('KeyD', () => {
       this.shooter.moveRight();
     });
-    keyboardInput.register('KeyW', () => {
-      this.shooter.jump();
-    });
     keyboardInput.register('Space', () => {
       this.shooter.fire();
     });
-    keyboardInput.register('KeyE', () => {
+
+    // Discrete (one per press) — holding must not repeat these.
+    keyboardInput.registerPress('KeyW', () => {
+      this.shooter.jump();
+    });
+    keyboardInput.registerPress('KeyF', () => {
       this.shooter.fireSuperzapper();
     });
-    keyboardInput.register('End', () => {
+    keyboardInput.registerPress('End', () => {
       this.shooter.setState(Shooter.STATE_GOING_DOWN_THE_TUBE);
+    });
+
+    // Dash — Q/E on the left hand mirrors A/D. Note KeyE is the superzapper,
+    // so dash-right uses KeyR to avoid the collision.
+    keyboardInput.registerPress('KeyQ', () => {
+      this.shooter.dashLeft();
+    });
+    keyboardInput.registerPress('KeyE', () => {
+      this.shooter.dashRight();
     });
 
     // Player 1 - Arrows
@@ -138,15 +149,19 @@ export default class Level {
     keyboardInput.register('ArrowRight', () => {
       this.shooter.moveRight();
     });
-    keyboardInput.register('ArrowUp', () => {
+    keyboardInput.registerPress('ArrowUp', () => {
       this.shooter.jump();
     });
-    keyboardInput.register('ArrowDown', () => {
+    keyboardInput.registerPress('ArrowDown', () => {
       this.shooter.fireSuperzapper();
     });
 
+    // Lane lock — polled each frame in update(), not dispatched.
+    keyboardInput.track('ShiftLeft');
+    keyboardInput.track('ShiftRight');
+
     // Global Pause
-    keyboardInput.register('Escape', () => {
+    keyboardInput.registerPress('Escape', () => {
       this.game.togglePause();
     });
   }
@@ -157,11 +172,15 @@ export default class Level {
     keyboardInput.unregister('KeyW');
     keyboardInput.unregister('Space');
     keyboardInput.unregister('KeyE');
+    keyboardInput.unregister('KeyQ');
+    keyboardInput.unregister('KeyF');
     keyboardInput.unregister('End');
     keyboardInput.unregister('ArrowLeft');
     keyboardInput.unregister('ArrowRight');
     keyboardInput.unregister('ArrowUp');
     keyboardInput.unregister('ArrowDown');
+    keyboardInput.unregister('ShiftLeft');
+    keyboardInput.unregister('ShiftRight');
     keyboardInput.unregister('Escape');
   }
 
@@ -173,6 +192,11 @@ export default class Level {
     if (this.released) {
       return;
     }
+
+    // Lane lock is a held modifier rather than a dispatched action, so it is
+    // polled. The gamepad sets its own flag in PlayMode.pollGamepads().
+    this.shooter.laneLockKeyboard =
+      keyboardInput.isDown('ShiftLeft') || keyboardInput.isDown('ShiftRight');
 
     this.projectileManager.update(delta);
     this.surfaceObjectsManager.update(delta);

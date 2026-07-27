@@ -27,6 +27,7 @@ import { PowerUpType } from '@/PowerUp/PowerUpType';
 import { PowerUpHUD } from '@/PowerUp/PowerUpHUD';
 import { AIDroid } from '@/PowerUp/AIDroid';
 import Starfield from '@/Renderer/Background/Starfield';
+import CyberGrid from '@/Renderer/Background/CyberGrid';
 import ScreenAttractMode from '@/Object/Screen/ScreenAttractMode';
 import { initVoiceCache } from '@/utils/voiceCache';
 import { ModeManager } from '@/Object/Manager/ModeManager';
@@ -99,7 +100,7 @@ export default class Game {
     this.modeManager.switchMode(new MenuMode());
 
     this.bgmManager.onBeat = () => {
-      if (this.starfield) this.starfield.pulse(1.2); //1.5
+      if (this.currentBackground) this.currentBackground.pulse(1.2);
       if (this.levelRenderer) this.levelRenderer.beatPulse = 0.15; // 40% flash
       this.beatGlow = 0.1;
       // Auto-fire straight down the lane!
@@ -109,7 +110,7 @@ export default class Game {
     };
 
     this.bgmManager.onAccent = () => {
-      if (this.starfield) this.starfield.pulse(2.0); //3.5
+      if (this.currentBackground) this.currentBackground.pulse(2.0);
       if (this.levelRenderer) this.levelRenderer.beatPulse = 0.35; // 90% flash
       this.beatGlow = 0.3;
       // Auto-fire a massive 5-lane spread!
@@ -238,6 +239,7 @@ export default class Game {
   }
 
   loadLevel(level) {
+    this._updateBackgroundRenderer(level);
     let surfaceId = ((level - 1) % 32) + 1;
     let surfaceData = surfaces.find((s) => s.id === surfaceId);
     if (!surfaceData) {
@@ -483,8 +485,8 @@ export default class Game {
 
   setupRenderer(highQuality = true, isMobile = false) {
     this.scene = new Scene();
-    this.starfield = new Starfield();
-    this.scene.add(this.starfield);
+    this.currentBackgroundPhase = 0;
+    this.currentBackground = null;
 
     // Get the actual pixel dimensions of the CRT screen interior
     const screenElement = document.getElementById('screen');
@@ -629,7 +631,7 @@ export default class Game {
       console.error('[CRITICAL ERROR CAUGHT IN UPDATE]:', err);
       throw err;
     }
-
+	
     if (this.beatGlow === undefined) {
       this.beatGlow = 0.0;
       this.baseBloom = this.bloomPass ? this.bloomPass.strength : 0.5;
@@ -647,8 +649,8 @@ export default class Game {
     }
 
     // Handle global background elements
-    if (this.starfield) {
-      this.starfield.update(delta);
+    if (this.currentBackground) {
+      this.currentBackground.update(delta);
     }
 
     if (this.screenObject !== null) {
@@ -931,5 +933,40 @@ export default class Game {
     this._lastMenuActivity = Date.now();
     this.populateScreenContentManager();
     this.loadScreen(new ScreenSelectSurface(this.screenContentManager));
+  }
+
+  _updateBackgroundRenderer(level) {
+    // Phases are exactly 32 levels each
+    const phase = Math.floor((level - 1) / 32) + 1;
+    
+    // If we are already in the correct phase background, do nothing
+    if (this.currentBackgroundPhase === phase) return;
+    this.currentBackgroundPhase = phase;
+
+    // Clean up the old background
+    if (this.currentBackground) {
+      this.scene.remove(this.currentBackground);
+      this.currentBackground.traverse((obj) => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+          else obj.material.dispose();
+        }
+      });
+      this.currentBackground = null;
+    }
+
+    // Mount the new background
+    switch (phase) {
+      case 2:
+        this.currentBackground = new CyberGrid();
+        break;
+      // Future phases (3-8) will be added here
+      default:
+        this.currentBackground = new Starfield();
+        break;
+    }
+
+    this.scene.add(this.currentBackground);
   }
 }

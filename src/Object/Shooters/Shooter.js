@@ -27,11 +27,32 @@ export default class Shooter extends ShootingSurfaceObject {
   static STATE_JUMPING = new State(600, 1, 'jumping');
   static JUMP_HEIGHT = -0.3; // Negative Z = above the rim
 
+  // Jump grants full hazard immunity for the whole of STATE_JUMPING (see the
+  // STATE_JUMPING guard in updateEntity). Without a cooldown longer than that
+  // 600ms window the player could re-jump the frame it ends and stay
+  // effectively invulnerable forever, so this must stay > STATE_JUMPING's
+  // duration to leave a real window of exposure on the ground.
+  static JUMP_COOLDOWN_MS = 1400;
+
+  // Dash teleports this many lanes at once. Because it is atomic, the player
+  // never occupies the lanes in between — which is what lets a dash cross a
+  // Pulsar-shorted band that walking across would be fatal. The destination
+  // lane is still evaluated normally.
+  static DASH_LANES = 3;
+  static DASH_COOLDOWN_MS = 600;
+
   static FLAG_ITS_ALREADY_TOO_LATE = 0x1;
   static FLAG_SUPERZAPPER_USED = 0x2;
 
   penaltyTimestamp = 0;
   jumpTimestamp = 0;
+  dashTimestamp = 0;
+
+  // Lane lock is held from two independent sources that are polled at
+  // different points in the frame; tracking them separately avoids one input
+  // device clearing the other's state depending on ordering.
+  laneLockKeyboard = false;
+  laneLockGamepad = false;
   lastLaneChangeTimestamp;
   laneChangeTimeoutMs;
   surfaceObjectsManager;
@@ -218,6 +239,12 @@ export default class Shooter extends ShootingSurfaceObject {
       return;
     }
 
+    // Lane lock is the whole point of the input — it must suppress movement
+    // silently, with no lane-change sound, so holding it feels inert.
+    if (this.isLaneLocked) {
+      return;
+    }
+
     let now = Date.now();
 
     if (now - this.lastLaneChangeTimestamp < Shooter.LANE_CHANGE_TIMEOUT_MS) {
@@ -367,19 +394,127 @@ export default class Shooter extends ShootingSurfaceObject {
   }
 
   jump() {
-    if (
-      !this.game?.powerUpManager?.hasJump ||
-      !this.inState(Shooter.STATE_ALIVE) ||
-      !this.canShoot
-    ) {
+    // Deliberately NOT gated on isLaneLocked: lock governs lateral movement.
+    // Jump is vertical and is the player's dodge, so holding lock to steady
+    // your aim must never cost you the ability to evade.
+    if (!this.inState(Shooter.STATE_ALIVE) || !this.canShoot) {
       return;
     }
+
+    // jumpTimestamp was previously written here and never read anywhere —
+    // the cooldown it implies is now actually enforced.
+    if (Date.now() - this.jumpTimestamp < Shooter.JUMP_COOLDOWN_MS) {
+      return;
+    }
+
     messageBroker.publish(
       MessageBroker.TOPIC_AUDIO,
       MessageBroker.MESSAGE_JUMP,
     );
     this.jumpTimestamp = Date.now();
     this.setState(Shooter.STATE_JUMPING);
+  }
+
+  /** True while either input source is holding lane lock. */
+  get isLaneLocked() {
+    return this.laneLockKeyboard || this.laneLockGamepad;
+  }
+
+  /** Fraction of the jump cooldown elapsed, 0..1. For HUD / renderer use. */
+  get jumpCooldownProgress() {
+    const elapsed = Date.now() - this.jumpTimestamp;
+    return Math.min(1, elapsed / Shooter.JUMP_COOLDOWN_MS);
+  }
+
+  /** Fraction of the dash cooldown elapsed, 0..1. For HUD / renderer use. */
+  get dashCooldownProgress() {
+    const elapsed = Date.now() - this.dashTimestamp;
+    return Math.min(1, elapsed / Shooter.DASH_COOLDOWN_MS);
+  }
+
+  dashLeft() {
+    this.dash(Shooter.DASH_LANES);
+  }
+
+  dashRight() {
+    this.dash(-Shooter.DASH_LANES);
+  }
+
+  /**
+   * Atomic multi-lane hop. Unlike repeated moveToLane() calls this never places
+   * the shooter in the intervening lanes, so hazards that are evaluated from
+   * `laneId` each frame (shorted lanes, lane-local enemy checks) are skipped
+   * over rather than crossed. The landing lane is NOT exempt.
+   *
+   * @param {number} offset - signed lane delta, matching moveLeft/moveRight's
+   *   convention where left is +1.
+   */
+  dash(offset) {
+    if (
+      !this.inState(Shooter.STATE_ALIVE) &&
+      !this.inState(Shooter.STATE_GOING_DOWN_THE_TUBE)
+    ) {
+      return;
+    }
+
+    if (this.isLaneLocked) {
+      return;
+    }
+
+    const now = Date.now();
+    if (now - this.dashTimestamp < Shooter.DASH_COOLDOWN_MS) {
+      return;
+    }
+
+    let targetLane = this.surface.getTargetLaneId(this.laneId, offset);
+
+    // Open surfaces return null past the edge. Clamp toward the edge instead of
+    // dropping the input — a dash the player committed to should always do
+    // something, even if it travels less than the full distance.
+    if (targetLane === null) {
+      targetLane = this._clampDashTarget(offset);
+    }
+
+    if (targetLane === null || targetLane === this.laneId) {
+      return;
+    }
+
+    this.setLane(targetLane);
+    this.surface.setActiveLane(this.laneId);
+
+    this.dashTimestamp = now;
+    // Dashing also consumes the normal lane-change budget so a dash can't be
+    // immediately followed by a free single step.
+    this.lastLaneChangeTimestamp = now;
+
+    messageBroker.publish(
+      MessageBroker.TOPIC_AUDIO,
+      MessageBroker.MESSAGE_DASH,
+    );
+  }
+
+  /**
+   * Walks the dash distance down until it lands on a valid lane. Only ever
+   * called for open surfaces, where getTargetLaneId() returns null off-edge.
+   *
+   * @param {number} offset
+   * @return {?number}
+   */
+  _clampDashTarget(offset) {
+    const direction = Math.sign(offset);
+
+    for (let distance = Math.abs(offset) - 1; distance > 0; distance--) {
+      const candidate = this.surface.getTargetLaneId(
+        this.laneId,
+        distance * direction,
+      );
+
+      if (candidate !== null) {
+        return candidate;
+      }
+    }
+
+    return null;
   }
 
   hitByProjectile() {
