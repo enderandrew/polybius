@@ -16,6 +16,8 @@ export default class Level {
   projectileManager;
   /** @var {EnemySpawner} */
   enemySpawner;
+  /** @var {boolean} True once release() has torn this level down. */
+  released = false;
 
   /** @var {number} */
   currentLevel;
@@ -92,6 +94,8 @@ export default class Level {
   }
 
   release() {
+    this.released = true;
+
     this.surfaceObjectsManager.removeEnemies();
     this.surfaceObjectsManager.removeShooters();
     this.surfaceObjectsManager.removeSpikes();
@@ -162,8 +166,21 @@ export default class Level {
   }
 
   update(delta = 1 / 60) {
+    // release() nulls out shooter/managers. Callbacks fired from deeper in this
+    // traversal (a death on the last life, for example) can trigger a teardown
+    // before the stack unwinds back to here, so bail rather than dereference
+    // fields that no longer exist.
+    if (this.released) {
+      return;
+    }
+
     this.projectileManager.update(delta);
     this.surfaceObjectsManager.update(delta);
+
+    if (this.released) {
+      return;
+    }
+
     this.enemySpawner.updateScore(this.getCurrentScore());
 
     if (this.shooter.inState(Shooter.STATE_ALIVE)) {
@@ -171,6 +188,7 @@ export default class Level {
     }
 
     if (
+      this.shooter.inState(Shooter.STATE_ALIVE) &&
       this.enemySpawner.reachedScoreTarget() &&
       this.surfaceObjectsManager.getAmountOfAliveEnemies() <= 3 &&
       !this.shooter.inState(Shooter.STATE_GOING_DOWN_THE_TUBE) &&

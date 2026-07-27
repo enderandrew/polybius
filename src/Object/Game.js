@@ -200,12 +200,39 @@ export default class Game {
   startLevel(levelId, firstLevel = false) {
     this.firstLevel = firstLevel;
     this.level = levelId;
+
+    // Starting on an advanced level credits that level's score bonus up front,
+    // the way the arcade original does. This used to be awarded in
+    // levelWonCallback() instead, which left the HUD reading 0 for the whole
+    // first level and only jumping to the real total once it was cleared.
+    if (firstLevel) {
+      const startingLevelData = this._findLevelData(levelId);
+      if (startingLevelData?.selectable && startingLevelData.scoreBonus > 0) {
+        this.score += startingLevelData.scoreBonus;
+      }
+    }
+
     this.screenContentManager.setLevel(this.level);
+    this.screenContentManager.setScore(this.score);
 
     const parodyScreen = new ScreenParodySurface(this.screenContentManager);
 
     this.modeManager.switchMode(
       new TransitionMode(parodyScreen, 4000, () => new PlayMode(this.level)),
+    );
+  }
+
+  /**
+   * Levels.js is exported either as a bare array or wrapped in a
+   * `levelsCollection` property depending on how it was built; support both.
+   *
+   * @param {number} levelId
+   * @returns {{id: number, selectable: boolean, scoreBonus: number, targetScore: number}|undefined}
+   */
+  _findLevelData(levelId) {
+    return (
+      levels.levelsCollection?.find((levelData) => levelData.id === levelId) ||
+      levels.find((levelData) => levelData.id === levelId)
     );
   }
 
@@ -235,17 +262,16 @@ export default class Game {
       throw new Error(`Can't find surface level with id === ${surfaceId} !`);
     }
 
-    this.levelData =
-      levels.levelsCollection?.find((levelData) => levelData.id === level) ||
-      levels.find((levelData) => levelData.id === level);
+    this.levelData = this._findLevelData(level);
 
     if (this.levelData === undefined) {
       throw new Error(`Can't find level with id === ${level} !`);
     }
 
-    let targetScore = this.firstLevel
-      ? this.levelData.targetScore - this.levelData.scoreBonus
-      : this.levelData.targetScore;
+    // The score bonus for a starting level is credited in startLevel(), so the
+    // player's score already includes it here — compare against the full
+    // target rather than a target discounted by the not-yet-awarded bonus.
+    let targetScore = this.levelData.targetScore;
 
     targetScore += this.bonusScoreOffset;
 
@@ -304,11 +330,8 @@ export default class Game {
   }
 
   loadScreen(screen) {
-    if (this.screenObject !== null) {
-      this.screenObject.release();
-      this.releaseScreen();
-    }
-
+    // releaseScreen() already calls screenObject.release(); calling it here too
+    // disposed every texture/geometry/material twice.
     this.releaseScreen();
     this.screenObject = screen;
     this.screenGroup.add(this.screenObject);
@@ -663,9 +686,8 @@ export default class Game {
 
   levelWonCallback() {
     if (this.firstLevel && this.levelData.selectable) {
-      this.score += this.levelData.scoreBonus;
-      this.screenContentManager.setScore(this.score);
-
+      // The score bonus itself was already credited in startLevel(); only the
+      // one-off extra life for a large starting bonus is granted here.
       if (this.levelData.scoreBonus >= Game.BONUS_EVERY && this.lives < 5) {
         this.lives++;
         this.screenContentManager.set(
@@ -801,7 +823,6 @@ export default class Game {
       PowerUpType.AI_DROID,
       PowerUpType.GRENADE,
       PowerUpType.JUMP,
-      PowerUpType.LASER,
       PowerUpType.ONE_UP,
       PowerUpType.LASER,
       PowerUpType.MISSILE,

@@ -153,8 +153,7 @@ export default class EnemyMirror extends Enemy {
    *   Outside STATE_REFLECTING → reflect the shot back, enter vulnerable window.
    *   Inside  STATE_REFLECTING → take the hit and die.
    */
-  hitByProjectile(damage = 1) {
-    // eslint-disable-line no-unused-vars
+  hitByProjectile(_damage = 1) {
     if (
       this.inState(EnemyMirror.STATE_EXPLODING) ||
       this.inState(EnemyMirror.STATE_DEAD) ||

@@ -54,8 +54,7 @@ export default class ShootingSurfaceObject extends SurfaceObject {
    *   `delta * 60` so speed stays frame-rate independent (constants were
    *   originally tuned assuming 60fps).
    */
-  updateEntity(delta) {
-    // eslint-disable-line no-unused-vars
+  updateEntity(_delta) {
     throw new Error("Method 'updateEntity()' must be implemented.");
   }
 

@@ -115,7 +115,38 @@ export default class EnemyTanker extends Enemy {
     }
   }
 
-  hitByProjectile() {
+  /**
+   * Tankers participate in the standard hitPoints damage model so that the
+   * `isStrong` roll (Enemy) and the extra hitPoints set by variants such as
+   * EnemyBombTanker actually mean something, and so damage power-ups scale
+   * against them.
+   *
+   * Previously this took no `damage` argument and called die() unconditionally,
+   * which made every tanker a one-hit kill regardless of hitPoints — the shield
+   * mesh rendered for strong tankers absorbed nothing, and Particle Blaster /
+   * Laser had no effect on them at all.
+   *
+   * @param {number} damage
+   */
+  hitByProjectile(damage = 1) {
+    // Already dying — ignore further hits so the release can't double-fire.
+    if (
+      this.inState(EnemyTanker.STATE_EXPLODING) ||
+      this.inState(EnemyTanker.STATE_DISAPPEARING) ||
+      this.inState(EnemyTanker.STATE_DEAD)
+    ) {
+      return;
+    }
+
+    this.hitPoints -= damage;
+
+    if (this.hitPoints > 0) {
+      // Survived: the shield visually represents the absorbed hit, matching
+      // Enemy.hitByProjectile().
+      this.hasShield = false;
+      return;
+    }
+
     this.reward = true;
     this.die();
     this._releaseEnemiesOnce();

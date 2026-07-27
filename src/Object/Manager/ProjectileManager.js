@@ -50,10 +50,14 @@ export default class ProjectileManager extends FIFOManager {
       if (this.game && this.game.powerUpManager) {
         const powerUps = this.game.powerUpManager;
 
-        // Base Damage Multiplier (Particle Blaster buffs ALL weapons!)
-        if (powerUps.hasParticleBlaster) {
-          projectile.damage *= 2.5;
-        }
+        // Damage multiplier for ALL weapon types. Routed through
+        // getBulletDamage() so PowerUpManager stays the single source of truth
+        // for damage scaling. This previously only applied the Particle Blaster
+        // multiplier inline, which meant the Laser's 2x bonus defined in
+        // getBulletDamage() never reached the projectile — Shooter.fire()
+        // overrides ShootingSurfaceObject.fire() and passes a hardcoded
+        // damage of 1, so the parent's getBulletDamage() call never runs.
+        projectile.damage = powerUps.getBulletDamage(projectile.damage);
 
         // Determine exactly what weapon is being fired
         let wType = weaponOverride;
@@ -139,8 +143,9 @@ export default class ProjectileManager extends FIFOManager {
         // Wipe Enemies in blast radius
         this.surfaceObjectsManager.enemies.forEach((enemy) => {
           if (enemy.alive && enemy.hittable) {
+            const laneCount = this.surfaceObjectsManager.surface.lanesAmount;
             let diff = Math.abs(enemy.laneId - projectile.laneId);
-            if (diff > 8) diff = 16 - diff;
+            if (diff > laneCount / 2) diff = laneCount - diff;
             let zDiff = Math.abs(enemy.zPosition - projectile.zPosition);
 
             // diff <= 2 hits 5 whole lanes (the center, plus 2 on each side)
@@ -154,8 +159,9 @@ export default class ProjectileManager extends FIFOManager {
         // Wipe Spikes in blast radius
         this.surfaceObjectsManager.spikes.forEach((spike) => {
           if (spike.alive && spike.hittable) {
+            const laneCount = this.surfaceObjectsManager.surface.lanesAmount;
             let diff = Math.abs(spike.laneId - projectile.laneId);
-            if (diff > 8) diff = 16 - diff;
+            if (diff > laneCount / 2) diff = laneCount - diff;
             let zDiff = Math.abs(spike.zPosition - projectile.zPosition);
 
             if (diff <= 2 && zDiff <= 0.45) {

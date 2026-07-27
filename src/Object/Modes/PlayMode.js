@@ -53,6 +53,13 @@ export default class PlayMode extends GameMode {
     // Update level and renderers
     if (game.levelObject !== null && game.levelRenderer !== null) {
       game.levelObject.update(delta);
+
+      // The level tick can end the game (last life lost), which tears the level
+      // down. Re-check before touching anything that teardown nulls out.
+      if (game.levelObject === null || game.levelRenderer === null) {
+        return;
+      }
+
       game.levelRenderer.update();
 
       // Power-up subsystem ticks
