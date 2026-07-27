@@ -19,8 +19,8 @@ export class MessageBroker {
   static MESSAGE_PLAYER_CHANGED_LANE = 'message_player_changed_lane';
   static MESSAGE_PLAYER_DEATH = 'message_player_death';
   static MESSAGE_PLAYER_SHOOT = 'message_player_shoot';
-  static MESSAGE_PLAYER_SHOOT_GRENADE = 'message_player_shoot_grenade'; 
-  static MESSAGE_PLAYER_SHOOT_LASER = 'message_player_shoot_laser'; 
+  static MESSAGE_PLAYER_SHOOT_GRENADE = 'message_player_shoot_grenade';
+  static MESSAGE_PLAYER_SHOOT_LASER = 'message_player_shoot_laser';
   static MESSAGE_PLAYER_SHOOT_MISSILE = 'message_player_shoot_missile';
   static MESSAGE_PLAYER_SUPERZAPPER_USED = 'message_player_superzapper_used';
   static MESSAGE_POWERUP = 'powerup';
@@ -32,7 +32,7 @@ export class MessageBroker {
   // Initialized as a standard object rather than an array for proper key-value topic mapping
   messages = {};
 
-  publish (topic, message, payload = null) {
+  publish(topic, message, payload = null) {
     if (this.messages[topic] === undefined) {
       this.messages[topic] = [];
     }
@@ -40,11 +40,11 @@ export class MessageBroker {
     this.messages[topic].push(new Message(topic, message, payload));
 
     if (this.messages[topic].length > 50) {
-        this.messages[topic].shift(); 
+      this.messages[topic].shift();
     }
   }
 
-  consume (topic) {
+  consume(topic) {
     if (!(topic in this.messages)) {
       return null;
     }
@@ -63,17 +63,17 @@ export class Message {
   message;
   context;
 
-  constructor (topic, message, context = []) {
+  constructor(topic, message, context = []) {
     this.topic = topic;
     this.message = message;
     this.context = context;
   }
 
-  isTopic (topic) {
+  isTopic(topic) {
     return this.topic === topic;
   }
 
-  isMessage (message) {
+  isMessage(message) {
     return this.message === message;
   }
 }

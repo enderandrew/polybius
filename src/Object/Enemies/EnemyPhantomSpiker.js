@@ -22,12 +22,18 @@
 import EnemySpiker from '@/Object/Enemies/EnemySpiker';
 
 export default class EnemyPhantomSpiker extends EnemySpiker {
-
-  constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
+  constructor(
+    surface,
+    projectileManager,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
     super(surface, projectileManager, rewardCallback, laneId, zPosition, game);
 
-    this.isPhantom     = true;
-    this.valueInPoints = 200;  // Worth more than a normal Spiker (150)
+    this.isPhantom = true;
+    this.valueInPoints = 200; // Worth more than a normal Spiker (150)
     // No extra hitPoints — the horror is the invisible spike, not the Spiker's
     // own durability.  One shot kills it just like a normal Spiker.
   }

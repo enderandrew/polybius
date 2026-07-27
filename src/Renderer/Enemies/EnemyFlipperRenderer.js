@@ -8,19 +8,25 @@ export default class EnemyFlipperRenderer extends EnemyRenderer {
    * @param {EnemyFlipper} enemyFlipper
    * @param {Surface} surface
    */
-  constructor (enemy, surface, type = Enemy.TYPE_FLIPPER) {
+  constructor(enemy, surface, type = Enemy.TYPE_FLIPPER) {
     super(enemy, surface, type);
   }
 
-  updateState () {
+  updateState() {
+    if (!this.object || typeof this.object.inState !== 'function') {
+      return;
+    }
     if (
-      (this.object.inState(EnemyFlipper.STATE_ROTATING_BEGIN) || this.object.inState(EnemyFlipper.STATE_ROTATING_END))
-      && (this.object.isFlagSet(EnemyFlipper.FLAG_ROTATION_CW) || this.object.isFlagSet(EnemyFlipper.FLAG_ROTATION_CCW))
+      (this.object.inState(EnemyFlipper.STATE_ROTATING_BEGIN) ||
+        this.object.inState(EnemyFlipper.STATE_ROTATING_END)) &&
+      (this.object.isFlagSet(EnemyFlipper.FLAG_ROTATION_CW) ||
+        this.object.isFlagSet(EnemyFlipper.FLAG_ROTATION_CCW))
     ) {
-
-      if (this.object.inState(EnemyFlipper.STATE_ROTATING_BEGIN)
-        && this.object.prevState.equals(EnemyFlipper.STATE_ROTATING_END)
-        && !this.rotatingStateCache.continuousRotationUpdate) {
+      if (
+        this.object.inState(EnemyFlipper.STATE_ROTATING_BEGIN) &&
+        this.object.prevState.equals(EnemyFlipper.STATE_ROTATING_END) &&
+        !this.rotatingStateCache.continuousRotationUpdate
+      ) {
         this.rotatingStateCache.continuousRotationUpdate = true;
         this.rotatingStateCache.valid = false;
       }
@@ -30,46 +36,68 @@ export default class EnemyFlipperRenderer extends EnemyRenderer {
       }
 
       if (!this.isRotationStateCacheValid()) {
-        this.calculateRotationStateCacheVariables(this.object.isFlagSet(EnemyFlipper.FLAG_ROTATION_CCW) ? 1 : -1);
+        this.calculateRotationStateCacheVariables(
+          this.object.isFlagSet(EnemyFlipper.FLAG_ROTATION_CCW) ? 1 : -1,
+        );
       }
 
-      let rotationAxisLaneId = this.object.isFlagSet(EnemyFlipper.FLAG_ROTATION_CW)
+      let rotationAxisLaneId = this.object.isFlagSet(
+        EnemyFlipper.FLAG_ROTATION_CW,
+      )
         ? this.rotatingStateCache.sourceLaneId
         : this.rotatingStateCache.targetLaneId;
 
-      this.zRotationBase = this.surface.lanesCenterDirectionRadians[rotationAxisLaneId];
-      this.positionBase = this.surface.lanesMiddleCoords[rotationAxisLaneId].clone();
+      this.zRotationBase =
+        this.surface.lanesCenterDirectionRadians[rotationAxisLaneId];
+
+      // Here is where it actually belongs!
+      this.positionBase.copy(
+        this.surface.lanesMiddleCoords[rotationAxisLaneId],
+      );
 
       if (this.object.inState(EnemyFlipper.STATE_ROTATING_BEGIN)) {
         if (this.object.isFlagSet(EnemyFlipper.FLAG_ROTATION_CW)) {
-          this.zRotationOffset = this.rotatingStateCache.relativeHalfStep * this.object.stateProgressInTime();
+          this.zRotationOffset =
+            this.rotatingStateCache.relativeHalfStep *
+            this.object.stateProgressInTime();
         } else {
-          this.zRotationOffset = this.rotatingStateCache.relativeHalfStep * (2 - this.object.stateProgressInTime());
+          this.zRotationOffset =
+            this.rotatingStateCache.relativeHalfStep *
+            (2 - this.object.stateProgressInTime());
         }
       } else {
         if (this.object.isFlagSet(EnemyFlipper.FLAG_ROTATION_CW)) {
-          this.zRotationOffset = this.rotatingStateCache.relativeHalfStep * (this.object.stateProgressInTime() + 1);
+          this.zRotationOffset =
+            this.rotatingStateCache.relativeHalfStep *
+            (this.object.stateProgressInTime() + 1);
         } else {
-          this.zRotationOffset = this.rotatingStateCache.relativeHalfStep * (1 - this.object.stateProgressInTime());
+          this.zRotationOffset =
+            this.rotatingStateCache.relativeHalfStep *
+            (1 - this.object.stateProgressInTime());
         }
       }
 
-      let positionRotationXYOffset = new Vector2().subVectors(
-        this.surface.lanesCoords[rotationAxisLaneId],
-        this.surface.lanesMiddleCoords[rotationAxisLaneId]
-      ).rotateAround(new Vector2(0, 0), this.zRotationOffset);
+      let positionRotationXYOffset = new Vector2()
+        .subVectors(
+          this.surface.lanesCoords[rotationAxisLaneId],
+          this.surface.lanesMiddleCoords[rotationAxisLaneId],
+        )
+        .rotateAround(new Vector2(0, 0), this.zRotationOffset);
 
-      this.positionBase = this.surface.lanesCoords[rotationAxisLaneId].clone().sub(positionRotationXYOffset);
-
+      // Copy the base coordinate first, then subtract the offset without using .clone()
+      this.positionBase
+        .copy(this.surface.lanesCoords[rotationAxisLaneId])
+        .sub(positionRotationXYOffset);
     } else if (this.object.inState(EnemyFlipper.STATE_EXPLODING)) {
       this.explodeAnimation();
-
     } else if (this.object.inState(EnemyFlipper.STATE_DISAPPEARING)) {
       this.disappearingAnimation();
-
     } else {
-      this.zRotationBase = this.surface.lanesCenterDirectionRadians[this.object.laneId];
-      this.positionBase = this.surface.lanesMiddleCoords[this.object.laneId].clone();
+      this.zRotationBase =
+        this.surface.lanesCenterDirectionRadians[this.object.laneId];
+      this.positionBase.copy(
+        this.surface.lanesMiddleCoords[this.object.laneId],
+      );
       this.zRotationOffset = 0;
 
       this.invalidateRotationStateCache();

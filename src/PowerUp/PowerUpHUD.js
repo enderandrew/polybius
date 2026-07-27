@@ -1,15 +1,14 @@
 /**
  * PowerUpHUD.js
- * 
+ *
  * Vanilla JS HUD — no Vue required.
  * Injects itself into the #screen element alongside the Three.js canvas.
  * Call new PowerUpHUD(powerUpManager) after the renderer is set up.
  */
 export class PowerUpHUD {
-
-  constructor (powerUpManager) {
+  constructor(powerUpManager) {
     this.powerUpManager = powerUpManager;
-    this.strips = new Map();   // type.id → { el, duration }
+    this.strips = new Map(); // type.id → { el, duration }
     this.flashTimer = null;
 
     this._buildDOM();
@@ -17,7 +16,7 @@ export class PowerUpHUD {
     this._tick();
   }
 
-  _buildDOM () {
+  _buildDOM() {
     const style = document.createElement('style');
     style.textContent = `
       #pu-hud {
@@ -91,11 +90,20 @@ export class PowerUpHUD {
 
     this.tokenRow = document.createElement('div');
     this.tokenRow.style.cssText = [
-      'position: absolute', 'bottom: 12px', 'left: 12px', 'z-index: 500',
-      'font-family: "Courier New", monospace', 'font-size: 12px',
-      'pointer-events: none', 'display: flex', 'gap: 8px', 'align-items: center',
-      'background: rgba(0,0,0,0.65)', 'padding: 4px 10px',
-      'border: 1px solid #333', 'border-radius: 3px',
+      'position: absolute',
+      'bottom: 12px',
+      'left: 12px',
+      'z-index: 500',
+      'font-family: "Courier New", monospace',
+      'font-size: 12px',
+      'pointer-events: none',
+      'display: flex',
+      'gap: 8px',
+      'align-items: center',
+      'background: rgba(0,0,0,0.65)',
+      'padding: 4px 10px',
+      'border: 1px solid #333',
+      'border-radius: 3px',
     ].join('; ');
     this.tokenRow.innerHTML = `
       <span style="color:#555; font-size:10px; letter-spacing:0.1em;">WARP</span>
@@ -111,17 +119,26 @@ export class PowerUpHUD {
     screen.appendChild(this.flash);
   }
 
-  _bindEvents () {
-    window.addEventListener('powerup:collected', ({ detail: { type, remaining } }) => {
-      this._addStrip(type, remaining);
-    });
+  _bindEvents() {
+    window.addEventListener(
+      'powerup:collected',
+      ({ detail: { type, remaining } }) => {
+        this._addStrip(type, remaining);
+      },
+    );
     window.addEventListener('powerup:expired', ({ detail: { type } }) => {
       this._removeStrip(type.id);
       this._showFlash(`${type.label.replace('\n', ' ')} ENDED`, type.color);
     });
-    window.addEventListener('powerup:score', ({ detail: { amount, label } }) => {
-      this._showFlash(`${label.replace('\n', ' ')}  +${amount.toLocaleString()}`, '#aaffaa');
-    });
+    window.addEventListener(
+      'powerup:score',
+      ({ detail: { amount, label } }) => {
+        this._showFlash(
+          `${label.replace('\n', ' ')}  +${amount.toLocaleString()}`,
+          '#aaffaa',
+        );
+      },
+    );
     window.addEventListener('powerup:extralife', () => {
       this._showFlash('1UP  ♥  EXTRA LIFE!', '#00ff44');
     });
@@ -130,23 +147,28 @@ export class PowerUpHUD {
     });
     window.addEventListener('warptoken:collected', ({ detail: { count } }) => {
       this._tokenSlots.forEach((slot, i) => {
-        slot.style.color      = i < count ? '#ffd700' : '#333';
+        slot.style.color = i < count ? '#ffd700' : '#333';
         slot.style.textShadow = i < count ? '0 0 8px #ffd700' : 'none';
       });
     });
     window.addEventListener('warptoken:ready', () => {
       // Flash all three gold then show BONUS READY
-      this._tokenSlots.forEach(s => { s.style.color = '#ffffff'; s.style.textShadow = '0 0 12px #ffd700'; });
+      this._tokenSlots.forEach((s) => {
+        s.style.color = '#ffffff';
+        s.style.textShadow = '0 0 12px #ffd700';
+      });
       this.tokenRow.querySelector('span').textContent = 'BONUS';
       setTimeout(() => {
-        this._tokenSlots.forEach(s => { s.style.color = '#ffd700'; });
+        this._tokenSlots.forEach((s) => {
+          s.style.color = '#ffd700';
+        });
         this.tokenRow.querySelector('span').textContent = 'WARP';
       }, 600);
     });
   }
 
-  _addStrip (type, duration) {
-    this._removeStrip(type.id);  // Remove existing if re-collected
+  _addStrip(type, duration) {
+    this._removeStrip(type.id); // Remove existing if re-collected
 
     const strip = document.createElement('div');
     strip.className = 'pu-strip';
@@ -179,14 +201,14 @@ export class PowerUpHUD {
     this.strips.set(type.id, { el: strip, fill, time, duration });
   }
 
-  _removeStrip (typeId) {
+  _removeStrip(typeId) {
     const entry = this.strips.get(typeId);
     if (!entry) return;
     entry.el.remove();
     this.strips.delete(typeId);
   }
 
-  _showFlash (message, color) {
+  _showFlash(message, color) {
     clearTimeout(this.flashTimer);
     this.flash.textContent = message;
     this.flash.style.color = color;
@@ -199,7 +221,7 @@ export class PowerUpHUD {
     }, 2200);
   }
 
-  _tick () {
+  _tick() {
     for (const [id, entry] of this.strips) {
       const remaining = this.powerUpManager.remainingSeconds(id);
       if (remaining <= 0) {
@@ -213,24 +235,24 @@ export class PowerUpHUD {
     requestAnimationFrame(this._tick.bind(this));
   }
 
-  destroy () {
+  destroy() {
     this.root.remove();
     this.flash.remove();
-  if (this.tokenRow) this.tokenRow.remove();
+    if (this.tokenRow) this.tokenRow.remove();
   }
 
-  hide () {
+  hide() {
     this.root.style.display = 'none';
     if (this.tokenRow) this.tokenRow.style.display = 'none';
     this.flash.style.display = 'none';
   }
 
-  show () {
+  show() {
     this.root.style.display = 'flex';
     if (this.tokenRow) this.tokenRow.style.display = 'flex';
   }
 
-  clear () {
+  clear() {
     // Wipes all active timer bars visually
     for (const entry of this.strips.values()) {
       entry.el.remove();

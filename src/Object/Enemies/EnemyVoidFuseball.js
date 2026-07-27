@@ -41,11 +41,17 @@
 import EnemyFuseball from '@/Object/Enemies/EnemyFuseball';
 
 export default class EnemyVoidFuseball extends EnemyFuseball {
-
-  constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
+  constructor(
+    surface,
+    projectileManager,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
     super(surface, projectileManager, rewardCallback, laneId, zPosition, game);
 
-    this.isVoid        = true;
+    this.isVoid = true;
     this.valueInPoints = 350;
 
     // Extra HP because the player gets fewer clean shot windows.
@@ -56,7 +62,7 @@ export default class EnemyVoidFuseball extends EnemyFuseball {
 
     // Wall-clock timing: don't phase within the first 2 seconds of spawning.
     this._nextPhaseCheck = performance.now() + 2000;
-    this._phaseEndsAt    = 0;
+    this._phaseEndsAt = 0;
   }
 
   // ---------------------------------------------------------------------------
@@ -66,7 +72,7 @@ export default class EnemyVoidFuseball extends EnemyFuseball {
   // setting this.hittable = !FLAG_IMMUNE every frame.  Our code runs AFTER
   // super so we can override hittable when phasing without fighting the parent.
   // ---------------------------------------------------------------------------
-  updateEntity () {
+  updateEntity() {
     super.updateEntity();
 
     // Don't phase during the exploding/dead transitions — let the explosion
@@ -82,15 +88,15 @@ export default class EnemyVoidFuseball extends EnemyFuseball {
     const now = performance.now();
 
     if (this.inState(EnemyFuseball.STATE_MOVING_ALONG_LINE)) {
-
       // ── Try to trigger a new phase ─────────────────────────────────────────
       if (!this.isPhasing && now >= this._nextPhaseCheck) {
         if (Math.random() < 0.04) {
           // Enter phase: 400–1200ms duration
-          this.isPhasing     = true;
-          this._phaseEndsAt  = now + 400 + Math.random() * 800;
+          this.isPhasing = true;
+          this._phaseEndsAt = now + 400 + Math.random() * 800;
           // Next check: cooldown of 1500–3500ms after phase ends
-          this._nextPhaseCheck = this._phaseEndsAt + 1500 + Math.random() * 2000;
+          this._nextPhaseCheck =
+            this._phaseEndsAt + 1500 + Math.random() * 2000;
         } else {
           // Didn't trigger — poll again in 150ms
           this._nextPhaseCheck = now + 150;
@@ -101,7 +107,6 @@ export default class EnemyVoidFuseball extends EnemyFuseball {
       if (this.isPhasing && now >= this._phaseEndsAt) {
         this.isPhasing = false;
       }
-
     } else {
       // During lane switches or any other state, clear any active phase.
       // (The lane-switch immunity from FLAG_IMMUNE still applies independently.)

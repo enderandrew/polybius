@@ -26,42 +26,56 @@ export default class SurfaceObjectsManager extends FIFOManager {
   /**
    * @param {Surface} surface
    */
-  constructor (surface) {
+  constructor(surface) {
     super();
 
     this.surface = surface;
-    this.shootersMap = new Array(this.surface.lanesAmount).fill(0).map(() => []);
+    this.shootersMap = new Array(this.surface.lanesAmount)
+      .fill(0)
+      .map(() => []);
     this.enemiesMap = new Array(this.surface.lanesAmount).fill(0).map(() => []);
     this.spikesMap = new Array(this.surface.lanesAmount).fill(0).map(() => []);
   }
 
-  addShooter (shooter) {
+  addShooter(shooter) {
     this.shooters.push(shooter);
-    this.rendererHelperNewObjectsIds.push(this.shooters[this.shooters.length - 1].objectId);
+    this.rendererHelperNewObjectsIds.push(
+      this.shooters[this.shooters.length - 1].objectId,
+    );
   }
 
-  addEnemy (enemy) {
+  addEnemy(enemy) {
     this.enemies.push(enemy);
-    this.rendererHelperNewObjectsIds.push(this.enemies[this.enemies.length - 1].objectId);
+    this.rendererHelperNewObjectsIds.push(
+      this.enemies[this.enemies.length - 1].objectId,
+    );
 
     this.createSpikes(enemy);
 
     return enemy;
   }
 
-  addSpike (spike) {
+  addSpike(spike) {
     this.spikes.push(spike);
-    this.rendererHelperNewObjectsIds.push(this.spikes[this.spikes.length - 1].objectId);
+    this.rendererHelperNewObjectsIds.push(
+      this.spikes[this.spikes.length - 1].objectId,
+    );
   }
 
-  createSpikes (enemy) {
+  createSpikes(enemy) {
     if (enemy.type === Enemy.TYPE_SPIKER) {
       if (
-        this.spikesMap[enemy.laneId].length === 0
-        || this.spikesMap[enemy.laneId].length === this.spikesMap[enemy.laneId].filter(spike => !spike.alive).length
+        this.spikesMap[enemy.laneId].length === 0 ||
+        this.spikesMap[enemy.laneId].length ===
+          this.spikesMap[enemy.laneId].filter((spike) => !spike.alive).length
       ) {
-        const spike = new EnemySpike(enemy.surface, enemy.projectileManager, enemy.rewardCallback, enemy.laneId);
-        if (enemy.isPhantom) spike.isPhantom = true;  // Propagate to the spike it creates
+        const spike = new EnemySpike(
+          enemy.surface,
+          enemy.projectileManager,
+          enemy.rewardCallback,
+          enemy.laneId,
+        );
+        if (enemy.isPhantom) spike.isPhantom = true; // Propagate to the spike it creates
         this.addSpike(spike);
       }
     }
@@ -73,15 +87,15 @@ export default class SurfaceObjectsManager extends FIFOManager {
    * Queue a spawn to happen safely at the start of the next update tick.
    * @param {Function} factoryFn  () => EnemyInstance — called during drain
    */
-  queueSpawn (factoryFn) {
+  queueSpawn(factoryFn) {
     this._pendingSpawns.push(factoryFn);
   }
 
-  _drainPendingSpawns () {
+  _drainPendingSpawns() {
     if (this._pendingSpawns.length === 0) return;
     const queue = this._pendingSpawns;
     this._pendingSpawns = [];
-    queue.forEach(factoryFn => {
+    queue.forEach((factoryFn) => {
       try {
         factoryFn();
       } catch (e) {
@@ -90,11 +104,11 @@ export default class SurfaceObjectsManager extends FIFOManager {
     });
   }
 
-  update (delta = 1 / 60) {
+  update(delta = 1 / 60) {
     this._drainPendingSpawns();
-	
-	this.shooters.forEach(shooter => shooter.update(delta));
-    this.enemies.forEach(enemy => enemy.update(delta));
+
+    this.shooters.forEach((shooter) => shooter.update(delta));
+    this.enemies.forEach((enemy) => enemy.update(delta));
 
     for (let i = 0; i < this.spikes.length; i++) {
       const spike = this.spikes[i];
@@ -106,7 +120,7 @@ export default class SurfaceObjectsManager extends FIFOManager {
           validSpikers.push(enemy);
         }
       }
-      
+
       spike.extendToLowestSpiker(validSpikers);
       spike.update(delta);
     }
@@ -115,7 +129,7 @@ export default class SurfaceObjectsManager extends FIFOManager {
     this.updateObjectsMap();
   }
 
-  runGarbageCollector () {
+  runGarbageCollector() {
     if (this.shouldTriggerGarbageCollector()) {
       const collectedEnemies = FIFOManager.garbageCollector(this.enemies);
       if (collectedEnemies) {
@@ -133,46 +147,56 @@ export default class SurfaceObjectsManager extends FIFOManager {
     }
   }
 
-  updateObjectsMap () {
-    FIFOManager.updateMap(this.shooters, this.shootersMap, this.forceMapsUpdate);
+  updateObjectsMap() {
+    FIFOManager.updateMap(
+      this.shooters,
+      this.shootersMap,
+      this.forceMapsUpdate,
+    );
     FIFOManager.updateMap(this.enemies, this.enemiesMap, this.forceMapsUpdate);
     FIFOManager.updateMap(this.spikes, this.spikesMap, this.forceMapsUpdate);
 
     this.forceMapsUpdate = false;
   }
 
-  handleSuperzapper () {
-    this.enemies.forEach(enemy => {
+  handleSuperzapper() {
+    this.enemies.forEach((enemy) => {
       enemy.reward = true;
       enemy.die();
     });
   }
 
-  removeEnemies () {
-    this.enemies.forEach(enemy => { enemy.disappear(); });
+  removeEnemies() {
+    this.enemies.forEach((enemy) => {
+      enemy.disappear();
+    });
     this.runGarbageCollector();
     this.updateObjectsMap();
   }
 
-  removeSpikes () {
-    this.spikes.forEach(enemy => { enemy.disappear(); });
+  removeSpikes() {
+    this.spikes.forEach((enemy) => {
+      enemy.disappear();
+    });
     this.runGarbageCollector();
     this.updateObjectsMap();
   }
 
-  removeShooters () {
-    this.shooters.forEach(shooter => { shooter.disappear(); });
+  removeShooters() {
+    this.shooters.forEach((shooter) => {
+      shooter.disappear();
+    });
     this.runGarbageCollector();
     this.updateObjectsMap();
   }
 
-  purgePlayField () {
+  purgePlayField() {
     this.removeEnemies();
     this.removeSpikes();
     this.removeShooters();
   }
 
-  getAmountOfAliveEnemies () {
+  getAmountOfAliveEnemies() {
     let count = 0;
     for (let i = 0; i < this.enemies.length; i++) {
       if (this.enemies[i].alive) count++;

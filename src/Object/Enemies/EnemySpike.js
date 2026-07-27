@@ -19,8 +19,23 @@ export default class EnemySpike extends Enemy {
    * @param {function} rewardCallback
    * @param {number} laneId
    */
-  constructor (surface, projectileManager, rewardCallback, laneId = 0, _zPosition = 1, game) {
-    super(surface, projectileManager, rewardCallback, laneId, 1, SurfaceObject.TYPE_SPIKE, game);
+  constructor(
+    surface,
+    projectileManager,
+    rewardCallback,
+    laneId = 0,
+    _zPosition = 1,
+    game,
+  ) {
+    super(
+      surface,
+      projectileManager,
+      rewardCallback,
+      laneId,
+      1,
+      SurfaceObject.TYPE_SPIKE,
+      game,
+    );
 
     this.firstLevel = 1;
     this.valueInPoints = 1;
@@ -29,33 +44,34 @@ export default class EnemySpike extends Enemy {
     this.canExplode = false;
 
     this.setState(EnemySpike.STATE_ALIVE);
-  this.game = game;
+    this.game = game;
   }
 
-  updateState () {
+  updateState() {
     if (this.inState(EnemySpike.STATE_DEAD)) {
       this.alive = false;
     }
   }
 
-  updateEntity () {}
+  updateEntity() {}
 
   /**
    * @param {EnemySpiker[]} spikers
    */
-  extendToLowestSpiker (spikers) {
+  extendToLowestSpiker(spikers) {
     if (spikers.length === 0) {
       return;
     }
 
-    spikers = spikers.filter(spiker =>
-      spiker.alive
-      && !spiker.inState(EnemySpiker.STATE_EXPLODING)
-      && !spiker.inState(EnemySpiker.STATE_DISAPPEARING)
+    spikers = spikers.filter(
+      (spiker) =>
+        spiker.alive &&
+        !spiker.inState(EnemySpiker.STATE_EXPLODING) &&
+        !spiker.inState(EnemySpiker.STATE_DISAPPEARING),
     );
 
     let lowestSpikerZPosition = spikers
-      .map(spiker => spiker.zPosition)
+      .map((spiker) => spiker.zPosition)
       .reduce((lowest, val) => (lowest < val ? lowest : val), 1);
 
     this.extendTo(lowestSpikerZPosition);
@@ -64,8 +80,9 @@ export default class EnemySpike extends Enemy {
   /**
    * @param {number} zPosition
    */
-  extendTo (zPosition) {
-    let newZPosition = Math.ceil(zPosition / EnemySpike.HUNK_LENGTH) * EnemySpike.HUNK_LENGTH;
+  extendTo(zPosition) {
+    let newZPosition =
+      Math.ceil(zPosition / EnemySpike.HUNK_LENGTH) * EnemySpike.HUNK_LENGTH;
 
     if (this.zPosition > newZPosition) {
       this.zPosition = newZPosition;
@@ -73,10 +90,10 @@ export default class EnemySpike extends Enemy {
     }
   }
 
-  hitByProjectile (damage = 1) {
+  hitByProjectile(damage = 1) {
     this.zPosition += EnemySpike.HIT_DESTROYED_LENGTH * damage;
     this.rendererHelperZPositionChanged = true;
-  
+
     if (this.zPosition + EnemySpike.HIT_DESTROYED_LENGTH >= 1) {
       this.reward = true;
       this.die();
@@ -85,7 +102,7 @@ export default class EnemySpike extends Enemy {
     }
   }
 
-  disappear () {
+  disappear() {
     if (this.inState(EnemySpike.STATE_DEAD)) {
       return;
     }
@@ -93,7 +110,7 @@ export default class EnemySpike extends Enemy {
     this.die();
   }
 
-  die () {
+  die() {
     if (this.inState(EnemySpike.STATE_DEAD)) {
       return;
     }
@@ -105,7 +122,7 @@ export default class EnemySpike extends Enemy {
   /**
    * @return {boolean}
    */
-  shouldRerenderSpikeDueToSpikeLengthChange () {
+  shouldRerenderSpikeDueToSpikeLengthChange() {
     if (this.rendererHelperZPositionChanged) {
       this.rendererHelperZPositionChanged = false;
       return true;

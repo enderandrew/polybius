@@ -2,7 +2,7 @@ class UniqueIdFactory {
   // Modern ES class field (no JSDoc type comments needed)
   lastId = 0;
 
-  getNewId () {
+  getNewId() {
     return this.lastId++;
   }
 }

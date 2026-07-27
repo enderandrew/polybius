@@ -25,7 +25,7 @@ export default class Shooter extends ShootingSurfaceObject {
   static STATE_REACHED_TUBE_BOTTOM = new State(0, 1, 'reached_tube_bottom');
   static STATE_DEAD = new State(0, 1, 'dead');
   static STATE_JUMPING = new State(600, 1, 'jumping');
-  static JUMP_HEIGHT = -0.3;   // Negative Z = above the rim
+  static JUMP_HEIGHT = -0.3; // Negative Z = above the rim
 
   static FLAG_ITS_ALREADY_TOO_LATE = 0x1;
   static FLAG_SUPERZAPPER_USED = 0x2;
@@ -44,12 +44,12 @@ export default class Shooter extends ShootingSurfaceObject {
    * @param {function} killedCallback
    * @param {number} laneId
    */
-  constructor (
+  constructor(
     surface,
     projectileManager,
     surfaceObjectsManager,
     killedCallback,
-    laneId = 0
+    laneId = 0,
   ) {
     super(surface, projectileManager, laneId, SurfaceObject.TYPE_SHOOTER);
 
@@ -68,46 +68,47 @@ export default class Shooter extends ShootingSurfaceObject {
     this.setState(Shooter.STATE_APPROACHING_TUBE);
   }
 
-  updateState () {
+  updateState() {
     if (this.inState(Shooter.STATE_RENOVATING)) {
       this.hittable = true;
       this.canShoot = true;
 
       this.setState(Shooter.STATE_ALIVE);
-
     } else if (this.inState(Shooter.STATE_EXPLODING)) {
       this.setState(Shooter.STATE_DEAD);
       this.killedCallback();
-
     } else if (this.inState(Shooter.STATE_DISAPPEARING)) {
       this.setState(Shooter.STATE_DEAD);
-
     } else if (this.inState(Shooter.STATE_DEAD)) {
       this.alive = false;
-
     } else if (this.inState(Shooter.STATE_GOING_DOWN_THE_TUBE)) {
       this.setState(Shooter.STATE_REACHED_TUBE_BOTTOM);
       this.die();
-
     } else if (this.inState(Shooter.STATE_APPROACHING_TUBE)) {
       this.hittable = true;
       this.canShoot = true;
       this.setState(Shooter.STATE_ALIVE);
-
     } else if (this.inState(Shooter.STATE_JUMPING)) {
       this.setState(Shooter.STATE_ALIVE);
       this.zPosition = 0;
     }
   }
 
-  updateEntity () {
-    if (this.inState(Shooter.STATE_ALIVE) || this.inState(Shooter.STATE_APPROACHING_TUBE)) {
+  updateEntity() {
+    if (
+      this.inState(Shooter.STATE_ALIVE) ||
+      this.inState(Shooter.STATE_APPROACHING_TUBE)
+    ) {
       if (!this.isShieldInvincible) {
-        const gameRef = this.game || (this.projectileManager && this.projectileManager.game);
-        this.hittable = !(gameRef?.powerUpManager?.hasPhantom);
+        const gameRef =
+          this.game || (this.projectileManager && this.projectileManager.game);
+        this.hittable = !gameRef?.powerUpManager?.hasPhantom;
       }
     }
-    if (this.isFlagNotSet(Shooter.FLAG_ITS_ALREADY_TOO_LATE) && !this.inState(Shooter.STATE_JUMPING)) {
+    if (
+      this.isFlagNotSet(Shooter.FLAG_ITS_ALREADY_TOO_LATE) &&
+      !this.inState(Shooter.STATE_JUMPING)
+    ) {
       this.handleShortedLanes();
 
       if (!this.inState(Shooter.STATE_GOING_DOWN_THE_TUBE)) {
@@ -121,52 +122,66 @@ export default class Shooter extends ShootingSurfaceObject {
     }
 
     if (this.inState(Shooter.STATE_GOING_DOWN_THE_TUBE)) {
-      this.zPosition = this.stateProgressInTime() * Shooter.TUBE_DESCENDING_LENGTH_MULTIPLIER;
+      this.zPosition =
+        this.stateProgressInTime() * Shooter.TUBE_DESCENDING_LENGTH_MULTIPLIER;
     } else if (this.inState(Shooter.STATE_APPROACHING_TUBE)) {
-      this.zPosition = -1 * (1 - this.stateProgressInTime()) * Shooter.TUBE_APPROACHING_LENGTH_MULTIPLIER;
-    } else if (this.inState(Shooter.STATE_ALIVE) || this.inState(Shooter.STATE_RENOVATING)) {
+      this.zPosition =
+        -1 *
+        (1 - this.stateProgressInTime()) *
+        Shooter.TUBE_APPROACHING_LENGTH_MULTIPLIER;
+    } else if (
+      this.inState(Shooter.STATE_ALIVE) ||
+      this.inState(Shooter.STATE_RENOVATING)
+    ) {
       this.zPosition = 0;
     } else if (this.inState(Shooter.STATE_JUMPING)) {
       // Sine arc: launches up, hangs at peak, comes back down
-      const arc      = Math.sin(this.stateProgressInTime() * Math.PI);
+      const arc = Math.sin(this.stateProgressInTime() * Math.PI);
       this.zPosition = Shooter.JUMP_HEIGHT * arc;
     }
   }
 
-  handleShortedLanes () {
+  handleShortedLanes() {
     if (!this.hittable) return;
     if (this.surface.isLaneShorted(this.laneId)) {
       this.shockedByPulsar();
     }
   }
 
-  handleCaptureByEnemy () {
+  handleCaptureByEnemy() {
     if (!this.hittable) return;
     let enemiesMapRef = this.surfaceObjectsManager.enemiesMap[this.laneId];
 
     if (enemiesMapRef.length > 0) {
-      enemiesMapRef.forEach(enemy => {
-        if (enemy.type === Enemy.TYPE_FLIPPER && enemy.isFlagSet(EnemyFlipper.FLAG_REACHED_SHOOTER)) {
+      enemiesMapRef.forEach((enemy) => {
+        if (
+          enemy.type === Enemy.TYPE_FLIPPER &&
+          enemy.isFlagSet(EnemyFlipper.FLAG_REACHED_SHOOTER)
+        ) {
           this.capturedByFlipper();
         }
 
-        if (enemy.type === Enemy.TYPE_FUSEBALL && enemy.isFlagSet(EnemyFuseball.FLAG_REACHED_SHOOTER)) {
+        if (
+          enemy.type === Enemy.TYPE_FUSEBALL &&
+          enemy.isFlagSet(EnemyFuseball.FLAG_REACHED_SHOOTER)
+        ) {
           this.capturedByFuseball();
         }
       });
     }
   }
 
-  handleCollisionWithEnemy () {
+  handleCollisionWithEnemy() {
     if (!this.hittable) return;
     let enemiesMapRef = this.surfaceObjectsManager.enemiesMap[this.laneId];
 
-    let collision = enemiesMapRef.findIndex(object => (
-        object.hittable
-        && object.alive
-        && object.zPosition >= this.zPosition - Shooter.COLLISION_RADIUS_BACKWARD
-        && object.zPosition <= this.zPosition + Shooter.COLLISION_RADIUS_FORWARD
-      )
+    let collision = enemiesMapRef.findIndex(
+      (object) =>
+        object.hittable &&
+        object.alive &&
+        object.zPosition >=
+          this.zPosition - Shooter.COLLISION_RADIUS_BACKWARD &&
+        object.zPosition <= this.zPosition + Shooter.COLLISION_RADIUS_FORWARD,
     );
 
     if (collision >= 0) {
@@ -175,15 +190,15 @@ export default class Shooter extends ShootingSurfaceObject {
     }
   }
 
-  handleCollisionWithSpike () {
+  handleCollisionWithSpike() {
     if (!this.hittable) return;
     let spikesMapRef = this.surfaceObjectsManager.spikesMap[this.laneId];
 
-    let collision = spikesMapRef.findIndex(object => (
-        object.hittable
-        && object.alive
-        && object.zPosition <= this.zPosition + Shooter.COLLISION_RADIUS_FORWARD
-      )
+    let collision = spikesMapRef.findIndex(
+      (object) =>
+        object.hittable &&
+        object.alive &&
+        object.zPosition <= this.zPosition + Shooter.COLLISION_RADIUS_FORWARD,
     );
 
     if (collision >= 0) {
@@ -194,10 +209,11 @@ export default class Shooter extends ShootingSurfaceObject {
   /**
    * @param {number} desiredLane
    */
-  moveToLane (desiredLane) {
-    if (!this.inState(Shooter.STATE_ALIVE)
-      && !this.inState(Shooter.STATE_GOING_DOWN_THE_TUBE)
-      && !this.inState(Shooter.STATE_APPROACHING_TUBE)
+  moveToLane(desiredLane) {
+    if (
+      !this.inState(Shooter.STATE_ALIVE) &&
+      !this.inState(Shooter.STATE_GOING_DOWN_THE_TUBE) &&
+      !this.inState(Shooter.STATE_APPROACHING_TUBE)
     ) {
       return;
     }
@@ -213,89 +229,110 @@ export default class Shooter extends ShootingSurfaceObject {
 
     this.lastLaneChangeTimestamp = now;
 
-    messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_CHANGED_LANE);
+    messageBroker.publish(
+      MessageBroker.TOPIC_AUDIO,
+      MessageBroker.MESSAGE_PLAYER_CHANGED_LANE,
+    );
   }
 
-  moveLeft () {
+  moveLeft() {
     this.moveToLane(this.laneId + 1);
   }
 
-  moveRight () {
+  moveRight() {
     this.moveToLane(this.laneId - 1);
   }
 
-  fire () {
+  fire() {
     if (
-      !this.canShoot || this.zPosition > 1 || 
-      (!this.inState(Shooter.STATE_ALIVE) && !this.inState(Shooter.STATE_GOING_DOWN_THE_TUBE) && !this.inState(Shooter.STATE_JUMPING))
+      !this.canShoot ||
+      this.zPosition > 1 ||
+      (!this.inState(Shooter.STATE_ALIVE) &&
+        !this.inState(Shooter.STATE_GOING_DOWN_THE_TUBE) &&
+        !this.inState(Shooter.STATE_JUMPING))
     ) {
       return;
     }
 
     const powerUps = this.game?.powerUpManager;
     let now = Date.now();
-    let cooldownMs = powerUps ? powerUps.getShotCooldown(this.shootTimeoutMs) : this.shootTimeoutMs;
+    let cooldownMs = powerUps
+      ? powerUps.getShotCooldown(this.shootTimeoutMs)
+      : this.shootTimeoutMs;
 
-    if (this.lastFiredTimestamp && now - this.lastFiredTimestamp < cooldownMs) return;
+    if (this.lastFiredTimestamp && now - this.lastFiredTimestamp < cooldownMs)
+      return;
     if (now - this.penaltyTimestamp < Shooter.BURST_PENALTY_MS) return;
 
     let firedAny = false;
-    
+
     // --- DETERMINE PRIMARY WEAPON ---
     let primaryWeapon = 'NORMAL';
     if (powerUps && powerUps.hasGrenade) primaryWeapon = 'GRENADE';
     else if (powerUps && powerUps.hasLaser) primaryWeapon = 'LASER';
 
     let primaryLanes = [this.laneId];
-    
+
     // Spread Gun Synergy
     if (powerUps && powerUps.hasSpreadGun) {
-       if (primaryWeapon === 'GRENADE') {
-           // Spread + Grenade = exactly 2 grenades overlapping AoE from the sides
-           primaryLanes = [-1, 1]
-               .map(offset => this.surface.getTargetLaneId(this.laneId, offset))
-               .filter(lane => lane !== null);
-       } else {
-           // Spread + Laser/Normal = 3 projectiles (Left, Center, Right)
-           primaryLanes = [-1, 0, 1]
-               .map(offset => this.surface.getTargetLaneId(this.laneId, offset))
-               .filter(lane => lane !== null);
-       }
+      if (primaryWeapon === 'GRENADE') {
+        // Spread + Grenade = exactly 2 grenades overlapping AoE from the sides
+        primaryLanes = [-1, 1]
+          .map((offset) => this.surface.getTargetLaneId(this.laneId, offset))
+          .filter((lane) => lane !== null);
+      } else {
+        // Spread + Laser/Normal = 3 projectiles (Left, Center, Right)
+        primaryLanes = [-1, 0, 1]
+          .map((offset) => this.surface.getTargetLaneId(this.laneId, offset))
+          .filter((lane) => lane !== null);
+      }
     }
 
     // Fire Primary
-    primaryLanes.forEach(lane => {
-       // '1' is Projectile.SOURCE_SHOOTER
-       if (this.projectileManager.fire(lane, 1, this.zPosition, 1, primaryWeapon)) {
-           firedAny = true;
-       }
+    primaryLanes.forEach((lane) => {
+      // '1' is Projectile.SOURCE_SHOOTER
+      if (
+        this.projectileManager.fire(lane, 1, this.zPosition, 1, primaryWeapon)
+      ) {
+        firedAny = true;
+      }
     });
 
     // --- DETERMINE SECONDARY WEAPON (MISSILE) ---
     let missileFired = false;
     if (powerUps && powerUps.hasMissile) {
-       // Limit to 2 if Rapid Fire is active, otherwise 1
-       const maxMissiles = powerUps.hasRapidFire ? 2 : 1; 
-       const activeMissiles = this.projectileManager.shooterProjectiles.filter(p => p.isMissile && p.alive);
-       
-       if (activeMissiles.length < maxMissiles) {
-           // Spread + Missile Synergy
-           let missileLanes = [this.laneId];
-           if (powerUps.hasSpreadGun) {
-               // Shoot missiles out of the left/right wingmen lanes!
-               missileLanes = [-1, 1]
-                   .map(offset => this.surface.getTargetLaneId(this.laneId, offset))
-                   .filter(lane => lane !== null); 
-           }
-           
-           let capacity = maxMissiles - activeMissiles.length;
-           for (let i = 0; i < Math.min(missileLanes.length, capacity); i++) {
-               if (this.projectileManager.fire(missileLanes[i], 1, this.zPosition, 1, 'MISSILE')) {
-                   firedAny = true;
-                   missileFired = true;
-               }
-           }
-       }
+      // Limit to 2 if Rapid Fire is active, otherwise 1
+      const maxMissiles = powerUps.hasRapidFire ? 2 : 1;
+      const activeMissiles = this.projectileManager.shooterProjectiles.filter(
+        (p) => p.isMissile && p.alive,
+      );
+
+      if (activeMissiles.length < maxMissiles) {
+        // Spread + Missile Synergy
+        let missileLanes = [this.laneId];
+        if (powerUps.hasSpreadGun) {
+          // Shoot missiles out of the left/right wingmen lanes!
+          missileLanes = [-1, 1]
+            .map((offset) => this.surface.getTargetLaneId(this.laneId, offset))
+            .filter((lane) => lane !== null);
+        }
+
+        let capacity = maxMissiles - activeMissiles.length;
+        for (let i = 0; i < Math.min(missileLanes.length, capacity); i++) {
+          if (
+            this.projectileManager.fire(
+              missileLanes[i],
+              1,
+              this.zPosition,
+              1,
+              'MISSILE',
+            )
+          ) {
+            firedAny = true;
+            missileFired = true;
+          }
+        }
+      }
     }
 
     // --- HANDLE AUDIO & PENALTIES ---
@@ -306,87 +343,120 @@ export default class Shooter extends ShootingSurfaceObject {
 
       // Audio Prioritization
       if (primaryWeapon === 'LASER') {
-          messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_SHOOT_LASER);
+        messageBroker.publish(
+          MessageBroker.TOPIC_AUDIO,
+          MessageBroker.MESSAGE_PLAYER_SHOOT_LASER,
+        );
       } else if (primaryWeapon === 'GRENADE') {
-          messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_SHOOT_GRENADE);
+        messageBroker.publish(
+          MessageBroker.TOPIC_AUDIO,
+          MessageBroker.MESSAGE_PLAYER_SHOOT_GRENADE,
+        );
       } else if (missileFired && primaryWeapon === 'NORMAL') {
-          messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_SHOOT_MISSILE);
+        messageBroker.publish(
+          MessageBroker.TOPIC_AUDIO,
+          MessageBroker.MESSAGE_PLAYER_SHOOT_MISSILE,
+        );
       } else {
-          messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_SHOOT);
+        messageBroker.publish(
+          MessageBroker.TOPIC_AUDIO,
+          MessageBroker.MESSAGE_PLAYER_SHOOT,
+        );
       }
     }
   }
 
-  jump () {
+  jump() {
     if (
-      !this.game?.powerUpManager?.hasJump
-      || !this.inState(Shooter.STATE_ALIVE)
-      || !this.canShoot
+      !this.game?.powerUpManager?.hasJump ||
+      !this.inState(Shooter.STATE_ALIVE) ||
+      !this.canShoot
     ) {
       return;
     }
-  messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_JUMP);
-  this.jumpTimestamp = Date.now();
+    messageBroker.publish(
+      MessageBroker.TOPIC_AUDIO,
+      MessageBroker.MESSAGE_JUMP,
+    );
+    this.jumpTimestamp = Date.now();
     this.setState(Shooter.STATE_JUMPING);
   }
 
-  hitByProjectile () {
+  hitByProjectile() {
     // console.log('BOOM! (projectile)');
-  if (this._checkAndConsumeShield()) return;
+    if (this._checkAndConsumeShield()) return;
     this.setState(Shooter.STATE_EXPLODING);
     this.die();
 
-    messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_DEATH);
+    messageBroker.publish(
+      MessageBroker.TOPIC_AUDIO,
+      MessageBroker.MESSAGE_PLAYER_DEATH,
+    );
   }
 
-  capturedByFlipper () {
+  capturedByFlipper() {
     // console.log('BAM! (flipper)');
     if (this._checkAndConsumeShield()) return;
-  this.setState(Shooter.STATE_EXPLODING);
+    this.setState(Shooter.STATE_EXPLODING);
     this.die();
 
-    messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_DEATH);
+    messageBroker.publish(
+      MessageBroker.TOPIC_AUDIO,
+      MessageBroker.MESSAGE_PLAYER_DEATH,
+    );
   }
 
-  capturedByFuseball () {
+  capturedByFuseball() {
     // console.log('POW! (fuseball)');
     if (this._checkAndConsumeShield()) return;
-  this.setState(Shooter.STATE_EXPLODING);
+    this.setState(Shooter.STATE_EXPLODING);
     this.die();
 
-    messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_DEATH);
+    messageBroker.publish(
+      MessageBroker.TOPIC_AUDIO,
+      MessageBroker.MESSAGE_PLAYER_DEATH,
+    );
   }
 
-  impaledOnSpike () {
+  impaledOnSpike() {
     // console.log('SPUT! (spike)');
     if (this._checkAndConsumeShield()) return;
-  this.setState(Shooter.STATE_EXPLODING);
+    this.setState(Shooter.STATE_EXPLODING);
     this.die();
 
-    messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_DEATH);
+    messageBroker.publish(
+      MessageBroker.TOPIC_AUDIO,
+      MessageBroker.MESSAGE_PLAYER_DEATH,
+    );
   }
 
-  shockedByPulsar () {
+  shockedByPulsar() {
     // console.log('BZZZT! (pulsar)');
     if (this._checkAndConsumeShield()) return;
-  this.setState(Shooter.STATE_EXPLODING);
+    this.setState(Shooter.STATE_EXPLODING);
     this.die();
 
-    messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_DEATH);
+    messageBroker.publish(
+      MessageBroker.TOPIC_AUDIO,
+      MessageBroker.MESSAGE_PLAYER_DEATH,
+    );
   }
 
-  die () {
+  die() {
     this.setFlag(Shooter.FLAG_ITS_ALREADY_TOO_LATE);
     this.hittable = false;
     this.canShoot = false;
   }
 
-  disappear () {
+  disappear() {
     if (this.shieldTimeout) {
       clearTimeout(this.shieldTimeout);
       this.shieldTimeout = null;
     }
-    if (this.inState(Shooter.STATE_EXPLODING) || this.inState(Shooter.STATE_DEAD)) {
+    if (
+      this.inState(Shooter.STATE_EXPLODING) ||
+      this.inState(Shooter.STATE_DEAD)
+    ) {
       return;
     }
 
@@ -394,22 +464,29 @@ export default class Shooter extends ShootingSurfaceObject {
     this.die();
   }
 
-  fireSuperzapper () {
+  fireSuperzapper() {
     if (
-      this.canShoot
-      && (this.inState(Shooter.STATE_ALIVE) || this.inState(Shooter.STATE_GOING_DOWN_THE_TUBE))
-      && this.isFlagNotSet(Shooter.FLAG_SUPERZAPPER_USED)
+      this.canShoot &&
+      (this.inState(Shooter.STATE_ALIVE) ||
+        this.inState(Shooter.STATE_GOING_DOWN_THE_TUBE)) &&
+      this.isFlagNotSet(Shooter.FLAG_SUPERZAPPER_USED)
     ) {
       this.setFlag(Shooter.FLAG_SUPERZAPPER_USED);
 
-      messageBroker.publish(MessageBroker.TOPIC_SCREEN, MessageBroker.MESSAGE_PLAYER_SUPERZAPPER_USED);
-      messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_SUPERZAPPER_USED);
+      messageBroker.publish(
+        MessageBroker.TOPIC_SCREEN,
+        MessageBroker.MESSAGE_PLAYER_SUPERZAPPER_USED,
+      );
+      messageBroker.publish(
+        MessageBroker.TOPIC_AUDIO,
+        MessageBroker.MESSAGE_PLAYER_SUPERZAPPER_USED,
+      );
 
       this.surfaceObjectsManager.handleSuperzapper();
     }
   }
 
-  renovate () {
+  renovate() {
     this.setState(Shooter.STATE_RENOVATING);
     this.alive = true;
 
@@ -421,64 +498,81 @@ export default class Shooter extends ShootingSurfaceObject {
     }
   }
 
-  fireSynthSurge (isAccent) {
-    if (!this.canShoot || this.zPosition > 1 || !this.inState(Shooter.STATE_ALIVE)) {
-        return;
+  fireSynthSurge(isAccent) {
+    if (
+      !this.canShoot ||
+      this.zPosition > 1 ||
+      !this.inState(Shooter.STATE_ALIVE)
+    ) {
+      return;
     }
 
     // Determine the lanes to fire on
     let lanesToFire = [this.laneId];
-    
+
     if (isAccent) {
-        // On an Accent/Chorus beat, fire a massive 5-lane spread wrapped around the cylinder!
-        lanesToFire = [-2, -1, 0, 1, 2]
-            .map(offset => this.surface.getTargetLaneId(this.laneId, offset))
-            .filter(lane => lane !== null);
+      // On an Accent/Chorus beat, fire a massive 5-lane spread wrapped around the cylinder!
+      lanesToFire = [-2, -1, 0, 1, 2]
+        .map((offset) => this.surface.getTargetLaneId(this.laneId, offset))
+        .filter((lane) => lane !== null);
     }
 
     let fired = false;
-    lanesToFire.forEach(lane => {
-        // '1' is the native constant for Projectile.SOURCE_SHOOTER
-        // We use the Manager directly to bypass single-lane firing restrictions
-        if (this.projectileManager.fire(lane, 1, this.zPosition, 1)) {
-            fired = true;
-        }
+    lanesToFire.forEach((lane) => {
+      // '1' is the native constant for Projectile.SOURCE_SHOOTER
+      // We use the Manager directly to bypass single-lane firing restrictions
+      if (this.projectileManager.fire(lane, 1, this.zPosition, 1)) {
+        fired = true;
+      }
     });
 
     if (fired) {
-        // Play the weapon sound (using the exact same logic as your spacebar)
-        const powerUps = this.game?.powerUpManager;
-        if (powerUps && powerUps.hasMissile) {
-            messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_SHOOT_MISSILE);
-        } else if (powerUps && powerUps.hasLaser) {
-            messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_SHOOT_LASER);
-        } else if (powerUps && powerUps.hasGrenade) {
-            messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_SHOOT_GRENADE);
-        } else {
-            messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_PLAYER_SHOOT);
-        }
+      // Play the weapon sound (using the exact same logic as your spacebar)
+      const powerUps = this.game?.powerUpManager;
+      if (powerUps && powerUps.hasMissile) {
+        messageBroker.publish(
+          MessageBroker.TOPIC_AUDIO,
+          MessageBroker.MESSAGE_PLAYER_SHOOT_MISSILE,
+        );
+      } else if (powerUps && powerUps.hasLaser) {
+        messageBroker.publish(
+          MessageBroker.TOPIC_AUDIO,
+          MessageBroker.MESSAGE_PLAYER_SHOOT_LASER,
+        );
+      } else if (powerUps && powerUps.hasGrenade) {
+        messageBroker.publish(
+          MessageBroker.TOPIC_AUDIO,
+          MessageBroker.MESSAGE_PLAYER_SHOOT_GRENADE,
+        );
+      } else {
+        messageBroker.publish(
+          MessageBroker.TOPIC_AUDIO,
+          MessageBroker.MESSAGE_PLAYER_SHOOT,
+        );
+      }
     }
   }
 
-  _checkAndConsumeShield () {
-    const gameRef = this.game || (this.projectileManager && this.projectileManager.game);
+  _checkAndConsumeShield() {
+    const gameRef =
+      this.game || (this.projectileManager && this.projectileManager.game);
     const powerUps = gameRef?.powerUpManager;
 
     if (powerUps && powerUps.hasShield) {
       powerUps.consumeShield();
-      
+
       // Grant 1.5s of invincibility so they can escape the hazard they hit!
       this.hittable = false;
       this.isShieldInvincible = true;
-      
+
       if (this.shieldTimeout) {
         clearTimeout(this.shieldTimeout);
       }
-      
+
       this.shieldTimeout = setTimeout(() => {
         this.hittable = true;
-	    this.isShieldInvincible = false;
-        this.shieldTimeout = null; 
+        this.isShieldInvincible = false;
+        this.shieldTimeout = null;
       }, 1500);
 
       return true; // The player survives!

@@ -15,7 +15,7 @@ export default class State {
    * @param {number} probability
    * @param {string} name
    */
-  constructor (duration, probability = 1, name = '') {
+  constructor(duration, probability = 1, name = '') {
     this.id = uniqueIdFactory.getNewId();
     this.duration = duration;
     this.probability = probability;
@@ -26,13 +26,13 @@ export default class State {
    * @param {State} state
    * @return {boolean}
    */
-  equals (state) {
+  equals(state) {
     return this.id === state.id;
   }
 
   /** @param {State} states */
-  static drawNextState (...states) {
-    let range = states.reduce(((acc, val) => acc + val.probability), 0);
+  static drawNextState(...states) {
+    let range = states.reduce((acc, val) => acc + val.probability, 0);
     let draw = Math.random() * range;
 
     for (let i = 0; i < states.length; i++) {

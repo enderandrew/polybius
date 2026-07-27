@@ -31,7 +31,6 @@ import Canvas3d from '@/Object/Screen/Canvas3d';
 import { findVoice } from '@/utils/voiceCache';
 
 export default class ScreenGameEnd extends Canvas3d {
-
   // ── Coin-slot error responses (in order; escalate in absurdity) ────────────
 
   static COIN_RESPONSES = [
@@ -74,31 +73,51 @@ export default class ScreenGameEnd extends Canvas3d {
   // ── Text lines revealed one at a time ──────────────────────────────────────
 
   static REVEAL_LINES = [
-    { text: 'THE CHAOS EMERALDS ATTUNED',       color: '#00ffff', size: 38, holdMs: 1800 },
-    { text: 'YOUR BRAINWAVES TO THE TRUTH',      color: '#ffffff', size: 32, holdMs: 1500 },
-    { text: 'FREQUENCY AND ONLY NOW CAN',        color: '#ffffff', size: 32, holdMs: 1500 },
-    { text: 'YOU BE TOLD THE GREATEST TRUTH...', color: '#ffff44', size: 34, holdMs: 3500 },
+    {
+      text: 'THE CHAOS EMERALDS ATTUNED',
+      color: '#00ffff',
+      size: 38,
+      holdMs: 1800,
+    },
+    {
+      text: 'YOUR BRAINWAVES TO THE TRUTH',
+      color: '#ffffff',
+      size: 32,
+      holdMs: 1500,
+    },
+    {
+      text: 'FREQUENCY AND ONLY NOW CAN',
+      color: '#ffffff',
+      size: 32,
+      holdMs: 1500,
+    },
+    {
+      text: 'YOU BE TOLD THE GREATEST TRUTH...',
+      color: '#ffff44',
+      size: 34,
+      holdMs: 3500,
+    },
   ];
 
-  static INITIAL_DELAY_MS = 1800;   // Pause before first line appears
+  static INITIAL_DELAY_MS = 1800; // Pause before first line appears
 
   // ── Constructor ────────────────────────────────────────────────────────────
 
-  constructor (screenContentManager) {
+  constructor(screenContentManager) {
     super(screenContentManager, 8, 8, 1024, 1024);
 
-    this._visibleLines    = 0;
-    this._nextLineAt      = Date.now() + ScreenGameEnd.INITIAL_DELAY_MS;
-    this._allRevealed     = false;
+    this._visibleLines = 0;
+    this._nextLineAt = Date.now() + ScreenGameEnd.INITIAL_DELAY_MS;
+    this._allRevealed = false;
 
-    this._flashOn         = false;
-    this._flashNext       = 0;
+    this._flashOn = false;
+    this._flashNext = 0;
 
-    this._coinResponse    = null;
-    this._coinResponseAt  = 0;
-    this._coinIndex       = 0;
+    this._coinResponse = null;
+    this._coinResponseAt = 0;
+    this._coinIndex = 0;
 
-    this._lastUpdate      = Date.now();
+    this._lastUpdate = Date.now();
 
     // Keydown → show coin error, but never actually do anything
     this._keyHandler = () => this._onAnyKey();
@@ -112,29 +131,34 @@ export default class ScreenGameEnd extends Canvas3d {
 
   // ── Canvas3d lifecycle ─────────────────────────────────────────────────────
 
-  release () {
+  release() {
     window.removeEventListener('keydown', this._keyHandler);
-    try { window.speechSynthesis.cancel(); } catch (error) { console.debug('[ScreenGameEnd] Speech cancel failed:', error); }
+    try {
+      window.speechSynthesis.cancel();
+    } catch (error) {
+      console.debug('[ScreenGameEnd] Speech cancel failed:', error);
+    }
   }
 
-  update () {
-    const now   = Date.now();
+  update() {
+    const now = Date.now();
     this._lastUpdate = now;
 
     // Reveal next line when its hold time has elapsed
     if (!this._allRevealed && now >= this._nextLineAt) {
       this._visibleLines++;
       if (this._visibleLines < ScreenGameEnd.REVEAL_LINES.length) {
-        this._nextLineAt = now + ScreenGameEnd.REVEAL_LINES[this._visibleLines - 1].holdMs;
+        this._nextLineAt =
+          now + ScreenGameEnd.REVEAL_LINES[this._visibleLines - 1].holdMs;
       } else {
         this._allRevealed = true;
-        this._flashNext   = now + 500;
+        this._flashNext = now + 500;
       }
     }
 
     // Flash INSERT COIN once all lines are revealed
     if (this._allRevealed && now >= this._flashNext) {
-      this._flashOn   = !this._flashOn;
+      this._flashOn = !this._flashOn;
       this._flashNext = now + 500;
     }
 
@@ -148,11 +172,11 @@ export default class ScreenGameEnd extends Canvas3d {
 
   // ── Key handler ────────────────────────────────────────────────────────────
 
-  _onAnyKey () {
-    if (!this._allRevealed) return;   // Ignore keys during the reveal sequence
+  _onAnyKey() {
+    if (!this._allRevealed) return; // Ignore keys during the reveal sequence
 
     const responses = ScreenGameEnd.COIN_RESPONSES;
-    this._coinResponse   = responses[this._coinIndex % responses.length];
+    this._coinResponse = responses[this._coinIndex % responses.length];
     this._coinIndex++;
     // Each response stays for 2.5 s, except the very last one which lingers
     const isLast = this._coinIndex >= responses.length;
@@ -161,36 +185,38 @@ export default class ScreenGameEnd extends Canvas3d {
 
   // ── WebSpeech ──────────────────────────────────────────────────────────────
 
-  _speakTruth () {
+  _speakTruth() {
     try {
       window.speechSynthesis.cancel();
       const text = [
-          'The Chaos Emeralds attuned your brainwaves',
-          'to the truth frequency.',
-          'And only now can you be told',
-          'the greatest truth.',
-          '... Insert Coin. To Continue.',
+        'The Chaos Emeralds attuned your brainwaves',
+        'to the truth frequency.',
+        'And only now can you be told',
+        'the greatest truth.',
+        '... Insert Coin. To Continue.',
       ].join(' ');
-      
-      const utt   = new SpeechSynthesisUtterance(text);
-      utt.rate    = 0.62;
-      utt.pitch   = 0.55;
-      utt.volume  = 1.0;
-      
+
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.rate = 0.62;
+      utt.pitch = 0.55;
+      utt.volume = 1.0;
+
       const deep = findVoice(/daniel|google uk|alex|thomas|french/i);
       if (deep) utt.voice = deep;
-      
+
       window.speechSynthesis.speak(utt);
-    } catch (error) { console.debug('[ScreenGameEnd] Speech synthesis failed:', error); }
+    } catch (error) {
+      console.debug('[ScreenGameEnd] Speech synthesis failed:', error);
+    }
   }
 
   // ── Rendering ──────────────────────────────────────────────────────────────
 
-  _render () {
+  _render() {
     const ctx = this.context;
-    const W   = this.canvasResX;    // 1024
-    const H   = this.canvasResY;    // 1024
-    const cx  = W / 2;
+    const W = this.canvasResX; // 1024
+    const H = this.canvasResY; // 1024
+    const cx = W / 2;
 
     // ── Background ───────────────────────────────────────────────────────────
     ctx.fillStyle = '#000000';
@@ -201,20 +227,27 @@ export default class ScreenGameEnd extends Canvas3d {
     for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 2);
 
     // Radial vignette — draws attention to the centre text
-    const vignette = ctx.createRadialGradient(cx, H * 0.45, 60, cx, H * 0.45, W * 0.75);
-    vignette.addColorStop(0,   'rgba(0,0,0,0)');
+    const vignette = ctx.createRadialGradient(
+      cx,
+      H * 0.45,
+      60,
+      cx,
+      H * 0.45,
+      W * 0.75,
+    );
+    vignette.addColorStop(0, 'rgba(0,0,0,0)');
     vignette.addColorStop(0.7, 'rgba(0,0,0,0)');
-    vignette.addColorStop(1,   'rgba(0,0,0,0.85)');
+    vignette.addColorStop(1, 'rgba(0,0,0,0.85)');
     ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, W, H);
 
-    ctx.textAlign    = 'center';
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
     // ── Revealed text lines ───────────────────────────────────────────────────
-    const lineH    = 74;
-    const total    = ScreenGameEnd.REVEAL_LINES.length;
-    const blockH   = total * lineH;
+    const lineH = 74;
+    const total = ScreenGameEnd.REVEAL_LINES.length;
+    const blockH = total * lineH;
     const blockTop = (H - blockH) / 2 - 60;
 
     ScreenGameEnd.REVEAL_LINES.forEach((line, i) => {
@@ -224,15 +257,15 @@ export default class ScreenGameEnd extends Canvas3d {
 
       // Double-pass glow
       ctx.shadowColor = line.color;
-      ctx.shadowBlur  = 22;
-      ctx.font        = `bold ${line.size}px "Courier New", monospace`;
-      ctx.fillStyle   = line.color;
+      ctx.shadowBlur = 22;
+      ctx.font = `bold ${line.size}px "Courier New", monospace`;
+      ctx.fillStyle = line.color;
       ctx.fillText(line.text, cx, y);
 
       // Second pass for intensity
-      ctx.shadowBlur  = 10;
+      ctx.shadowBlur = 10;
       ctx.fillText(line.text, cx, y);
-      ctx.shadowBlur  = 0;
+      ctx.shadowBlur = 0;
     });
 
     // ── INSERT COIN TO CONTINUE ───────────────────────────────────────────────
@@ -241,25 +274,28 @@ export default class ScreenGameEnd extends Canvas3d {
 
       if (this._flashOn) {
         ctx.shadowColor = '#ff2200';
-        ctx.shadowBlur  = 24;
-        ctx.font        = 'bold 30px "Courier New", monospace';
-        ctx.fillStyle   = '#ff2200';
+        ctx.shadowBlur = 24;
+        ctx.font = 'bold 30px "Courier New", monospace';
+        ctx.fillStyle = '#ff2200';
         ctx.fillText('INSERT COIN TO CONTINUE', cx, coinY);
-        ctx.shadowBlur  = 0;
+        ctx.shadowBlur = 0;
       }
 
       // Coin error response (fades in/out)
       if (this._coinResponse) {
-        const remaining = Math.max(0, (this._coinResponseAt - Date.now()) / 1000);
-        const alpha     = Math.min(1, remaining / 0.4);   // Fade out over last 0.4 s
-        ctx.font        = '15px "Courier New", monospace';
-        ctx.fillStyle   = `rgba(160,160,160,${alpha.toFixed(2)})`;
+        const remaining = Math.max(
+          0,
+          (this._coinResponseAt - Date.now()) / 1000,
+        );
+        const alpha = Math.min(1, remaining / 0.4); // Fade out over last 0.4 s
+        ctx.font = '15px "Courier New", monospace';
+        ctx.fillStyle = `rgba(160,160,160,${alpha.toFixed(2)})`;
         ctx.fillText(this._coinResponse, cx, coinY + 52);
       }
 
       // Subtle hint that nothing will ever happen (appears after several attempts)
       if (this._coinIndex >= 6) {
-        ctx.font      = '12px "Courier New", monospace';
+        ctx.font = '12px "Courier New", monospace';
         ctx.fillStyle = 'rgba(40,40,40,1)';
         ctx.fillText('THERE IS NO COIN SLOT.', cx, H - 30);
       }

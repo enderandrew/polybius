@@ -56,10 +56,9 @@ import EnemyTanker from '@/Object/Enemies/EnemyTanker';
 import Enemy from '@/Object/Enemies/Enemy';
 
 export default class EnemyBombTanker extends EnemyTanker {
-
   // How many lanes on each side of the impact point are shorted.
   // 2 = own lane + 2 left + 2 right = up to 5 lanes total.
-  static BLAST_RADIUS      = 2;
+  static BLAST_RADIUS = 2;
 
   // How long the shorted lanes stay shorted after detonation (ms).
   static SHORT_DURATION_MS = 3000;
@@ -72,14 +71,30 @@ export default class EnemyBombTanker extends EnemyTanker {
    * @param {number}            zPosition
    * @param {Game}              game
    */
-  constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
+  constructor(
+    surface,
+    projectileManager,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
     // Pass null as enemySpawnFunction — EnemyTanker stores it but never calls
     // it directly; only createEnemies() uses it, and we override that entirely.
-    super(surface, projectileManager, null, rewardCallback, Enemy.TYPE_FLIPPER_TANKER, laneId, zPosition, game);
+    super(
+      surface,
+      projectileManager,
+      null,
+      rewardCallback,
+      Enemy.TYPE_FLIPPER_TANKER,
+      laneId,
+      zPosition,
+      game,
+    );
 
-    this.isBomb        = true;
-    this.valueInPoints = 100;   // Less than normal Tanker — the danger IS the blast
-    this.hitPoints     = this.isStrong ? 3 : 2;  // Tougher — gives the player less time
+    this.isBomb = true;
+    this.valueInPoints = 100; // Less than normal Tanker — the danger IS the blast
+    this.hitPoints = this.isStrong ? 3 : 2; // Tougher — gives the player less time
   }
 
   // ---------------------------------------------------------------------------
@@ -88,7 +103,7 @@ export default class EnemyBombTanker extends EnemyTanker {
   // Called by EnemyTanker from both hitByProjectile() and the rim-reach path
   // in updateEntity().  Override does the detonation instead of releasing enemies.
   // ---------------------------------------------------------------------------
-  createEnemies () {
+  createEnemies() {
     // Guard: don't detonate during level cleanup (disappear) or after death.
     // updateEntity() keeps running during STATE_DISAPPEARING so the zPosition <= 0
     // rim check could fire; this prevents a spurious detonation in that case.
@@ -106,7 +121,7 @@ export default class EnemyBombTanker extends EnemyTanker {
   // Private
   // ---------------------------------------------------------------------------
 
-  _detonate () {
+  _detonate() {
     const surface = this.surface;
     if (!surface) return;
 
@@ -114,21 +129,25 @@ export default class EnemyBombTanker extends EnemyTanker {
     // getActualLaneIdFromProjectedMovement() clamps on open surfaces — Set
     // deduplication prevents double-shorting a clamped lane.
     const lanesToShort = new Set();
-    for (let offset = -EnemyBombTanker.BLAST_RADIUS; offset <= EnemyBombTanker.BLAST_RADIUS; offset++) {
+    for (
+      let offset = -EnemyBombTanker.BLAST_RADIUS;
+      offset <= EnemyBombTanker.BLAST_RADIUS;
+      offset++
+    ) {
       lanesToShort.add(
-        surface.getActualLaneIdFromProjectedMovement(this.laneId + offset)
+        surface.getActualLaneIdFromProjectedMovement(this.laneId + offset),
       );
     }
 
     // Short immediately
-    lanesToShort.forEach(lane => surface.shortLane(lane));
+    lanesToShort.forEach((lane) => surface.shortLane(lane));
 
     // Schedule cleanup.  Closure captures the specific Surface instance —
     // if the level releases before this fires, the old Surface is an orphan
     // and the unshort calls are harmless.
-    const lanes = lanesToShort;  // Snapshot for closure
+    const lanes = lanesToShort; // Snapshot for closure
     setTimeout(() => {
-      lanes.forEach(lane => surface.unshortLane(lane));
+      lanes.forEach((lane) => surface.unshortLane(lane));
     }, EnemyBombTanker.SHORT_DURATION_MS);
   }
 }

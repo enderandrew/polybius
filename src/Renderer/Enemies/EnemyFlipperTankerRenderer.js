@@ -7,17 +7,21 @@ export default class EnemyFlipperTankerRenderer extends EnemyRenderer {
    * @param {EnemyFlipperTanker} enemyFlipperTanker
    * @param {Surface} surface
    */
-  constructor (enemyFlipperTanker, surface) {
+  constructor(enemyFlipperTanker, surface) {
     super(enemyFlipperTanker, surface, Enemy.TYPE_FLIPPER_TANKER);
   }
 
-  updateState () {
-    this.positionBase = this.surface.lanesMiddleCoords[this.object.laneId].clone();
-    this.zRotationBase = this.surface.lanesCenterDirectionRadians[this.object.laneId];
+  updateState() {
+    if (!this.object || typeof this.object.inState !== 'function') {
+      return;
+    }
+
+    this.positionBase.copy(this.surface.lanesMiddleCoords[this.object.laneId]);
+    this.zRotationBase =
+      this.surface.lanesCenterDirectionRadians[this.object.laneId];
 
     if (this.object.inState(EnemyTanker.STATE_EXPLODING)) {
       this.explodeAnimation();
-
     } else if (this.object.inState(EnemyTanker.STATE_DISAPPEARING)) {
       this.disappearingAnimation();
     }

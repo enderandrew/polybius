@@ -40,33 +40,33 @@ export default class SurfaceObject {
    * @param {number} laneId
    * @param {string} type
    */
-  constructor (surface, laneId, type) {
+  constructor(surface, laneId, type) {
     this.surface = surface;
     this.laneId = this.surface.getActualLaneIdFromProjectedMovement(laneId);
     this.type = type;
     this.objectId = ObjectIdManager.getNewId();
   }
 
-  update () {
-    throw new Error('Method \'update()\' must be implemented.');
+  update() {
+    throw new Error("Method 'update()' must be implemented.");
   }
 
-  die () {
-    throw new Error('Method \'die()\' must be implemented.');
+  die() {
+    throw new Error("Method 'die()' must be implemented.");
   }
 
-  hitByProjectile () {
+  hitByProjectile() {
     this.die();
   }
 
-  disappear () {
-    throw new Error('Method \'disappear()\' must be implemented.');
+  disappear() {
+    throw new Error("Method 'disappear()' must be implemented.");
   }
 
   /**
    * @param {number} laneId
    */
-  setLane (laneId) {
+  setLane(laneId) {
     this.prevLaneId = this.laneId;
     this.laneId = this.surface.getActualLaneIdFromProjectedMovement(laneId);
     this.laneChangeMapsNeedUpdate = true;
@@ -75,7 +75,7 @@ export default class SurfaceObject {
   /**
    * @return {boolean}
    */
-  shouldUpdateFIFOMaps () {
+  shouldUpdateFIFOMaps() {
     if (!this.laneChangeMapsNeedUpdate) {
       return false;
     }
@@ -85,7 +85,7 @@ export default class SurfaceObject {
   }
 
   /** @param {State} state */
-  setState (state) {
+  setState(state) {
     this.prevState = this.state;
     this.state = state;
     this.lastStateChange = Date.now();
@@ -94,14 +94,14 @@ export default class SurfaceObject {
   /**
    * @return {number}
    */
-  timeSinceLastStateChange () {
+  timeSinceLastStateChange() {
     return Date.now() - this.lastStateChange;
   }
 
   /**
    * @return {number} 0 - 100%
    */
-  stateProgressInTime () {
+  stateProgressInTime() {
     let timeSienceLastStateChange = this.timeSinceLastStateChange();
 
     if (timeSienceLastStateChange >= this.state.duration) {
@@ -114,7 +114,7 @@ export default class SurfaceObject {
   /**
    * @return {boolean}
    */
-  canChangeState () {
+  canChangeState() {
     return this.timeSinceLastStateChange() > this.state.duration;
   }
 
@@ -122,33 +122,40 @@ export default class SurfaceObject {
    * @param {State} state
    * @return {boolean}
    */
-  inState (state) {
-    return this.state.equals(state);
+  inState(state) {
+    if (!this || !this.state || !state) return false;
+    if (typeof this.state.equals === 'function') {
+      return this.state.equals(state);
+    }
+    return this.state === state;
   }
 
   /**
    * @param {State} state
    * @return {boolean}
    */
-  prevInState (state) {
+  prevInState(state) {
+    if (!this.prevState || typeof this.prevState.equals !== 'function') {
+      return false;
+    }
     return this.prevState.equals(state);
   }
 
   /**
    * @param {number} flag
    */
-  setFlag (flag) {
+  setFlag(flag) {
     this.flags |= flag;
   }
 
   /**
    * @param {number} flag
    */
-  unsetFlag (flag) {
+  unsetFlag(flag) {
     this.flags &= ~flag;
   }
 
-  clearFlags () {
+  clearFlags() {
     this.flags = 0;
   }
 
@@ -156,7 +163,7 @@ export default class SurfaceObject {
    * @param {number} flag
    * @return {boolean}
    */
-  isFlagSet (flag) {
+  isFlagSet(flag) {
     return (this.flags & flag) > 0;
   }
 
@@ -164,7 +171,7 @@ export default class SurfaceObject {
    * @param {number} flag
    * @return {boolean}
    */
-  isFlagNotSet (flag) {
+  isFlagNotSet(flag) {
     return !this.isFlagSet(flag);
   }
 }

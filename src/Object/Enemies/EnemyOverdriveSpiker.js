@@ -40,14 +40,20 @@
 import EnemySpiker from '@/Object/Enemies/EnemySpiker';
 
 export default class EnemyOverdriveSpiker extends EnemySpiker {
-
-  constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
+  constructor(
+    surface,
+    projectileManager,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
     super(surface, projectileManager, rewardCallback, laneId, zPosition, game);
 
-    this.isOverdrive      = true;
-    this.valueInPoints    = 200;
-    this.zSpeed           = -0.018;   // 3× average normal speed (~0.004–0.006)
-    this.turnaroundHeight = 0.55;     // Turns back halfway instead of near-rim
+    this.isOverdrive = true;
+    this.valueInPoints = 200;
+    this.zSpeed = -0.018; // 3× average normal speed (~0.004–0.006)
+    this.turnaroundHeight = 0.55; // Turns back halfway instead of near-rim
   }
 
   // ---------------------------------------------------------------------------
@@ -55,13 +61,16 @@ export default class EnemyOverdriveSpiker extends EnemySpiker {
   // turnaround condition uses this.turnaroundHeight (instance) rather than
   // EnemySpiker.TURNAROUND_HEIGHT (static 0.1).
   // ---------------------------------------------------------------------------
-  updateEntity (delta = 1 / 60) {
+  updateEntity(delta = 1 / 60) {
     if (this.inState(EnemySpiker.STATE_DEAD)) {
       this.alive = false;
     }
 
     // ── Turnaround: instance property replaces static ───────────────────────
-    if (this.zPosition <= this.turnaroundHeight && this.isFlagNotSet(EnemySpiker.FLAG_REACHED_TOP)) {
+    if (
+      this.zPosition <= this.turnaroundHeight &&
+      this.isFlagNotSet(EnemySpiker.FLAG_REACHED_TOP)
+    ) {
       this.setFlag(EnemySpiker.FLAG_REACHED_TOP);
       this.zPosition = this.turnaroundHeight;
     }
@@ -72,7 +81,10 @@ export default class EnemyOverdriveSpiker extends EnemySpiker {
     }
 
     // ── Shoot on the way down (same as parent) ───────────────────────────────
-    if (this.inState(EnemySpiker.STATE_SHOOTING) && this.isFlagNotSet(EnemySpiker.FLAG_SHOOTS_FIRED)) {
+    if (
+      this.inState(EnemySpiker.STATE_SHOOTING) &&
+      this.isFlagNotSet(EnemySpiker.FLAG_SHOOTS_FIRED)
+    ) {
       this.setFlag(EnemySpiker.FLAG_SHOOTS_FIRED);
       this.fire();
     }
@@ -81,9 +93,9 @@ export default class EnemyOverdriveSpiker extends EnemySpiker {
     // zSpeed was tuned per-frame at 60fps -> scale by delta to stay frame-rate independent.
     if (!this.inState(EnemySpiker.STATE_EXPLODING)) {
       if (this.isFlagNotSet(EnemySpiker.FLAG_REACHED_TOP)) {
-        this.zPosition += this.zSpeed * 60 * delta;   // Inward (negative zSpeed)
+        this.zPosition += this.zSpeed * 60 * delta; // Inward (negative zSpeed)
       } else {
-        this.zPosition -= this.zSpeed * 60 * delta;   // Back out (subtracting negative = positive)
+        this.zPosition -= this.zSpeed * 60 * delta; // Back out (subtracting negative = positive)
       }
     }
   }

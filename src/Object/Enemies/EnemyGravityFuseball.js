@@ -23,13 +23,19 @@
 import EnemyFuseball from '@/Object/Enemies/EnemyFuseball';
 
 export default class EnemyGravityFuseball extends EnemyFuseball {
-
-  constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
+  constructor(
+    surface,
+    projectileManager,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
     super(surface, projectileManager, rewardCallback, laneId, zPosition, game);
 
-    this.isGravity     = true;
-    this.valueInPoints = 300;   // Worth more than a normal Fuseball (250)
-    this.hitPoints     = this.isStrong ? 3 : 2; // Takes more hits — it earns the extra HP
+    this.isGravity = true;
+    this.valueInPoints = 300; // Worth more than a normal Fuseball (250)
+    this.hitPoints = this.isStrong ? 3 : 2; // Takes more hits — it earns the extra HP
   }
 
   // ---------------------------------------------------------------------------
@@ -49,8 +55,7 @@ export default class EnemyGravityFuseball extends EnemyFuseball {
   //     CW switch (same as parent), while FLAG_SET_LANE_CCW is set immediately
   //     here (same asymmetry as the parent).
   // ---------------------------------------------------------------------------
-  updateEntity () {
-
+  updateEntity() {
     // ── Death ─────────────────────────────────────────────────────────────────
     if (this.inState(EnemyFuseball.STATE_DEAD)) {
       this.alive = false;
@@ -69,13 +74,15 @@ export default class EnemyGravityFuseball extends EnemyFuseball {
     ) {
       this.setFlag(EnemyFuseball.FLAG_SWITCHING_DIR_CHOSEN);
 
-      const dir = this.surface.getShortestPathDirection(this.laneId, this.surface.activeLaneId);
+      const dir = this.surface.getShortestPathDirection(
+        this.laneId,
+        this.surface.activeLaneId,
+      );
 
       if (dir === 0) {
         // Already in the player's lane — FLAG_REACHED_SHOOTER triggers
         // the "at player" path in updateState.
         this.setFlag(EnemyFuseball.FLAG_REACHED_SHOOTER);
-
       } else if (dir === 1) {
         // CW toward player.
         // FLAG_SET_LANE_CW is deliberately NOT set here — updateState()
@@ -83,7 +90,6 @@ export default class EnemyGravityFuseball extends EnemyFuseball {
         // which defers the CW lane change to the end of the animation).
         this.setFlag(EnemyFuseball.FLAG_SWITCHING_LANE_CW);
         this.unsetFlag(EnemyFuseball.FLAG_REACHED_SHOOTER);
-
       } else {
         // CCW toward player.
         // FLAG_SET_LANE_CCW is set immediately so the lane changes at the
@@ -104,7 +110,10 @@ export default class EnemyGravityFuseball extends EnemyFuseball {
     }
 
     // ── Apply the queued lane change ──────────────────────────────────────────
-    if (this.isFlagSet(EnemyFuseball.FLAG_SET_LANE_CW) || this.isFlagSet(EnemyFuseball.FLAG_SET_LANE_CCW)) {
+    if (
+      this.isFlagSet(EnemyFuseball.FLAG_SET_LANE_CW) ||
+      this.isFlagSet(EnemyFuseball.FLAG_SET_LANE_CCW)
+    ) {
       const direction = this.isFlagSet(EnemyFuseball.FLAG_SET_LANE_CW) ? 1 : -1;
       this.setLane(this.laneId + direction);
       this.unsetFlag(EnemyFuseball.FLAG_SET_LANE_CW);
@@ -126,7 +135,7 @@ export default class EnemyGravityFuseball extends EnemyFuseball {
       this.isFlagNotSet(EnemyFuseball.FLAG_MOVING_TARGET_CHOSEN)
     ) {
       this.setFlag(EnemyFuseball.FLAG_MOVING_TARGET_CHOSEN);
-      this.zBase   = this.zPosition;
+      this.zBase = this.zPosition;
       this.zTarget = 0;
     }
 
@@ -142,7 +151,8 @@ export default class EnemyGravityFuseball extends EnemyFuseball {
     }
 
     if (this.inState(EnemyFuseball.STATE_MOVING_ALONG_LINE)) {
-      this.zPosition = this.zBase + (this.zTarget - this.zBase) * this.stateProgressInTime();
+      this.zPosition =
+        this.zBase + (this.zTarget - this.zBase) * this.stateProgressInTime();
     }
   }
 }

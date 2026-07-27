@@ -23,7 +23,6 @@ import * as THREE from 'three';
 import { PowerUpRenderer } from '@/PowerUp/PowerUpRenderer';
 
 export class PowerUp {
-
   /**
    * @param {object}  type        - A PowerUpType enum value
    * @param {number}  lane        - Web lane index where the power-up spawns
@@ -31,28 +30,30 @@ export class PowerUp {
    * @param {object}  webGeometry - Reference to the web/level geometry helper
    *                                (must expose lanePositionAt(lane, depth) → THREE.Vector3)
    */
-  constructor (type, lane, depth, webGeometry) {
-    this.type        = type;
-    this.lane        = lane;
-    this.depth       = depth;
+  constructor(type, lane, depth, webGeometry) {
+    this.type = type;
+    this.lane = lane;
+    this.depth = depth;
     this.webGeometry = webGeometry;
-  //console.log("POWERUP: Constructed with geometry:", this.webGeometry);
+    //console.log("POWERUP: Constructed with geometry:", this.webGeometry);
     if (!this.webGeometry.coords && !this.webGeometry.lanesCoords) {
-        console.error("CRITICAL: webGeometry passed to PowerUp is missing coordinate data!");
-        console.log("Geometry Object:", this.webGeometry);
+      console.error(
+        'CRITICAL: webGeometry passed to PowerUp is missing coordinate data!',
+      );
+      //console.log("Geometry Object:", this.webGeometry);
     }
-  
+
     this.isCollected = false;
-    this.isExpired   = false;
+    this.isExpired = false;
 
     // How fast the power-up crawls toward the player (units per second).
     // Slower than enemies so the player has to decide whether to collect.
     this.speed = 0.35;
 
     // Visual bob/pulse animation state
-    this._bobTime    = Math.random() * Math.PI * 2;  // Random phase offset
-    this._rotTime    = 0;
-    this._baseScale  = 0.55;
+    this._bobTime = Math.random() * Math.PI * 2; // Random phase offset
+    this._rotTime = 0;
+    this._baseScale = 0.55;
 
     this._buildSprite();
   }
@@ -62,17 +63,17 @@ export class PowerUp {
   // ---------------------------------------------------------------------------
 
   /** Call once per game tick. delta is seconds since last frame. */
-  update (delta) {
+  update(delta) {
     if (!this.webGeometry) {
-        this.isExpired = true;
-        return;
+      this.isExpired = true;
+      return;
     }
     if (this.isExpired) return;
 
     if (this.isCollected) {
-       this._rotTime += delta * 8.0; 
-       this.sprite.material.rotation = this._rotTime * 0.5;
-       return; 
+      this._rotTime += delta * 8.0;
+      this.sprite.material.rotation = this._rotTime * 0.5;
+      return;
     }
 
     this.depth -= this.speed * delta;
@@ -82,46 +83,49 @@ export class PowerUp {
       return;
     }
 
-    this._bobTime  += delta * 2.8;
-    this._rotTime  += delta * 1.4;
+    this._bobTime += delta * 2.8;
+    this._rotTime += delta * 1.4;
 
-    const bob    = Math.sin(this._bobTime) * 0.05;
-    const pulse  = 1.0 + Math.sin(this._bobTime * 1.5) * 0.08;
+    const bob = Math.sin(this._bobTime) * 0.05;
+    const pulse = 1.0 + Math.sin(this._bobTime * 1.5) * 0.08;
 
     const pos = this.webGeometry.lanePositionAt(this.lane, this.depth);
-    
+
     if (pos) {
-        this.sprite.position.copy(pos);
-        this.sprite.position.y += bob;
-    } 
+      this.sprite.position.copy(pos);
+      this.sprite.position.y += bob;
+    }
 
     this.sprite.material.rotation = this._rotTime * 0.5;
     this.sprite.scale.setScalar(this._baseScale * pulse);
   }
 
   /** Trigger collection VFX and mark as collected. */
-  collect () {
+  collect() {
     if (this.isCollected) return;
     this.isCollected = true;
     this._playCollectVFX();
   }
 
   /** Remove the sprite from the scene. Call when cleaning up. */
-  dispose (scene) {
+  dispose(scene) {
     try {
-        if (scene && this.sprite) {
-            scene.remove(this.sprite);
+      if (scene && this.sprite) {
+        scene.remove(this.sprite);
+      }
+      if (this.sprite && this.sprite.material) {
+        if (
+          this.sprite.material.map &&
+          typeof this.sprite.material.map.dispose === 'function'
+        ) {
+          this.sprite.material.map.dispose();
         }
-        if (this.sprite && this.sprite.material) {
-            if (this.sprite.material.map && typeof this.sprite.material.map.dispose === 'function') {
-                this.sprite.material.map.dispose();
-            }
-            if (typeof this.sprite.material.dispose === 'function') {
-                this.sprite.material.dispose();
-            }
+        if (typeof this.sprite.material.dispose === 'function') {
+          this.sprite.material.dispose();
         }
+      }
     } catch (e) {
-        console.error("Safely caught dispose error:", e);
+      console.error('Safely caught dispose error:', e);
     }
   }
 
@@ -129,34 +133,34 @@ export class PowerUp {
   // Private helpers
   // ---------------------------------------------------------------------------
 
-  _buildSprite () {
-    const canvas  = PowerUpRenderer.createCanvas(this.type);
-  //console.log(`POWERUP RENDER: Canvas created for ${this.type.id}. Size: ${canvas.width}x${canvas.height}`);
+  _buildSprite() {
+    const canvas = PowerUpRenderer.createCanvas(this.type);
+    //console.log(`POWERUP RENDER: Canvas created for ${this.type.id}. Size: ${canvas.width}x${canvas.height}`);
     const texture = new THREE.CanvasTexture(canvas);
 
     const material = new THREE.SpriteMaterial({
-      map:         texture,
+      map: texture,
       transparent: true,
-      blending:    THREE.AdditiveBlending,   // Glows nicely against dark backgrounds
-      depthTest:   false,
-    depthWrite:  false,
+      blending: THREE.AdditiveBlending, // Glows nicely against dark backgrounds
+      depthTest: false,
+      depthWrite: false,
     });
 
     this.sprite = new THREE.Sprite(material);
     this.sprite.scale.setScalar(this._baseScale);
-    this.sprite.renderOrder = 10;            // Draw above web geometry
-  //console.log(`POWERUP RENDER: Sprite built. Scale:`, this.sprite.scale, `Opacity:`, this.sprite.material.opacity);
+    this.sprite.renderOrder = 10; // Draw above web geometry
+    //console.log(`POWERUP RENDER: Sprite built. Scale:`, this.sprite.scale, `Opacity:`, this.sprite.material.opacity);
   }
 
-  _playCollectVFX () {
-    let elapsed  = 0;
-    const burst  = 16;
+  _playCollectVFX() {
+    let elapsed = 0;
+    const burst = 16;
     const expand = () => {
       elapsed += burst;
       const t = elapsed / 300;
       if (t >= 1) {
         this.sprite.material.opacity = 0;
-        this.isExpired = true; 
+        this.isExpired = true;
         return;
       }
       this.sprite.scale.setScalar(this._baseScale * (1 + t * 1.8));

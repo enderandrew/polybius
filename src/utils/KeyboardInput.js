@@ -2,17 +2,21 @@ class KeyboardInput {
   /** @var {{key: string, keyDown: boolean, action: function}[]} **/
   keyToFunctionMap = [];
 
-  constructor () {
-    document.onkeydown = event => {
-      let element = this.keyToFunctionMap.find(keyMap => keyMap.key === event.code);
+  constructor() {
+    document.onkeydown = (event) => {
+      let element = this.keyToFunctionMap.find(
+        (keyMap) => keyMap.key === event.code,
+      );
 
       if (element !== undefined) {
         element.keyDown = true;
       }
     };
 
-    document.onkeyup = event => {
-      let element = this.keyToFunctionMap.find(keyMap => keyMap.key === event.code);
+    document.onkeyup = (event) => {
+      let element = this.keyToFunctionMap.find(
+        (keyMap) => keyMap.key === event.code,
+      );
 
       if (element !== undefined) {
         element.keyDown = false;
@@ -20,37 +24,40 @@ class KeyboardInput {
     };
   }
 
-  dispatchActions () {
-    this.keyToFunctionMap.filter(keyMap => keyMap.keyDown).forEach(keyMap => keyMap.action());
+  dispatchActions() {
+    this.keyToFunctionMap
+      .filter((keyMap) => keyMap.keyDown)
+      .forEach((keyMap) => keyMap.action());
   }
 
   /**
    * @param {string} key
    * @param {function} action
    */
-  register (key, action) {
+  register(key, action) {
     this.unregister(key);
 
     this.keyToFunctionMap.push({
-        key: key,
-        keyDown: false,
-        action: action
-      }
-    );
+      key: key,
+      keyDown: false,
+      action: action,
+    });
   }
 
   /**
    * @param {string} key
    */
-  unregister (key) {
-    const index = this.keyToFunctionMap.findIndex(keyMap => keyMap.key === key);
+  unregister(key) {
+    const index = this.keyToFunctionMap.findIndex(
+      (keyMap) => keyMap.key === key,
+    );
 
     if (index >= 0) {
       this.keyToFunctionMap.splice(index, 1);
     }
   }
 
-  purge () {
+  purge() {
     this.keyToFunctionMap = [];
   }
 }

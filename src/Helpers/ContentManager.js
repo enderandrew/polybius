@@ -7,7 +7,7 @@ export default class ContentManager {
    * @param {string} key
    * @param {*} value
    */
-  set (key, value) {
+  set(key, value) {
     this.content[key] = value;
     this.setUpdateFlag();
   }
@@ -16,22 +16,22 @@ export default class ContentManager {
    * @param {string} key
    * @return {*}
    */
-  get (key) {
+  get(key) {
     return this.content[key];
   }
 
-  setUpdateFlag () {
+  setUpdateFlag() {
     this.updateFlag = true;
   }
 
-  unsetUpdateFlag () {
+  unsetUpdateFlag() {
     this.updateFlag = false;
   }
 
   /**
    * @return {boolean}
    */
-  isUpdateFlagSet () {
+  isUpdateFlagSet() {
     return this.updateFlag;
   }
 }

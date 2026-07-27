@@ -33,18 +33,34 @@ export default class EnemyFlipper extends Enemy {
    * @param {number} laneId
    * @param {number} zPosition
    */
-  constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, type = Enemy.TYPE_FLIPPER, game) {
-    super(surface, projectileManager, rewardCallback, laneId, zPosition, type, game);
+  constructor(
+    surface,
+    projectileManager,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    type = Enemy.TYPE_FLIPPER,
+    game,
+  ) {
+    super(
+      surface,
+      projectileManager,
+      rewardCallback,
+      laneId,
+      zPosition,
+      type,
+      game,
+    );
 
     this.firstLevel = 1;
     this.valueInPoints = 150;
 
     this.zSpeed = -randomRange(6, 9) * 0.001;
     this.setState(EnemyFlipper.STATE_IDLE);
-  this.game = game;
+    this.game = game;
   }
 
-  updateState () {
+  updateState() {
     if (this.inState(EnemyFlipper.STATE_IDLE)) {
       if (this.isFlagSet(EnemyFlipper.FLAG_REACHED_TOP)) {
         this.setState(EnemyFlipper.STATE_ROTATING_BEGIN);
@@ -55,18 +71,16 @@ export default class EnemyFlipper extends Enemy {
             EnemyFlipper.STATE_SHOOTING,
             this.isFlagNotSet(EnemyFlipper.FLAG_CANNOT_FLIP)
               ? EnemyFlipper.STATE_ROTATING_BEGIN
-              : EnemyFlipper.STATE_IDLE
-          )
+              : EnemyFlipper.STATE_IDLE,
+          ),
         );
       }
-
     } else if (this.inState(EnemyFlipper.STATE_ROTATING_BEGIN)) {
       this.setState(EnemyFlipper.STATE_ROTATING_END);
       if (this.isFlagSet(EnemyFlipper.FLAG_IMMUNE_ROTATION)) {
         this.unsetFlag(EnemyFlipper.FLAG_IMMUNE_ROTATION);
         this.hittable = true;
       }
-
     } else if (this.inState(EnemyFlipper.STATE_ROTATING_END)) {
       if (this.isFlagSet(EnemyFlipper.FLAG_REACHED_TOP)) {
         this.setState(EnemyFlipper.STATE_ROTATING_BEGIN);
@@ -77,7 +91,6 @@ export default class EnemyFlipper extends Enemy {
       this.unsetFlag(EnemyFlipper.FLAG_ROTATION_CW);
       this.unsetFlag(EnemyFlipper.FLAG_ROTATION_CCW);
       this.unsetFlag(EnemyFlipper.FLAG_ROTATION_DIR_CHOSEN);
-
     } else if (this.inState(EnemyFlipper.STATE_SHOOTING)) {
       this.setState(EnemyFlipper.STATE_IDLE);
       this.unsetFlag(EnemyFlipper.FLAG_SHOOTS_FIRED);
@@ -88,20 +101,29 @@ export default class EnemyFlipper extends Enemy {
     }
   }
 
-  updateEntity (delta = 1 / 60) {
+  updateEntity(delta = 1 / 60) {
     if (this.inState(EnemyFlipper.STATE_DEAD)) {
       this.alive = false;
     }
 
-    if (this.zPosition <= 0 && this.isFlagNotSet(EnemyFlipper.FLAG_REACHED_TOP)) {
+    if (
+      this.zPosition <= 0 &&
+      this.isFlagNotSet(EnemyFlipper.FLAG_REACHED_TOP)
+    ) {
       this.setFlag(EnemyFlipper.FLAG_REACHED_TOP);
       this.zPosition = 0;
     }
 
-    if (this.inState(EnemyFlipper.STATE_ROTATING_BEGIN) && this.isFlagNotSet(EnemyFlipper.FLAG_ROTATION_DIR_CHOSEN)) {
+    if (
+      this.inState(EnemyFlipper.STATE_ROTATING_BEGIN) &&
+      this.isFlagNotSet(EnemyFlipper.FLAG_ROTATION_DIR_CHOSEN)
+    ) {
       this.setFlag(EnemyFlipper.FLAG_ROTATION_DIR_CHOSEN);
       if (this.isFlagSet(EnemyFlipper.FLAG_REACHED_TOP)) {
-        let direction = this.surface.getShortestPathDirection(this.laneId, this.surface.activeLaneId);
+        let direction = this.surface.getShortestPathDirection(
+          this.laneId,
+          this.surface.activeLaneId,
+        );
         if (direction === 1) {
           this.setFlag(EnemyFlipper.FLAG_ROTATION_CCW);
           this.unsetFlag(EnemyFlipper.FLAG_ROTATION_CW);
@@ -114,12 +136,25 @@ export default class EnemyFlipper extends Enemy {
           this.setFlag(EnemyFlipper.FLAG_REACHED_SHOOTER);
         }
       } else {
-        if (this.isFlagNotSet(EnemyFlipper.FLAG_ROTATION_CW) && this.isFlagNotSet(EnemyFlipper.FLAG_ROTATION_CCW)) {
-          let canRotateCCW = this.surface.getActualLaneIdFromProjectedMovement(this.laneId + 1) !== this.laneId;
-          let canRotateCW = this.surface.getActualLaneIdFromProjectedMovement(this.laneId - 1) !== this.laneId;
+        if (
+          this.isFlagNotSet(EnemyFlipper.FLAG_ROTATION_CW) &&
+          this.isFlagNotSet(EnemyFlipper.FLAG_ROTATION_CCW)
+        ) {
+          let canRotateCCW =
+            this.surface.getActualLaneIdFromProjectedMovement(
+              this.laneId + 1,
+            ) !== this.laneId;
+          let canRotateCW =
+            this.surface.getActualLaneIdFromProjectedMovement(
+              this.laneId - 1,
+            ) !== this.laneId;
 
           if (canRotateCCW && canRotateCW) {
-            this.setFlag(Math.random() > 0.5 ? EnemyFlipper.FLAG_ROTATION_CW : EnemyFlipper.FLAG_ROTATION_CCW);
+            this.setFlag(
+              Math.random() > 0.5
+                ? EnemyFlipper.FLAG_ROTATION_CW
+                : EnemyFlipper.FLAG_ROTATION_CCW,
+            );
           } else if (canRotateCW) {
             this.setFlag(EnemyFlipper.FLAG_ROTATION_CW);
           } else {
@@ -129,36 +164,51 @@ export default class EnemyFlipper extends Enemy {
       }
     }
 
-    if (this.inState(EnemyFlipper.STATE_ROTATING_END) && this.isFlagNotSet(EnemyFlipper.FLAG_LANE_CHANGED)) {
+    if (
+      this.inState(EnemyFlipper.STATE_ROTATING_END) &&
+      this.isFlagNotSet(EnemyFlipper.FLAG_LANE_CHANGED)
+    ) {
       this.setFlag(EnemyFlipper.FLAG_LANE_CHANGED);
-      if (this.isFlagSet(EnemyFlipper.FLAG_ROTATION_CW) || this.isFlagSet(EnemyFlipper.FLAG_ROTATION_CCW)) {
+      if (
+        this.isFlagSet(EnemyFlipper.FLAG_ROTATION_CW) ||
+        this.isFlagSet(EnemyFlipper.FLAG_ROTATION_CCW)
+      ) {
         let direction = this.isFlagSet(EnemyFlipper.FLAG_ROTATION_CCW) ? 1 : -1;
         this.setLane(this.laneId + direction);
       }
     }
 
-    if (this.inState(EnemyFlipper.STATE_SHOOTING) && this.isFlagNotSet(EnemyFlipper.FLAG_SHOOTS_FIRED)) {
+    if (
+      this.inState(EnemyFlipper.STATE_SHOOTING) &&
+      this.isFlagNotSet(EnemyFlipper.FLAG_SHOOTS_FIRED)
+    ) {
       this.setFlag(EnemyFlipper.FLAG_SHOOTS_FIRED);
       this.fire();
     }
 
-    if (this.isFlagNotSet(EnemyFlipper.FLAG_REACHED_TOP) && !this.inState(EnemyFlipper.STATE_EXPLODING)) {
+    if (
+      this.isFlagNotSet(EnemyFlipper.FLAG_REACHED_TOP) &&
+      !this.inState(EnemyFlipper.STATE_EXPLODING)
+    ) {
       // zSpeed was tuned per-frame at 60fps -> scale by delta to stay frame-rate independent.
       this.zPosition += this.zSpeed * 60 * delta;
     }
   }
 
-  cannotFlip () {
+  cannotFlip() {
     this.setFlag(EnemyFlipper.FLAG_CANNOT_FLIP);
   }
 
-  immuneDuringNextRotation () {
+  immuneDuringNextRotation() {
     this.setFlag(EnemyFlipper.FLAG_IMMUNE_ROTATION);
     this.hittable = false;
   }
 
-  disappear () {
-    if (this.inState(EnemyFlipper.STATE_EXPLODING) || this.inState(EnemyFlipper.STATE_DEAD)) {
+  disappear() {
+    if (
+      this.inState(EnemyFlipper.STATE_EXPLODING) ||
+      this.inState(EnemyFlipper.STATE_DEAD)
+    ) {
       return;
     }
 
@@ -166,7 +216,7 @@ export default class EnemyFlipper extends Enemy {
     super.die();
   }
 
-  die () {
+  die() {
     if (this.inState(EnemyFlipper.STATE_DEAD)) {
       return;
     }

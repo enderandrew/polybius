@@ -1,3 +1,25 @@
+// @ts-check
+
+/**
+ * @enum {number}
+ */
+export const TankerState = {
+  IDLE: 0,
+  SHOOTING: 1,
+  EXPLODING: 2,
+  DISAPPEARING: 3,
+  DEAD: 4,
+};
+
+/**
+ * @enum {number}
+ */
+export const TankerFlags = {
+  NONE: 0,
+  SHOOTS_FIRED: 1 << 0,
+  ROTATION_DIR_CHOSEN: 1 << 1,
+};
+
 import Enemy from '@/Object/Enemies/Enemy';
 import State from '@/Object/State';
 import randomRange from '@/utils/randomRange';
@@ -24,66 +46,86 @@ export default class EnemyTanker extends Enemy {
    * @param {number} laneId
    * @param {number} zPosition
    */
-  constructor (surface, projectileManager, enemySpawnFunction, rewardCallback, type, laneId = 0, zPosition = 1, game) {
-    super(surface, projectileManager, rewardCallback, laneId, zPosition, type, game);
+  constructor(
+    surface,
+    projectileManager,
+    enemySpawnFunction,
+    rewardCallback,
+    type,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
+    super(
+      surface,
+      projectileManager,
+      rewardCallback,
+      laneId,
+      zPosition,
+      type,
+      game,
+    );
     this.enemySpawnFunction = enemySpawnFunction;
     this.firstLevel = 3;
     this.valueInPoints = 100;
     this.zSpeed = -randomRange(3, 6) * 0.001;
     this.setState(EnemyTanker.STATE_IDLE);
-    //this.game = game;
+    this.game = game;
   }
 
-  updateState () {
+  updateState() {
     if (this.inState(EnemyTanker.STATE_IDLE)) {
       this.setState(
-        State.drawNextState(
-          EnemyTanker.STATE_IDLE,
-          EnemyTanker.STATE_SHOOTING
-        )
+        State.drawNextState(EnemyTanker.STATE_IDLE, EnemyTanker.STATE_SHOOTING),
       );
-
     } else if (this.inState(EnemyTanker.STATE_SHOOTING)) {
       this.setState(EnemyTanker.STATE_IDLE);
       this.unsetFlag(EnemyTanker.FLAG_SHOOTS_FIRED);
-
     } else if (this.inState(EnemyTanker.STATE_EXPLODING)) {
       this.setState(EnemyTanker.STATE_DEAD);
-
     } else if (this.inState(EnemyTanker.STATE_DISAPPEARING)) {
       this.setState(EnemyTanker.STATE_DEAD);
     }
   }
 
-  updateEntity (delta = 1 / 60) {
+  updateEntity(delta = 1 / 60) {
     if (this.inState(EnemyTanker.STATE_DEAD)) {
       this.alive = false;
     }
 
     if (this.zPosition <= 0) {
-        this.alive = false;
-        this._releaseEnemiesOnce();
+      this.alive = false;
+      this._releaseEnemiesOnce();
     }
 
-    if (this.inState(EnemyTanker.STATE_SHOOTING) && this.isFlagNotSet(EnemyTanker.FLAG_SHOOTS_FIRED)) {
+    if (
+      this.inState(EnemyTanker.STATE_SHOOTING) &&
+      this.isFlagNotSet(EnemyTanker.FLAG_SHOOTS_FIRED)
+    ) {
       this.setFlag(EnemyTanker.FLAG_SHOOTS_FIRED);
       this.fire();
     }
 
-    if (!this.inState(EnemyTanker.STATE_EXPLODING) && !this.inState(EnemyTanker.STATE_DISAPPEARING)) {
+    if (
+      !this.inState(EnemyTanker.STATE_EXPLODING) &&
+      !this.inState(EnemyTanker.STATE_DISAPPEARING)
+    ) {
       // zSpeed was tuned per-frame at 60fps -> scale by delta to stay frame-rate independent.
       this.zPosition += this.zSpeed * 60 * delta;
     }
   }
 
-  hitByProjectile () {
+  hitByProjectile() {
     this.reward = true;
     this.die();
     this._releaseEnemiesOnce();
   }
 
-  disappear () {
-    if (this.inState(EnemyTanker.STATE_EXPLODING) || this.inState(EnemyTanker.STATE_DEAD)) {
+  disappear() {
+    if (
+      this.inState(EnemyTanker.STATE_EXPLODING) ||
+      this.inState(EnemyTanker.STATE_DEAD)
+    ) {
       return;
     }
 
@@ -91,7 +133,7 @@ export default class EnemyTanker extends Enemy {
     super.die();
   }
 
-  die () {
+  die() {
     if (this.inState(EnemyTanker.STATE_DEAD)) {
       return;
     }
@@ -100,13 +142,26 @@ export default class EnemyTanker extends Enemy {
     super.die();
   }
 
-  createEnemies () {
-    throw new Error('Method \'createEnemies()\' must be implemented.');
+  createEnemies() {
+    throw new Error("Method 'createEnemies()' must be implemented.");
   }
 
-  _releaseEnemiesOnce () {
-      if (this._hasReleasedEnemies) return;
-      this._hasReleasedEnemies = true;
+  _releaseEnemiesOnce() {
+    if (this._hasReleasedEnemies) return;
+    this._hasReleasedEnemies = true;
+
+    // Defer the spawn to the start of the next update() tick to prevent mutating the collision arrays mid-loop.
+    if (
+      this.game &&
+      this.game.levelObject &&
+      this.game.levelObject.surfaceObjectsManager
+    ) {
+      this.game.levelObject.surfaceObjectsManager.queueSpawn(() => {
+        this.createEnemies();
+      });
+    } else {
+      // Fallback just in case
       this.createEnemies();
+    }
   }
 }

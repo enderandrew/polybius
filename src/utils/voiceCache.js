@@ -18,14 +18,14 @@
  */
 
 let _voices = [];
-let _ready  = false;
+let _ready = false;
 let _readyPromise = null;
 
-function _captureVoices () {
+function _captureVoices() {
   const list = window.speechSynthesis?.getVoices?.() ?? [];
   if (list.length > 0) {
     _voices = list;
-    _ready  = true;
+    _ready = true;
   }
   return list;
 }
@@ -34,7 +34,7 @@ function _captureVoices () {
  * Call once at app boot (e.g. from main.js / App.vue mounted hook).
  * Safe to call multiple times — subsequent calls are no-ops.
  */
-export function initVoiceCache () {
+export function initVoiceCache() {
   if (_readyPromise) return _readyPromise;
 
   _readyPromise = new Promise((resolve) => {
@@ -47,13 +47,16 @@ export function initVoiceCache () {
     }
 
     if (!window.speechSynthesis) {
-      resolve([]);   // No TTS support at all — resolve empty, callers handle gracefully
+      resolve([]); // No TTS support at all — resolve empty, callers handle gracefully
       return;
     }
 
     const onVoicesChanged = () => {
       _captureVoices();
-      window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+      window.speechSynthesis.removeEventListener(
+        'voiceschanged',
+        onVoicesChanged,
+      );
       resolve(_voices);
     };
     window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
@@ -61,7 +64,10 @@ export function initVoiceCache () {
     // Safety timeout — some browsers never fire voiceschanged at all
     // (older Firefox, some mobile WebViews). Don't hang forever.
     setTimeout(() => {
-      window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+      window.speechSynthesis.removeEventListener(
+        'voiceschanged',
+        onVoicesChanged,
+      );
       _captureVoices();
       resolve(_voices);
     }, 2000);
@@ -71,11 +77,11 @@ export function initVoiceCache () {
 }
 
 /** Synchronous read of whatever's cached so far (may be empty before init resolves). */
-export function getCachedVoices () {
+export function getCachedVoices() {
   return _voices;
 }
 
-export function isVoiceCacheReady () {
+export function isVoiceCacheReady() {
   return _ready;
 }
 
@@ -83,6 +89,6 @@ export function isVoiceCacheReady () {
  * Find the first cached voice whose name matches the given RegExp.
  * Returns undefined if no match or cache isn't populated yet.
  */
-export function findVoice (nameRegex) {
-  return _voices.find(v => nameRegex.test(v.name));
+export function findVoice(nameRegex) {
+  return _voices.find((v) => nameRegex.test(v.name));
 }

@@ -14,7 +14,6 @@
  */
 
 export class PowerUpRenderer {
-
   static CANVAS_SIZE = 128;
 
   /**
@@ -23,14 +22,14 @@ export class PowerUpRenderer {
    * @param {number} [size=128]   - Canvas pixel dimensions (square)
    * @returns {HTMLCanvasElement}
    */
-  static createCanvas (powerUpType, size = PowerUpRenderer.CANVAS_SIZE) {
-    const canvas  = document.createElement('canvas');
-    canvas.width  = size;
+  static createCanvas(powerUpType, size = PowerUpRenderer.CANVAS_SIZE) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
     canvas.height = size;
-    const ctx     = canvas.getContext('2d');
-    const cx      = size / 2;
-    const cy      = size / 2;
-    const r       = size * 0.34;      // Main shape radius — leaves room for glow
+    const ctx = canvas.getContext('2d');
+    const cx = size / 2;
+    const cy = size / 2;
+    const r = size * 0.34; // Main shape radius — leaves room for glow
 
     PowerUpRenderer._drawGlow(ctx, cx, cy, r, powerUpType.glowColor);
     PowerUpRenderer._drawShape(ctx, cx, cy, r, powerUpType);
@@ -43,22 +42,21 @@ export class PowerUpRenderer {
   // Private helpers
   // ---------------------------------------------------------------------------
 
-  static _drawGlow (ctx, cx, cy, r, glowColor) {
+  static _drawGlow(ctx, cx, cy, r, glowColor) {
     const grad = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r * 1.6);
-    grad.addColorStop(0,   glowColor);
+    grad.addColorStop(0, glowColor);
     grad.addColorStop(0.15, glowColor.replace(/[\d.]+\)$/, '0.2)'));
-    grad.addColorStop(0.3,   'rgba(0,0,0,0)');
+    grad.addColorStop(0.3, 'rgba(0,0,0,0)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   }
 
-  static _drawShape (ctx, cx, cy, r, type) {
+  static _drawShape(ctx, cx, cy, r, type) {
     ctx.save();
     ctx.shadowColor = type.color;
-    ctx.shadowBlur  = 14;
+    ctx.shadowBlur = 14;
 
     switch (type.shape) {
-
       case 'beam':
         PowerUpRenderer._beam(ctx, cx, cy, r, type.color);
         break;
@@ -129,159 +127,192 @@ export class PowerUpRenderer {
   // --- Individual shape drawers ---
 
   /** Elongated hexagon — represents a laser beam */
-  static _beam (ctx, cx, cy, r, color) {
-    const hw = r * 0.32;   // Half-width (narrow)
-    const hh = r * 0.90;   // Half-height (tall)
-    const tip = r * 0.18;  // Hex tip offset
+  static _beam(ctx, cx, cy, r, color) {
+    const hw = r * 0.32; // Half-width (narrow)
+    const hh = r * 0.9; // Half-height (tall)
+    const tip = r * 0.18; // Hex tip offset
     ctx.beginPath();
-    ctx.moveTo(cx,      cy - hh);
+    ctx.moveTo(cx, cy - hh);
     ctx.lineTo(cx + hw, cy - hh + tip);
     ctx.lineTo(cx + hw, cy + hh - tip);
-    ctx.lineTo(cx,      cy + hh);
+    ctx.lineTo(cx, cy + hh);
     ctx.lineTo(cx - hw, cy + hh - tip);
     ctx.lineTo(cx - hw, cy - hh + tip);
     ctx.closePath();
-    ctx.fillStyle   = color;
+    ctx.fillStyle = color;
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth   = 1.5;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
     // Core bright stripe
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.fillRect(cx - hw * 0.3, cy - hh * 0.7, hw * 0.6, hh * 1.4);
   }
 
-  static _bomb (ctx, cx, cy, r, color) {
+  static _bomb(ctx, cx, cy, r, color) {
     // Bomb body
-    ctx.beginPath(); ctx.arc(cx, cy + r * 0.15, r * 0.65, 0, Math.PI * 2);
-    ctx.fillStyle = color; ctx.fill();
-    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, cy + r * 0.15, r * 0.65, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
     // Metal Cap
     ctx.fillStyle = '#999999';
     ctx.fillRect(cx - r * 0.2, cy - r * 0.65, r * 0.4, r * 0.2);
     // Lit Fuse
-    ctx.beginPath(); ctx.moveTo(cx, cy - r * 0.65);
-    ctx.quadraticCurveTo(cx + r * 0.4, cy - r * 0.9, cx + r * 0.5, cy - r * 1.1);
-    ctx.strokeStyle = '#ffff00'; ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r * 0.65);
+    ctx.quadraticCurveTo(
+      cx + r * 0.4,
+      cy - r * 0.9,
+      cx + r * 0.5,
+      cy - r * 1.1,
+    );
+    ctx.strokeStyle = '#ffff00';
+    ctx.stroke();
   }
 
   /** Simple circle with cross-hair accent */
-  static _circle (ctx, cx, cy, r, color) {
+  static _circle(ctx, cx, cy, r, color) {
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle   = color;
+    ctx.fillStyle = color;
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth   = 1.5;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
     // Score +++ tick marks
     ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-    ctx.lineWidth   = 2;
-    const angles    = [0, Math.PI / 2, Math.PI, Math.PI * 1.5];
-    angles.forEach(a => {
+    ctx.lineWidth = 2;
+    const angles = [0, Math.PI / 2, Math.PI, Math.PI * 1.5];
+    angles.forEach((a) => {
       ctx.beginPath();
       ctx.moveTo(cx + Math.cos(a) * r * 0.45, cy + Math.sin(a) * r * 0.45);
-      ctx.lineTo(cx + Math.cos(a) * r * 0.8,  cy + Math.sin(a) * r * 0.8);
+      ctx.lineTo(cx + Math.cos(a) * r * 0.8, cy + Math.sin(a) * r * 0.8);
       ctx.stroke();
     });
   }
 
-  static _isoCube (ctx, cx, cy, r, color) {
-    const w = r * 0.88, h = r * 0.44;
+  static _isoCube(ctx, cx, cy, r, color) {
+    const w = r * 0.88,
+      h = r * 0.44;
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth   = 1.5;
-  
+    ctx.lineWidth = 1.5;
+
     // Top face
     ctx.beginPath();
-    ctx.moveTo(cx, cy - h); ctx.lineTo(cx + w, cy);
-    ctx.lineTo(cx, cy + h); ctx.lineTo(cx - w, cy);
+    ctx.moveTo(cx, cy - h);
+    ctx.lineTo(cx + w, cy);
+    ctx.lineTo(cx, cy + h);
+    ctx.lineTo(cx - w, cy);
     ctx.closePath();
-    ctx.fillStyle = color; ctx.fill(); ctx.stroke();
-  
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.stroke();
+
     // Right face (darker)
     ctx.beginPath();
-    ctx.moveTo(cx + w, cy); ctx.lineTo(cx + w, cy + h * 2);
-    ctx.lineTo(cx, cy + h * 3); ctx.lineTo(cx, cy + h);
+    ctx.moveTo(cx + w, cy);
+    ctx.lineTo(cx + w, cy + h * 2);
+    ctx.lineTo(cx, cy + h * 3);
+    ctx.lineTo(cx, cy + h);
     ctx.closePath();
-    ctx.globalAlpha = 0.7; ctx.fillStyle = color;
-    ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
-  
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.stroke();
+
     // Left face (darkest)
     ctx.beginPath();
-    ctx.moveTo(cx - w, cy); ctx.lineTo(cx - w, cy + h * 2);
-    ctx.lineTo(cx, cy + h * 3); ctx.lineTo(cx, cy + h);
+    ctx.moveTo(cx - w, cy);
+    ctx.lineTo(cx - w, cy + h * 2);
+    ctx.lineTo(cx, cy + h * 3);
+    ctx.lineTo(cx, cy + h);
     ctx.closePath();
-    ctx.globalAlpha = 0.45; ctx.fillStyle = color;
-    ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
-  
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.stroke();
+
     // Heart on top face — isometric-skewed
     const hs = r * 0.28;
     ctx.beginPath();
     for (let i = 0; i <= 32; i++) {
-      const t  = (i / 32) * Math.PI * 2;
-      const hx = hs * 16 * Math.pow(Math.sin(t), 3) / 16;
-      const hy = -hs * (13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t)) / 16;
+      const t = (i / 32) * Math.PI * 2;
+      const hx = (hs * 16 * Math.pow(Math.sin(t), 3)) / 16;
+      const hy =
+        (-hs *
+          (13 * Math.cos(t) -
+            5 * Math.cos(2 * t) -
+            2 * Math.cos(3 * t) -
+            Math.cos(4 * t))) /
+        16;
       const ix = cx + hx * 0.9 - hy * 0.45;
-      const iy = (cy - h * 0.4) + hx * 0.22 + hy * 0.22;
+      const iy = cy - h * 0.4 + hx * 0.22 + hy * 0.22;
       i === 0 ? ctx.moveTo(ix, iy) : ctx.lineTo(ix, iy);
     }
     ctx.closePath();
-    ctx.fillStyle = '#ff0066'; ctx.fill();
+    ctx.fillStyle = '#ff0066';
+    ctx.fill();
   }
 
   /** Rotated square (diamond) with inner highlight */
-  static _diamond (ctx, cx, cy, r, color) {
+  static _diamond(ctx, cx, cy, r, color) {
     ctx.beginPath();
-    ctx.moveTo(cx,     cy - r);
+    ctx.moveTo(cx, cy - r);
     ctx.lineTo(cx + r, cy);
-    ctx.lineTo(cx,     cy + r);
+    ctx.lineTo(cx, cy + r);
     ctx.lineTo(cx - r, cy);
     ctx.closePath();
-    ctx.fillStyle   = color;
+    ctx.fillStyle = color;
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth   = 1.5;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
     // Inner diamond highlight
     const ir = r * 0.45;
     ctx.beginPath();
-    ctx.moveTo(cx,      cy - ir);
+    ctx.moveTo(cx, cy - ir);
     ctx.lineTo(cx + ir, cy);
-    ctx.lineTo(cx,      cy + ir);
+    ctx.lineTo(cx, cy + ir);
     ctx.lineTo(cx - ir, cy);
     ctx.closePath();
     ctx.fillStyle = 'rgba(255,255,255,0.25)';
     ctx.fill();
   }
 
-  static _eq (ctx, cx, cy, r, color) {
+  static _eq(ctx, cx, cy, r, color) {
     ctx.fillStyle = color;
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1.5;
-    
+
     const barW = r * 0.4;
-    
+
     // Left bar
     ctx.fillRect(cx - r * 0.7, cy + r * 0.5, barW, -r * 0.8);
     ctx.strokeRect(cx - r * 0.7, cy + r * 0.5, barW, -r * 0.8);
-    
+
     // Middle bar (tallest)
     ctx.fillRect(cx - r * 0.15, cy + r * 0.5, barW, -r * 1.2);
     ctx.strokeRect(cx - r * 0.15, cy + r * 0.5, barW, -r * 1.2);
-    
+
     // Right bar
     ctx.fillRect(cx + r * 0.4, cy + r * 0.5, barW, -r * 0.6);
     ctx.strokeRect(cx + r * 0.4, cy + r * 0.5, barW, -r * 0.6);
   }
 
   /** Three-pronged fan — evokes a spread shot pattern */
-  static _fan (ctx, cx, cy, r, color) {
+  static _fan(ctx, cx, cy, r, color) {
     const prongs = 3;
-    const spread = Math.PI * 0.28;   // Angle between prongs
-    const baseAngle = -Math.PI / 2;  // Point upward
-    ctx.fillStyle   = color;
+    const spread = Math.PI * 0.28; // Angle between prongs
+    const baseAngle = -Math.PI / 2; // Point upward
+    ctx.fillStyle = color;
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth   = 1.5;
+    ctx.lineWidth = 1.5;
     for (let i = 0; i < prongs; i++) {
       const angle = baseAngle + (i - 1) * spread;
       ctx.beginPath();
@@ -299,20 +330,20 @@ export class PowerUpRenderer {
   }
 
   /** Classic Arcade Ghost */
-  static _ghost (ctx, cx, cy, r, color) {
+  static _ghost(ctx, cx, cy, r, color) {
     const w = r * 0.8;
     const h = r * 0.9;
-    
+
     // Ghost Body
     ctx.beginPath();
     ctx.arc(cx, cy - h * 0.2, w, Math.PI, 0); // Top dome
-    ctx.lineTo(cx + w, cy + h);               // Right edge
+    ctx.lineTo(cx + w, cy + h); // Right edge
     // Bottom frills
     ctx.lineTo(cx + w * 0.33, cy + h - w * 0.3);
     ctx.lineTo(cx - w * 0.33, cy + h);
-    ctx.lineTo(cx - w, cy + h);               // Left edge
+    ctx.lineTo(cx - w, cy + h); // Left edge
     ctx.closePath();
-    
+
     ctx.fillStyle = color;
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
@@ -321,33 +352,48 @@ export class PowerUpRenderer {
 
     // Eye Whites
     ctx.fillStyle = '#ffffff';
-    ctx.beginPath(); ctx.arc(cx - w * 0.35, cy - h * 0.2, w * 0.25, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(cx + w * 0.35, cy - h * 0.2, w * 0.25, 0, Math.PI * 2); ctx.fill();
-    
+    ctx.beginPath();
+    ctx.arc(cx - w * 0.35, cy - h * 0.2, w * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.35, cy - h * 0.2, w * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+
     // Pupils
     ctx.fillStyle = '#000000';
-    ctx.beginPath(); ctx.arc(cx - w * 0.35, cy - h * 0.2, w * 0.1, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(cx + w * 0.35, cy - h * 0.2, w * 0.1, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx - w * 0.35, cy - h * 0.2, w * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.35, cy - h * 0.2, w * 0.1, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   /** Stylised pixel heart */
-  static _heart (ctx, cx, cy, r, color) {
+  static _heart(ctx, cx, cy, r, color) {
     const s = r * 0.9;
     ctx.save();
     ctx.translate(cx, cy + s * 0.15);
     ctx.beginPath();
     ctx.moveTo(0, -s * 0.2);
     // Left lobe
-    ctx.bezierCurveTo(-s * 0.1, -s * 0.8, -s * 1.0, -s * 0.7, -s * 0.9, -s * 0.1);
-    ctx.bezierCurveTo(-s * 0.8,  s * 0.4, -s * 0.3,  s * 0.7,  0,         s * 0.9);
+    ctx.bezierCurveTo(
+      -s * 0.1,
+      -s * 0.8,
+      -s * 1.0,
+      -s * 0.7,
+      -s * 0.9,
+      -s * 0.1,
+    );
+    ctx.bezierCurveTo(-s * 0.8, s * 0.4, -s * 0.3, s * 0.7, 0, s * 0.9);
     // Right lobe
-    ctx.bezierCurveTo( s * 0.3,  s * 0.7,  s * 0.8,  s * 0.4,  s * 0.9, -s * 0.1);
-    ctx.bezierCurveTo( s * 1.0, -s * 0.7,  s * 0.1, -s * 0.8,  0,        -s * 0.2);
+    ctx.bezierCurveTo(s * 0.3, s * 0.7, s * 0.8, s * 0.4, s * 0.9, -s * 0.1);
+    ctx.bezierCurveTo(s * 1.0, -s * 0.7, s * 0.1, -s * 0.8, 0, -s * 0.2);
     ctx.closePath();
-    ctx.fillStyle   = color;
+    ctx.fillStyle = color;
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth   = 1.5;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
     // Highlight
     ctx.beginPath();
@@ -358,34 +404,34 @@ export class PowerUpRenderer {
   }
 
   /** Classic Hourglass */
-  static _hourglass (ctx, cx, cy, r, color) {
+  static _hourglass(ctx, cx, cy, r, color) {
     ctx.beginPath();
     ctx.moveTo(cx - r * 0.6, cy - r * 0.8); // Top Left
     ctx.lineTo(cx + r * 0.6, cy - r * 0.8); // Top Right
-    ctx.lineTo(cx + r * 0.1, cy);           // Pinch Right
+    ctx.lineTo(cx + r * 0.1, cy); // Pinch Right
     ctx.lineTo(cx + r * 0.6, cy + r * 0.8); // Bottom Right
     ctx.lineTo(cx - r * 0.6, cy + r * 0.8); // Bottom Left
-    ctx.lineTo(cx - r * 0.1, cy);           // Pinch Left
+    ctx.lineTo(cx - r * 0.1, cy); // Pinch Left
     ctx.closePath();
     ctx.fillStyle = color;
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1.5;
     ctx.stroke();
-    
+
     // Add "Sand" in the bottom half
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.fillRect(cx - r * 0.3, cy + r * 0.4, r * 0.6, r * 0.4);
   }
 
   /** Sleek Rocket Shape */
-  static _missile (ctx, cx, cy, r, color) {
+  static _missile(ctx, cx, cy, r, color) {
     ctx.beginPath();
     ctx.moveTo(cx, cy - r); // Tip
     ctx.lineTo(cx + r * 0.3, cy - r * 0.4); // Right nose
     ctx.lineTo(cx + r * 0.3, cy + r * 0.6); // Right body
-    ctx.lineTo(cx + r * 0.6, cy + r);       // Right fin
-    ctx.lineTo(cx - r * 0.6, cy + r);       // Left fin
+    ctx.lineTo(cx + r * 0.6, cy + r); // Right fin
+    ctx.lineTo(cx - r * 0.6, cy + r); // Left fin
     ctx.lineTo(cx - r * 0.3, cy + r * 0.6); // Left body
     ctx.lineTo(cx - r * 0.3, cy - r * 0.4); // Left nose
     ctx.closePath();
@@ -396,7 +442,7 @@ export class PowerUpRenderer {
     ctx.stroke();
   }
 
-  static _octagon (ctx, cx, cy, r, color) {
+  static _octagon(ctx, cx, cy, r, color) {
     ctx.beginPath();
     for (let i = 0; i < 8; i++) {
       const angle = (i * Math.PI) / 4 - Math.PI / 8;
@@ -425,24 +471,24 @@ export class PowerUpRenderer {
   }
 
   /** N-pointed star */
-  static _star (ctx, cx, cy, outerR, innerR, points, color) {
+  static _star(ctx, cx, cy, outerR, innerR, points, color) {
     ctx.beginPath();
     for (let i = 0; i < points * 2; i++) {
       const angle = (i * Math.PI) / points - Math.PI / 2;
-      const rad   = i % 2 === 0 ? outerR : innerR;
-      const x     = cx + Math.cos(angle) * rad;
-      const y     = cy + Math.sin(angle) * rad;
+      const rad = i % 2 === 0 ? outerR : innerR;
+      const x = cx + Math.cos(angle) * rad;
+      const y = cy + Math.sin(angle) * rad;
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
     ctx.closePath();
-    ctx.fillStyle   = color;
+    ctx.fillStyle = color;
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth   = 1.5;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
   }
 
-  static _token (ctx, cx, cy, r, color) {
+  static _token(ctx, cx, cy, r, color) {
     // Outer coin
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -458,33 +504,44 @@ export class PowerUpRenderer {
     ctx.lineWidth = 1;
     ctx.stroke();
     // Star inside
-    PowerUpRenderer._star(ctx, cx, cy, r * 0.52, r * 0.22, 5, 'rgba(0,0,0,0.5)');
+    PowerUpRenderer._star(
+      ctx,
+      cx,
+      cy,
+      r * 0.52,
+      r * 0.22,
+      5,
+      'rgba(0,0,0,0.5)',
+    );
   }
 
   /** Double-headed arrow in a circle — warp symbol */
-  static _warp (ctx, cx, cy, r, color) {
+  static _warp(ctx, cx, cy, r, color) {
     // Outer ring
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.strokeStyle = color;
-    ctx.lineWidth   = 3.5;
+    ctx.lineWidth = 3.5;
     ctx.stroke();
     // Two arrows pointing in opposite directions
     const arrowLen = r * 0.55;
     const headSize = r * 0.28;
-    [[1, 0], [-1, 0]].forEach(([dx]) => {
+    [
+      [1, 0],
+      [-1, 0],
+    ].forEach(([dx]) => {
       const ax = cx + dx * arrowLen;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.lineTo(ax, cy);
       ctx.strokeStyle = color;
-      ctx.lineWidth   = 3;
+      ctx.lineWidth = 3;
       ctx.stroke();
       // Arrowhead
       ctx.beginPath();
-      ctx.moveTo(ax,                      cy);
-      ctx.lineTo(ax - dx * headSize,      cy - headSize * 0.55);
-      ctx.lineTo(ax - dx * headSize,      cy + headSize * 0.55);
+      ctx.moveTo(ax, cy);
+      ctx.lineTo(ax - dx * headSize, cy - headSize * 0.55);
+      ctx.lineTo(ax - dx * headSize, cy + headSize * 0.55);
       ctx.closePath();
       ctx.fillStyle = color;
       ctx.fill();
@@ -497,19 +554,19 @@ export class PowerUpRenderer {
   }
 
   /** Renders the label text centred below the shape's midpoint */
-  static _drawLabel (ctx, cx, cy, size, type) {
-    const lines    = type.label.split('\n');
+  static _drawLabel(ctx, cx, cy, size, type) {
+    const lines = type.label.split('\n');
     const fontSize = Math.round(size * 0.11);
-    ctx.font         = `bold ${fontSize}px "Courier New", monospace`;
-    ctx.textAlign    = 'center';
+    ctx.font = `bold ${fontSize}px "Courier New", monospace`;
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle    = '#ffffff';
-    ctx.shadowColor  = type.color;
-    ctx.shadowBlur   = 6;
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = type.color;
+    ctx.shadowBlur = 6;
 
-    const lineH     = fontSize * 1.3;
-    const totalH    = lineH * lines.length;
-    const startY    = cy + size * 0.34 + lineH * 0.5;
+    const lineH = fontSize * 1.3;
+    const totalH = lineH * lines.length;
+    const startY = cy + size * 0.34 + lineH * 0.5;
 
     lines.forEach((line, i) => {
       ctx.fillText(line.trim(), cx, startY + i * lineH - totalH / 2);

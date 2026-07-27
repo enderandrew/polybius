@@ -23,7 +23,6 @@ import Enemy from '@/Object/Enemies/Enemy';
 import EnemySpiker from '@/Object/Enemies/EnemySpiker';
 
 export default class EnemySpikerRenderer extends EnemyRenderer {
-
   static ROTATION_SPEED = 0.1;
 
   /**
@@ -34,21 +33,21 @@ export default class EnemySpikerRenderer extends EnemyRenderer {
    *   Accepting it fixes the type-check error that would otherwise fire in
    *   EnemyRenderer.setObjectRef() for Demon Horn enemies.
    */
-  constructor (enemy, surface, type = Enemy.TYPE_SPIKER) {
+  constructor(enemy, surface, type = Enemy.TYPE_SPIKER) {
     super(enemy, surface, type);
   }
 
   // ── Model construction ─────────────────────────────────────────────────────
 
-  loadModel () {
-    super.loadModel();   // modelGroup, shieldMesh, explosionGroup from EnemyRenderer
+  loadModel() {
+    super.loadModel(); // modelGroup, shieldMesh, explosionGroup from EnemyRenderer
 
     // Pre-build variant effect groups — hidden until _applyVariantVisuals() runs.
     // Built once per renderer instance, toggled on setObjectRef for pool reuse.
-    this._hydraForks      = this._buildHydraForks();
+    this._hydraForks = this._buildHydraForks();
     this._overdriveStreaks = this._buildOverdriveStreaks();
 
-    this._hydraForks.visible      = false;
+    this._hydraForks.visible = false;
     this._overdriveStreaks.visible = false;
 
     this.add(this._hydraForks);
@@ -57,62 +56,67 @@ export default class EnemySpikerRenderer extends EnemyRenderer {
 
   // ── Object assignment ──────────────────────────────────────────────────────
 
-  setObjectRef (object) {
+  setObjectRef(object) {
     super.setObjectRef(object);
     this._applyVariantVisuals();
   }
 
   // Called by EnemyRenderer after explosion animations complete.
   // Must re-apply variant scale — super resets modelGroup scale to 1,1,1.
-  setVisualsToNormal () {
+  setVisualsToNormal() {
     super.setVisualsToNormal();
     this._applyVariantVisuals();
   }
 
-  _applyVariantVisuals () {
+  _applyVariantVisuals() {
     if (!this.object) return;
 
     // Toggle effect groups — only one flag can be set at a time
-    if (this._hydraForks)      this._hydraForks.visible      = !!this.object.isHydra;
-    if (this._overdriveStreaks) this._overdriveStreaks.visible = !!this.object.isOverdrive;
+    if (this._hydraForks) this._hydraForks.visible = !!this.object.isHydra;
+    if (this._overdriveStreaks)
+      this._overdriveStreaks.visible = !!this.object.isOverdrive;
 
     // Scale communicates the variant's "feel" at a glance
     if (this.modelGroup) {
-      const s = this.object.isHydra      ? 1.30   // Larger — boss presence
-              : this.object.isOverdrive  ? 0.80   // Smaller — dart-like, fast
-              : 1.0;
+      const s = this.object.isHydra
+        ? 1.3 // Larger — boss presence
+        : this.object.isOverdrive
+          ? 0.8 // Smaller — dart-like, fast
+          : 1.0;
       this.modelGroup.scale.setScalar(s);
     }
   }
 
   // ── Per-frame update ───────────────────────────────────────────────────────
 
-  updateState () {
-    this.positionBase  = this.surface.lanesMiddleCoords[this.object.laneId].clone();
-    this.zRotationBase = this.surface.lanesCenterDirectionRadians[this.object.laneId];
+  updateState() {
+    if (!this.object || typeof this.object.inState !== 'function') {
+      return;
+    }
+    this.positionBase.copy(this.surface.lanesMiddleCoords[this.object.laneId]);
+    this.zRotationBase =
+      this.surface.lanesCenterDirectionRadians[this.object.laneId];
 
     if (this.object.inState(EnemySpiker.STATE_EXPLODING)) {
       this._hideEffects();
       this.explodeAnimation();
-
     } else if (this.object.inState(EnemySpiker.STATE_DISAPPEARING)) {
       this._hideEffects();
       this.disappearingAnimation();
-
     } else {
       this.zRotationOffset += EnemySpikerRenderer.ROTATION_SPEED;
       this._animateVariantEffects();
     }
   }
 
-  _animateVariantEffects () {
+  _animateVariantEffects() {
     const t = performance.now();
 
     // ── Hydra: amber fork counter-rotates, slow pulse ─────────────────────
     if (this._hydraForks && this._hydraForks.visible) {
       this._hydraForks.rotation.z -= 0.018;
       const pulse = 0.45 + 0.35 * Math.abs(Math.sin(t / 700));
-      this._hydraForks.children.forEach(line => {
+      this._hydraForks.children.forEach((line) => {
         if (line.material) line.material.opacity = pulse;
       });
     }
@@ -120,15 +124,16 @@ export default class EnemySpikerRenderer extends EnemyRenderer {
     // ── Overdrive: streaks flash rapidly, suggesting kinetic blur ─────────
     if (this._overdriveStreaks && this._overdriveStreaks.visible) {
       // Fast irregular flash — not perfectly periodic so it feels kinetic
-      const flash = 0.25 + 0.75 * Math.abs(Math.sin(t / 90 + Math.sin(t / 40) * 0.8));
-      this._overdriveStreaks.children.forEach(line => {
+      const flash =
+        0.25 + 0.75 * Math.abs(Math.sin(t / 90 + Math.sin(t / 40) * 0.8));
+      this._overdriveStreaks.children.forEach((line) => {
         if (line.material) line.material.opacity = flash;
       });
     }
   }
 
-  _hideEffects () {
-    if (this._hydraForks)      this._hydraForks.visible      = false;
+  _hideEffects() {
+    if (this._hydraForks) this._hydraForks.visible = false;
     if (this._overdriveStreaks) this._overdriveStreaks.visible = false;
   }
 
@@ -144,32 +149,38 @@ export default class EnemySpikerRenderer extends EnemyRenderer {
    *       |     ← stem
    *       ·     ← model origin
    */
-  _buildHydraForks () {
-    const group   = new Group();
-    const color   = 0xffaa00;   // Amber — warm, distinct from green Spiker
+  _buildHydraForks() {
+    const group = new Group();
+    const color = 0xffaa00; // Amber — warm, distinct from green Spiker
     const stemBase = 0.08;
-    const stemTip  = 0.22;
-    const forkX    = 0.36;
-    const forkY    = 0.52;
+    const stemTip = 0.22;
+    const forkX = 0.36;
+    const forkY = 0.52;
 
     // Central stem
-    group.add(this._makeLine(
-      new Vector3(0, stemBase, 0),
-      new Vector3(0, stemTip,  0),
-      color
-    ));
+    group.add(
+      this._makeLine(
+        new Vector3(0, stemBase, 0),
+        new Vector3(0, stemTip, 0),
+        color,
+      ),
+    );
     // Left prong
-    group.add(this._makeLine(
-      new Vector3(0,      stemTip, 0),
-      new Vector3(-forkX, forkY,   0),
-      color
-    ));
+    group.add(
+      this._makeLine(
+        new Vector3(0, stemTip, 0),
+        new Vector3(-forkX, forkY, 0),
+        color,
+      ),
+    );
     // Right prong
-    group.add(this._makeLine(
-      new Vector3(0,     stemTip, 0),
-      new Vector3(forkX, forkY,   0),
-      color
-    ));
+    group.add(
+      this._makeLine(
+        new Vector3(0, stemTip, 0),
+        new Vector3(forkX, forkY, 0),
+        color,
+      ),
+    );
 
     return group;
   }
@@ -186,22 +197,24 @@ export default class EnemySpikerRenderer extends EnemyRenderer {
    *   |\ \
    *   |  \ \   ← three streaks fanning back into the tube
    */
-  _buildOverdriveStreaks () {
+  _buildOverdriveStreaks() {
     const group = new Group();
-    const color = 0x88eeff;   // Electric cyan — kinetic, fast-feeling
+    const color = 0x88eeff; // Electric cyan — kinetic, fast-feeling
 
     const streakConfigs = [
-      { x:  0.00, y:  0.00, zNear: 0.12, zFar: 0.42 },   // Centre
-      { x:  0.14, y:  0.08, zNear: 0.08, zFar: 0.32 },   // Right
-      { x: -0.12, y:  0.06, zNear: 0.10, zFar: 0.36 },   // Left
+      { x: 0.0, y: 0.0, zNear: 0.12, zFar: 0.42 }, // Centre
+      { x: 0.14, y: 0.08, zNear: 0.08, zFar: 0.32 }, // Right
+      { x: -0.12, y: 0.06, zNear: 0.1, zFar: 0.36 }, // Left
     ];
 
     streakConfigs.forEach(({ x, y, zNear, zFar }) => {
-      group.add(this._makeLine(
-        new Vector3(x * 0.4, y * 0.4, zNear),   // Bright end near model
-        new Vector3(x,       y,       zFar),     // Fading end deeper into tube
-        color
-      ));
+      group.add(
+        this._makeLine(
+          new Vector3(x * 0.4, y * 0.4, zNear), // Bright end near model
+          new Vector3(x, y, zFar), // Fading end deeper into tube
+          color,
+        ),
+      );
     });
 
     return group;
@@ -209,10 +222,10 @@ export default class EnemySpikerRenderer extends EnemyRenderer {
 
   // ── Shared geometry helper ─────────────────────────────────────────────────
 
-  _makeLine (from, to, color) {
+  _makeLine(from, to, color) {
     return new Line(
       new BufferGeometry().setFromPoints([from, to]),
-      new MeshBasicMaterial({ color, transparent: true, opacity: 0.6 })
+      new MeshBasicMaterial({ color, transparent: true, opacity: 0.6 }),
     );
   }
 }

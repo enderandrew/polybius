@@ -30,13 +30,19 @@
 import EnemyFuseball from '@/Object/Enemies/EnemyFuseball';
 
 export default class EnemySupernovaFuseball extends EnemyFuseball {
-
-  constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
+  constructor(
+    surface,
+    projectileManager,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
     super(surface, projectileManager, rewardCallback, laneId, zPosition, game);
 
-    this.isSupernova   = true;
-    this.valueInPoints = 400;    // Worth more — killing it is risky
-    this.hitPoints     = this.isStrong ? 3 : 2;  // Survives one extra hit before splitting
+    this.isSupernova = true;
+    this.valueInPoints = 400; // Worth more — killing it is risky
+    this.hitPoints = this.isStrong ? 3 : 2; // Survives one extra hit before splitting
 
     // Guard against double-split (die() can be called more than once
     // via the exploding → dead state machine path).
@@ -55,33 +61,41 @@ export default class EnemySupernovaFuseball extends EnemyFuseball {
   // Children are plain EnemyFuseball instances so the split does not chain.
   // EnemyFuseball is already imported (via extends) — no circular dependency.
   // ---------------------------------------------------------------------------
-  die () {
+  die() {
     if (this._hasSplit || this.inState(EnemyFuseball.STATE_DEAD)) {
       super.die();
       return;
     }
-  
+
     this._hasSplit = true;
-  
+
     if (this.game?.levelObject) {
-      const mgr  = this.game.levelObject.surfaceObjectsManager;
-      const zPos = this.zPosition;   // Capture before deferred execution
-  
-      const leftLane  = this.surface.getActualLaneIdFromProjectedMovement(this.laneId - 1);
-      const rightLane = this.surface.getActualLaneIdFromProjectedMovement(this.laneId + 1);
-  
-      [leftLane, rightLane].forEach(lane => {
-        mgr.queueSpawn(() => mgr.addEnemy(new EnemyFuseball(
-          this.surface,
-          this.game.levelObject.projectileManager,
-          this.rewardCallback,
-          lane,
-          zPos,
-          this.game
-        )));
+      const mgr = this.game.levelObject.surfaceObjectsManager;
+      const zPos = this.zPosition; // Capture before deferred execution
+
+      const leftLane = this.surface.getActualLaneIdFromProjectedMovement(
+        this.laneId - 1,
+      );
+      const rightLane = this.surface.getActualLaneIdFromProjectedMovement(
+        this.laneId + 1,
+      );
+
+      [leftLane, rightLane].forEach((lane) => {
+        mgr.queueSpawn(() =>
+          mgr.addEnemy(
+            new EnemyFuseball(
+              this.surface,
+              this.game.levelObject.projectileManager,
+              this.rewardCallback,
+              lane,
+              zPos,
+              this.game,
+            ),
+          ),
+        );
       });
     }
-  
+
     super.die();
   }
 }

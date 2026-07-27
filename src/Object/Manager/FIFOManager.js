@@ -7,10 +7,13 @@ export default class FIFOManager {
   /**
    * @return {boolean}
    */
-  shouldTriggerGarbageCollector () {
+  shouldTriggerGarbageCollector() {
     let now = Date.now();
 
-    if (now - this.lastGarbageCollectorExecutionTimestamp < FIFOManager.GARBAGE_COLLECTION_TIMEOUT_MS) {
+    if (
+      now - this.lastGarbageCollectorExecutionTimestamp <
+      FIFOManager.GARBAGE_COLLECTION_TIMEOUT_MS
+    ) {
       return false;
     }
 
@@ -22,12 +25,12 @@ export default class FIFOManager {
    * @param {Object[]} objects
    * @return {number}
    */
-  static garbageCollector (objects) {
+  static garbageCollector(objects) {
     if (objects.length === 0) {
       return 0;
     }
 
-    let indexOfAliveObject = objects.findIndex(object => object.alive);
+    let indexOfAliveObject = objects.findIndex((object) => object.alive);
 
     if (indexOfAliveObject === 0) {
       return 0;
@@ -49,15 +52,17 @@ export default class FIFOManager {
    * @param {boolean} forceUpdate
    * @return {boolean}
    */
-  static updateMap (objects, map, forceUpdate) {
-    const mapNeedsUpdate = objects.filter(object => object.shouldUpdateFIFOMaps()).length;
+  static updateMap(objects, map, forceUpdate) {
+    const mapNeedsUpdate = objects.filter((object) =>
+      object.shouldUpdateFIFOMaps(),
+    ).length;
 
     if (!(forceUpdate || mapNeedsUpdate)) {
       return false;
     }
 
-    map.forEach(lane => lane.length = 0);
-    objects.forEach(object => {
+    map.forEach((lane) => (lane.length = 0));
+    objects.forEach((object) => {
       map[object.laneId].push(object);
     });
 

@@ -1,7 +1,14 @@
 import EnemyPulsar from '@/Object/Enemies/EnemyPulsar';
 
 export default class EnemyInversePulsar extends EnemyPulsar {
-  constructor(surface, projectileManager, rewardCallback, laneId = 0, zPosition = 0.05, game) {
+  constructor(
+    surface,
+    projectileManager,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 0.05,
+    game,
+  ) {
     // Note: We spawn it at zPosition = 0.05 (near the rim) instead of 1.0!
     super(surface, projectileManager, rewardCallback, laneId, zPosition, game);
 
@@ -18,8 +25,12 @@ export default class EnemyInversePulsar extends EnemyPulsar {
 
     // Since it moves backwards, it dies when it reaches the deep end of the tube (1.0)
     // Normal enemies die at 0.0.
-    if (this.zPosition >= 1.0 && !this.inState(EnemyPulsar.STATE_DEAD) && !this.inState(EnemyPulsar.STATE_EXPLODING)) {
-        this.die(); 
+    if (
+      this.zPosition >= 1.0 &&
+      !this.inState(EnemyPulsar.STATE_DEAD) &&
+      !this.inState(EnemyPulsar.STATE_EXPLODING)
+    ) {
+      this.die();
     }
   }
 }

@@ -2,9 +2,12 @@ import * as THREE from 'three';
 import { Mesh, PlaneGeometry, MeshBasicMaterial, DoubleSide } from 'three';
 import randomRange from '@/utils/randomRange';
 
-const fontLoadPromise = new FontFace('VectorBattle', 'url(VectorBattle.ttf)').load().then(font => {
+const fontLoadPromise = new FontFace('VectorBattle', 'url(VectorBattle.ttf)')
+  .load()
+  .then((font) => {
     document.fonts.add(font);
-}).catch(err => console.warn('VectorBattle font failed to load:', err));
+  })
+  .catch((err) => console.warn('VectorBattle font failed to load:', err));
 
 export default class Canvas3d extends Mesh {
   static KEY_INPUT_DELAY = 200;
@@ -35,9 +38,15 @@ export default class Canvas3d extends Mesh {
    * @param {number} canvasResX
    * @param {number} canvasResY
    */
-  constructor (screenContentManager, width = 8, height = 6, canvasResX = 1024, canvasResY = 768) {
+  constructor(
+    screenContentManager,
+    width = 8,
+    height = 6,
+    canvasResX = 1024,
+    canvasResY = 768,
+  ) {
     const contextRef = document.createElement('canvas').getContext('2d');
-    
+
     // Use the dynamic variables for a 4:3 aspect ratio instead of hardcoding 1024
     contextRef.canvas.width = canvasResX;
     contextRef.canvas.height = canvasResY;
@@ -51,7 +60,7 @@ export default class Canvas3d extends Mesh {
         map: texture,
         side: DoubleSide,
         transparent: true,
-      })
+      }),
     );
 
     this.context = contextRef;
@@ -71,14 +80,14 @@ export default class Canvas3d extends Mesh {
     this.screenContentManager = screenContentManager;
   }
 
-  release () {
+  release() {
     // Dispose of Three.js GPU resources
     if (this.texture) this.texture.dispose();
     if (this.geometry) this.geometry.dispose();
-    
+
     if (this.material) {
       if (Array.isArray(this.material)) {
-        this.material.forEach(m => m.dispose());
+        this.material.forEach((m) => m.dispose());
       } else {
         this.material.dispose();
       }
@@ -91,7 +100,7 @@ export default class Canvas3d extends Mesh {
     }
   }
 
-  keyInputDelay () {
+  keyInputDelay() {
     let now = Date.now();
 
     if (now - this.lastKeyInputTimestamp < Canvas3d.KEY_INPUT_DELAY) {
@@ -102,21 +111,21 @@ export default class Canvas3d extends Mesh {
     return true;
   }
 
-  clearCanvas () {
+  clearCanvas() {
     this.context.clearRect(0, 0, this.canvasResX, this.canvasResY);
   }
 
   /**
    * @param {number} width
    */
-  setLineWidth (width = 2) {
+  setLineWidth(width = 2) {
     this.context.lineWidth = width;
   }
 
   /**
    * @param {number} size
    */
-  setFontSizePx (size) {
+  setFontSizePx(size) {
     this.context.font = `${size}px ${this.fontName}`;
   }
 
@@ -127,7 +136,7 @@ export default class Canvas3d extends Mesh {
    * @param {string} color
    * @param {number} spacing
    */
-  drawText (text, x, y, color, spacing = 2) {
+  drawText(text, x, y, color, spacing = 2) {
     if (typeof text === 'number') {
       text = text.toString();
     }
@@ -142,15 +151,19 @@ export default class Canvas3d extends Mesh {
       let offset = 8;
 
       this.drawRect(
-        x - offset, y + offset,
-        textMetrics.width + offset * 2, -textMetrics.actualBoundingBoxAscent - offset * 2,
-        Canvas3d.COLOR_WHITE
+        x - offset,
+        y + offset,
+        textMetrics.width + offset * 2,
+        -textMetrics.actualBoundingBoxAscent - offset * 2,
+        Canvas3d.COLOR_WHITE,
       );
 
       this.drawLine(
-        x + textMetrics.width / 2, y - textMetrics.actualBoundingBoxAscent / 2 - 50,
-        x + textMetrics.width / 2, y + 50,
-        Canvas3d.COLOR_WHITE
+        x + textMetrics.width / 2,
+        y - textMetrics.actualBoundingBoxAscent / 2 - 50,
+        x + textMetrics.width / 2,
+        y + 50,
+        Canvas3d.COLOR_WHITE,
       );
 
       this.setLineWidth();
@@ -169,7 +182,7 @@ export default class Canvas3d extends Mesh {
    * @param {number} y2
    * @param {string} color
    */
-  drawLine (x, y, x2, y2, color) {
+  drawLine(x, y, x2, y2, color) {
     this.context.strokeStyle = color;
     this.context.beginPath();
     this.context.moveTo(x, y);
@@ -184,16 +197,22 @@ export default class Canvas3d extends Mesh {
    * @param {number} h
    * @param {string} color
    */
-  drawRect (x, y, w, h, color) {
+  drawRect(x, y, w, h, color) {
     this.context.strokeStyle = color;
     this.context.strokeRect(x, y, w, h);
   }
 
-  displayCanvasBorder () {
-    this.drawRect(1, 1, this.canvasResX - 2, this.canvasResY - 2, Canvas3d.COLOR_RED);
+  displayCanvasBorder() {
+    this.drawRect(
+      1,
+      1,
+      this.canvasResX - 2,
+      this.canvasResY - 2,
+      Canvas3d.COLOR_RED,
+    );
   }
 
-  update () {
+  update() {
     if (!this.fontReady || !this._dirty) {
       return;
     }
@@ -208,18 +227,23 @@ export default class Canvas3d extends Mesh {
     this.queueTextureUpdate();
   }
 
-  draw () {
+  draw() {
     this.clearCanvas();
 
     let color = `rgb(${randomRange(0, 256)}, ${randomRange(0, 256)}, ${randomRange(0, 256)})`;
-    this.drawText('POLYBIUS', randomRange(256, 500), randomRange(500, 600), color);
+    this.drawText(
+      'POLYBIUS',
+      randomRange(256, 500),
+      randomRange(500, 600),
+      color,
+    );
   }
 
-  queueTextureUpdate () {
+  queueTextureUpdate() {
     this.material.map.needsUpdate = true;
   }
 
-  alignNumberToRight (number, size = 6) {
+  alignNumberToRight(number, size = 6) {
     return number.toString().padStart(size, this.debug ? '_' : ' ');
   }
 }

@@ -44,11 +44,10 @@ import randomRange from '@/utils/randomRange';
 import Projectile from '@/Object/Projectiles/Projectile';
 
 export default class EnemyMirror extends Enemy {
-
   // ── Timing constants ──────────────────────────────────────────────────────
 
   /** z-depth at which the Mirror stops and parks (0 = rim, 1 = back of tube). */
-  static STOPPING_HEIGHT = 0.30;
+  static STOPPING_HEIGHT = 0.3;
 
   /** Duration the Mirror remains vulnerable after reflecting a shot (ms). */
   static REFLECTING_DURATION_MS = 400;
@@ -58,11 +57,15 @@ export default class EnemyMirror extends Enemy {
   // STATE_IDLE serves double duty: approaching (before FLAG_REACHED_RIM) and
   // parked (after). Duration 0 means canChangeState() is always true, but
   // updateState() doesn't auto-transition out of IDLE — it's event-driven.
-  static STATE_IDLE         = new State(0,                          1, 'idle');
-  static STATE_REFLECTING   = new State(EnemyMirror.REFLECTING_DURATION_MS, 1, 'reflecting');
-  static STATE_DISAPPEARING = new State(1000,                       1, 'disappearing');
-  static STATE_EXPLODING    = new State(1000,                       1, 'exploding');
-  static STATE_DEAD         = new State(0,                          1, 'dead');
+  static STATE_IDLE = new State(0, 1, 'idle');
+  static STATE_REFLECTING = new State(
+    EnemyMirror.REFLECTING_DURATION_MS,
+    1,
+    'reflecting',
+  );
+  static STATE_DISAPPEARING = new State(1000, 1, 'disappearing');
+  static STATE_EXPLODING = new State(1000, 1, 'exploding');
+  static STATE_DEAD = new State(0, 1, 'dead');
 
   // ── Flags ─────────────────────────────────────────────────────────────────
 
@@ -70,44 +73,57 @@ export default class EnemyMirror extends Enemy {
 
   // ── Constructor ───────────────────────────────────────────────────────────
 
-  constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
-    super(surface, projectileManager, rewardCallback, laneId, zPosition, SurfaceObject.TYPE_MIRROR, game);
+  constructor(
+    surface,
+    projectileManager,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
+    super(
+      surface,
+      projectileManager,
+      rewardCallback,
+      laneId,
+      zPosition,
+      SurfaceObject.TYPE_MIRROR,
+      game,
+    );
 
-    this.isMirror      = true;
+    this.isMirror = true;
     this.valueInPoints = 250;
 
     // Mirror doesn't use the standard hitPoints system — vulnerability is
     // entirely state-gated. Explicitly zero out the shield to avoid the
     // icosahedron shield mesh being shown on the hex model.
-    this.isStrong  = false;
-    this.hitPoints = 99;   // Never decremented via normal path
+    this.isStrong = false;
+    this.hitPoints = 99; // Never decremented via normal path
     this.hasShield = false;
 
     // Mirror never fires on its own — only reflects via hitByProjectile().
     this.canShoot = false;
 
-    this.zSpeed = -randomRange(3, 5) * 0.001;   // Slow, deliberate approach
+    this.zSpeed = -randomRange(3, 5) * 0.001; // Slow, deliberate approach
 
     this.setState(EnemyMirror.STATE_IDLE);
   }
 
   // ── State machine ─────────────────────────────────────────────────────────
 
-  updateState () {
+  updateState() {
     if (this.inState(EnemyMirror.STATE_REFLECTING)) {
       // Vulnerability window expired — return to immune IDLE
       this.setState(EnemyMirror.STATE_IDLE);
-
     } else if (this.inState(EnemyMirror.STATE_EXPLODING)) {
       this.setState(EnemyMirror.STATE_DEAD);
-
     } else if (this.inState(EnemyMirror.STATE_DISAPPEARING)) {
       this.setState(EnemyMirror.STATE_DEAD);
     }
     // STATE_IDLE: no automatic transition (event-driven only)
   }
 
-  updateEntity (delta = 1 / 60) {
+  updateEntity(delta = 1 / 60) {
     if (this.inState(EnemyMirror.STATE_DEAD)) {
       this.alive = false;
       return;
@@ -137,10 +153,11 @@ export default class EnemyMirror extends Enemy {
    *   Outside STATE_REFLECTING → reflect the shot back, enter vulnerable window.
    *   Inside  STATE_REFLECTING → take the hit and die.
    */
-  hitByProjectile (damage = 1) {  // eslint-disable-line no-unused-vars
+  hitByProjectile(damage = 1) {
+    // eslint-disable-line no-unused-vars
     if (
       this.inState(EnemyMirror.STATE_EXPLODING) ||
-      this.inState(EnemyMirror.STATE_DEAD)       ||
+      this.inState(EnemyMirror.STATE_DEAD) ||
       this.inState(EnemyMirror.STATE_DISAPPEARING)
     ) {
       return;
@@ -160,24 +177,26 @@ export default class EnemyMirror extends Enemy {
 
   // ── Cleanup ───────────────────────────────────────────────────────────────
 
-  die () {
+  die() {
     if (
       this.inState(EnemyMirror.STATE_DEAD) ||
       this.inState(EnemyMirror.STATE_EXPLODING)
-    ) return;
+    )
+      return;
 
     this.setState(EnemyMirror.STATE_EXPLODING);
-    super.die();   // Enemy.die() — reward, power-up drop
+    super.die(); // Enemy.die() — reward, power-up drop
   }
 
-  disappear () {
+  disappear() {
     if (
       this.inState(EnemyMirror.STATE_EXPLODING) ||
       this.inState(EnemyMirror.STATE_DEAD)
-    ) return;
+    )
+      return;
 
     this.setState(EnemyMirror.STATE_DISAPPEARING);
-    super.die();   // Enemy.die() with reward = false → no reward, no drop
+    super.die(); // Enemy.die() with reward = false → no reward, no drop
   }
 
   // ── Private ───────────────────────────────────────────────────────────────
@@ -191,11 +210,11 @@ export default class EnemyMirror extends Enemy {
    *   • Detected against the player's lane each tick
    *   • Can be shot down by the player (buying reaction time)
    */
-  _reflectShot () {
-      this.projectileManager.fire(
-          this.laneId,
-          Projectile.SOURCE_ENEMY,
-          this.zPosition
-      );
+  _reflectShot() {
+    this.projectileManager.fire(
+      this.laneId,
+      Projectile.SOURCE_ENEMY,
+      this.zPosition,
+    );
   }
 }

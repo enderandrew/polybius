@@ -36,21 +36,24 @@ export default class AudioManager {
   audioLoader = new AudioLoader();
   isLoaded = false;
 
-  constructor (audioListener) {
+  constructor(audioListener) {
     this.audioListener = audioListener;
     this.audio.push(new Audio(this.audioListener));
   }
 
-  playSound (soundName, volume = 1) {
+  playSound(soundName, volume = 1) {
     //console.log(`[AudioManager] Attempting to play sound: ${soundName}`);
 
-    if (this.audioListener.context && this.audioListener.context.state === 'suspended') {
+    if (
+      this.audioListener.context &&
+      this.audioListener.context.state === 'suspended'
+    ) {
       //console.log('[AudioManager] Resuming suspended AudioContext');
       this.audioListener.context.resume();
     }
 
     const buffer = this.buffers.get(soundName);
-    
+
     if (!buffer) {
       console.error(`[AudioManager] Buffer missing for: ${soundName}`);
       return;
@@ -58,7 +61,7 @@ export default class AudioManager {
 
     //console.log(`[AudioManager] Buffer found. Finding available audio channel...`);
 
-    let availableAudio = this.audio.find(audio => !audio.isPlaying);
+    let availableAudio = this.audio.find((audio) => !audio.isPlaying);
     if (!availableAudio) {
       //console.log(`[AudioManager] Audio pool full, spawning new channel.`);
       const newAudio = new Audio(this.audioListener);
@@ -72,21 +75,24 @@ export default class AudioManager {
     availableAudio.play();
   }
 
-  update () {
+  update() {
     if (!this.isLoaded) return;
-	
-	const seen = new Set();
+
+    const seen = new Set();
     let msgObj;
     let n = 0;
 
     // Drain up to 8 messages from the queue per frame
-    while ((msgObj = messageBroker.consume(MessageBroker.TOPIC_AUDIO)) !== null && n++ < 8) {
+    while (
+      (msgObj = messageBroker.consume(MessageBroker.TOPIC_AUDIO)) !== null &&
+      n++ < 8
+    ) {
       //console.log(`[AudioManager] Consumed message from queue: ${msgObj.message}`);
 
       // Deduplicate
       if (seen.has(msgObj.message)) {
-          //console.log(`[AudioManager] Dropping duplicate burst sound: ${msgObj.message}`);
-          continue;
+        //console.log(`[AudioManager] Dropping duplicate burst sound: ${msgObj.message}`);
+        continue;
       }
       seen.add(msgObj.message);
 
@@ -153,6 +159,9 @@ export default class AudioManager {
         case MessageBroker.MESSAGE_PLAYER_SHOOT_MISSILE:
           this.playSound(AudioManager.SOUND_MISSILE, 0.8);
           break;
+        case MessageBroker.MESSAGE_PLAYER_SUPERZAPPER_USED:
+          this.playSound(AudioManager.SOUND_YES, 0.8);
+          break;
         case MessageBroker.MESSAGE_POWERUP:
           this.playSound(AudioManager.SOUND_POWERUP);
           break;
@@ -169,7 +178,9 @@ export default class AudioManager {
           this.playSound(AudioManager.SOUND_YES, 0.8);
           break;
         default:
-          console.warn(`[AudioManager] Unhandled message in switch: ${msgObj.message}`);
+          console.warn(
+            `[AudioManager] Unhandled message in switch: ${msgObj.message}`,
+          );
           break;
       }
     }
@@ -179,24 +190,30 @@ export default class AudioManager {
    * Fetches and decodes all audio files once at boot.
    * @param {string[]} soundNames - Array of sound filenames (without .ogg)
    */
-  async preload (soundNames) {
-    await Promise.all(soundNames.map(name =>
-      new Promise(resolve => {
-        this.audioLoader.load(
-          `sounds/${name}.ogg`,
-          buffer => {
-            this.buffers.set(name, buffer);
-            resolve();
-          },
-          undefined, // onProgress is not needed
-          (err) => {
-            console.warn(`[AudioManager] Missing or failed sound: ${name}.ogg`, err);
-            resolve(); // Resolve anyway so one missing file doesn't hang the whole game boot
-          }
-        );
-      })
-    ));
-    
+  async preload(soundNames) {
+    await Promise.all(
+      soundNames.map(
+        (name) =>
+          new Promise((resolve) => {
+            this.audioLoader.load(
+              `sounds/${name}.ogg`,
+              (buffer) => {
+                this.buffers.set(name, buffer);
+                resolve();
+              },
+              undefined, // onProgress is not needed
+              (err) => {
+                console.warn(
+                  `[AudioManager] Missing or failed sound: ${name}.ogg`,
+                  err,
+                );
+                resolve(); // Resolve anyway so one missing file doesn't hang the whole game boot
+              },
+            );
+          }),
+      ),
+    );
+
     this.isLoaded = true;
   }
 }

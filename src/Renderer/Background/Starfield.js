@@ -1,10 +1,17 @@
-import { Group, BufferGeometry, BufferAttribute, PointsMaterial, Points, MathUtils } from 'three';
+import {
+  Group,
+  BufferGeometry,
+  BufferAttribute,
+  PointsMaterial,
+  Points,
+  MathUtils,
+} from 'three';
 
 export default class Starfield extends Group {
   numStars;
   size;
   speed;
-  speedMultiplier = 1.0; 
+  speedMultiplier = 1.0;
 
   constructor(numStars = 2500, size = 150, speed = 15.0) {
     super();
@@ -16,18 +23,18 @@ export default class Starfield extends Group {
     const positions = new Float32Array(this.numStars * 3);
 
     for (let i = 0; i < this.numStars; i++) {
-      positions[i * 3] = MathUtils.randFloatSpread(this.size);    
-      positions[i * 3 + 1] = MathUtils.randFloatSpread(this.size); 
-      positions[i * 3 + 2] = MathUtils.randFloatSpread(this.size); 
+      positions[i * 3] = MathUtils.randFloatSpread(this.size);
+      positions[i * 3 + 1] = MathUtils.randFloatSpread(this.size);
+      positions[i * 3 + 2] = MathUtils.randFloatSpread(this.size);
     }
 
     geometry.setAttribute('position', new BufferAttribute(positions, 3));
 
     const material = new PointsMaterial({
       color: 0xffffff,
-      size: 0.15, 
+      size: 0.15,
       transparent: true,
-      opacity: 0.8
+      opacity: 0.8,
     });
 
     this.points = new Points(geometry, material);
@@ -35,7 +42,7 @@ export default class Starfield extends Group {
   }
 
   pulse(intensity) {
-      this.speedMultiplier = intensity;
+    this.speedMultiplier = intensity;
   }
 
   update(delta) {
@@ -45,7 +52,7 @@ export default class Starfield extends Group {
     this.speedMultiplier += (1.0 - this.speedMultiplier) * delta * 6.0;
 
     const positions = this.points.geometry.attributes.position.array;
-    const distance = this.speed * this.speedMultiplier * delta; 
+    const distance = this.speed * this.speedMultiplier * delta;
 
     for (let i = 0; i < this.numStars; i++) {
       positions[i * 3 + 2] -= distance;

@@ -11,15 +11,34 @@ export default class EnemyFuseballTanker extends EnemyTanker {
    * @param {number} laneId
    * @param {number} zPosition
    */
-  constructor (surface, projectileManager, enemySpawnFunction, rewardCallback, laneId = 0, zPosition = 1, game ) {
-    super(surface, projectileManager, enemySpawnFunction, rewardCallback, Enemy.TYPE_FUSEBALL_TANKER, laneId, zPosition, game);
+  constructor(
+    surface,
+    projectileManager,
+    enemySpawnFunction,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
+    super(
+      surface,
+      projectileManager,
+      enemySpawnFunction,
+      rewardCallback,
+      Enemy.TYPE_FUSEBALL_TANKER,
+      laneId,
+      zPosition,
+      game,
+    );
 
     this.firstLevel = 35;
-    //this.game = game;
+    this.game = game;
   }
 
-  createEnemies () {
-    let CWLaneId = this.surface.getActualLaneIdFromProjectedMovement(this.laneId + 1);
+  createEnemies() {
+    let CWLaneId = this.surface.getActualLaneIdFromProjectedMovement(
+      this.laneId + 1,
+    );
 
     let enemyCW = this.enemySpawnFunction(CWLaneId, this.zPosition);
     let enemyCCW = this.enemySpawnFunction(this.laneId, this.zPosition);

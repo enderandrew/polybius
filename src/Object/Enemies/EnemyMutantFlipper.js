@@ -3,10 +3,25 @@ import Enemy from '@/Object/Enemies/Enemy';
 import randomRange from '@/utils/randomRange';
 
 export default class EnemyMutantFlipper extends EnemyFlipper {
-  constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
-    super(surface, projectileManager, rewardCallback, laneId, zPosition, Enemy.TYPE_FLIPPER, game);
+  constructor(
+    surface,
+    projectileManager,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
+    super(
+      surface,
+      projectileManager,
+      rewardCallback,
+      laneId,
+      zPosition,
+      Enemy.TYPE_FLIPPER,
+      game,
+    );
     this.isMutant = true;
-    
+
     // Move significantly faster than normal flippers
     this.zSpeed = -randomRange(9, 13) * 0.001;
   }

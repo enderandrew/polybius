@@ -15,19 +15,20 @@ export default class ScreenContentManager extends ContentManager {
   static KEY_RANK_POSITION = 'rank_position';
   static KEY_LEVEL_SELECTED_CALLBACK = 'level_selected_callback';
   static KEY_PUSH_HIGH_SCORE_CALLBACK = 'push_high_score_callback';
-  static KEY_CLOSE_HIGH_SCORES_SCREEN_CALLBACK = 'close_high_scores_screen_callback';
+  static KEY_CLOSE_HIGH_SCORES_SCREEN_CALLBACK =
+    'close_high_scores_screen_callback';
 
   /**
    * @param {number} score
    */
-  setScore (score) {
+  setScore(score) {
     this.set(ScreenContentManager.KEY_SCORE, score);
   }
 
   /**
    * @param {{name: string, score: number}[]} highScores
    */
-  setHighScores (highScores) {
+  setHighScores(highScores) {
     this.set(ScreenContentManager.KEY_HIGH_SCORES, highScores);
     this.set(ScreenContentManager.KEY_HIGHEST_SCORE, highScores[0]);
   }
@@ -35,70 +36,79 @@ export default class ScreenContentManager extends ContentManager {
   /**
    * @param {number} credits
    */
-  setCredits (credits) {
+  setCredits(credits) {
     this.set(ScreenContentManager.KEY_CREDITS, credits);
   }
 
   /**
    * @param {number} lives
    */
-  setLives (lives) {
+  setLives(lives) {
     this.set(ScreenContentManager.KEY_LIVES, lives);
   }
 
   /**
    * @param {number} level
    */
-  setLevel (level) {
+  setLevel(level) {
     this.set(ScreenContentManager.KEY_LEVEL, level);
   }
 
   /**
    * @param {boolean} superzapperUsed
    */
-  setSuperzapperUsed (superzapperUsed) {
+  setSuperzapperUsed(superzapperUsed) {
     this.set(ScreenContentManager.KEY_SUPERZAPPER_USED, superzapperUsed);
   }
 
   /**
    * @param {number} offset
    */
-  setSelectOffset (offset) {
+  setSelectOffset(offset) {
     this.set(ScreenContentManager.KEY_SELECT_OFFSET, offset);
   }
 
   /**
    * @param {number} active
    */
-  setSelectActive (active) {
+  setSelectActive(active) {
     this.set(ScreenContentManager.KEY_SELECT_ACTIVE, active);
   }
 
   /**
    * @param {{id: number, score: number}[]} levels
    */
-  setSelectLevels (levels) {
+  setSelectLevels(levels) {
     this.set(ScreenContentManager.KEY_LEVELS, levels);
   }
 
   /**
    * @param {function} levelSelectedCallback
    */
-  setLevelSelectedCallback (levelSelectedCallback) {
-    this.set(ScreenContentManager.KEY_LEVEL_SELECTED_CALLBACK, levelSelectedCallback);
+  setLevelSelectedCallback(levelSelectedCallback) {
+    this.set(
+      ScreenContentManager.KEY_LEVEL_SELECTED_CALLBACK,
+      levelSelectedCallback,
+    );
   }
 
   /**
    * @param {function} closeHighScoresScreenCallback
    */
-  setCloseHighScoresScreenCallback (closeHighScoresScreenCallback) {
-    this.set(ScreenContentManager.KEY_CLOSE_HIGH_SCORES_SCREEN_CALLBACK, closeHighScoresScreenCallback);
+  setCloseHighScoresScreenCallback(closeHighScoresScreenCallback) {
+    this.set(
+      ScreenContentManager.KEY_CLOSE_HIGH_SCORES_SCREEN_CALLBACK,
+      closeHighScoresScreenCallback,
+    );
   }
 
   /**
    * @param {function} pushHighScoreCallback
    */
-  setPushHighScoreCallback (pushHighScoreCallback) {
-    this.set(ScreenContentManager.KEY_PUSH_HIGH_SCORE_CALLBACK, pushHighScoreCallback);
+  setPushHighScoreCallback(pushHighScoreCallback) {
+    this.set(
+      ScreenContentManager.KEY_PUSH_HIGH_SCORE_CALLBACK,
+      pushHighScoreCallback,
+    );
   }
 }

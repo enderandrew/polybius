@@ -25,12 +25,11 @@ import { PowerUp } from '@/PowerUp/PowerUp';
 // Base drop chance per enemy tier (0–1)
 const DROP_CHANCE = {
   normal: 0.18,
-  elite:  0.40,
-  boss:   1.00,
+  elite: 0.4,
+  boss: 1.0,
 };
 
 export class PowerUpSpawner {
-
   /**
    * @param {object} scene       - THREE.Scene — sprite is added here
    * @param {object} webGeometry - Web geometry helper (see PowerUp.js)
@@ -38,13 +37,13 @@ export class PowerUpSpawner {
    * @param {number} [options.dropChanceNormal]  Override normal drop rate
    * @param {number} [options.dropChanceElite]   Override elite drop rate
    */
-  constructor (scene, webGeometry, options = {}) {
-    this._scene       = scene;
+  constructor(scene, webGeometry, options = {}) {
+    this._scene = scene;
     this._webGeometry = webGeometry;
-    this._dropChance  = {
+    this._dropChance = {
       normal: options.dropChanceNormal ?? DROP_CHANCE.normal,
-      elite:  options.dropChanceElite  ?? DROP_CHANCE.elite,
-      boss:   DROP_CHANCE.boss,
+      elite: options.dropChanceElite ?? DROP_CHANCE.elite,
+      boss: DROP_CHANCE.boss,
     };
 
     // All live PowerUp instances currently in the world
@@ -64,24 +63,34 @@ export class PowerUpSpawner {
    *                                    .tier   ('normal' | 'elite' | 'boss')
    * @returns {PowerUp|null}
    */
-  tryDrop (enemy) {
+  tryDrop(enemy) {
     //console.log("SPAWNER: Attempting drop. Current webGeometry is:", this._webGeometry);
-  const tier   = enemy.tier ?? 'normal';
+    const tier = enemy.tier ?? 'normal';
     const chance = this._dropChance[tier] ?? this._dropChance.normal;
 
     if (Math.random() > chance) return null;
 
-    if (!this._webGeometry || typeof this._webGeometry.lanePositionAt !== 'function') {
-        console.error("PowerUpSpawner: Cannot spawn - webGeometry is invalid or missing.");
-        return null;
+    if (
+      !this._webGeometry ||
+      typeof this._webGeometry.lanePositionAt !== 'function'
+    ) {
+      console.error(
+        'PowerUpSpawner: Cannot spawn - webGeometry is invalid or missing.',
+      );
+      return null;
     }
 
     const filterFn = tier === 'boss' ? (t) => t.isWeapon : null;
-    const type    = pickWeightedRandom(filterFn);
-    
-    const powerUp = new PowerUp(type, enemy.laneId, enemy.zPosition, this._webGeometry);
-    
-  //console.log("SPAWNER: PowerUp created with:", powerUp.webGeometry);
+    const type = pickWeightedRandom(filterFn);
+
+    const powerUp = new PowerUp(
+      type,
+      enemy.laneId,
+      enemy.zPosition,
+      this._webGeometry,
+    );
+
+    //console.log("SPAWNER: PowerUp created with:", powerUp.webGeometry);
 
     this._scene.add(powerUp.sprite);
     this._activePowerUps.push(powerUp);
@@ -93,12 +102,12 @@ export class PowerUpSpawner {
    * Update all live power-ups.  Call every game tick.
    * @param {number} delta  - Seconds since last frame
    */
-  update (delta) {
+  update(delta) {
     if (!this._webGeometry) return;
-  for (let i = this._activePowerUps.length - 1; i >= 0; i--) {
+    for (let i = this._activePowerUps.length - 1; i >= 0; i--) {
       const pu = this._activePowerUps[i];
       if (!pu.webGeometry) continue;
-    pu.update(delta);
+      pu.update(delta);
 
       if (pu.isExpired) {
         pu.dispose(this._scene);
@@ -121,7 +130,7 @@ export class PowerUpSpawner {
    *                                (usually 0.5–1.5 units from the rim)
    * @returns {object|null}  PowerUpType value, or null
    */
-  checkPlayerCollision (playerLane, rimDepth = 1.2) {
+  checkPlayerCollision(playerLane, rimDepth = 1.2) {
     for (const pu of this._activePowerUps) {
       if (pu.isCollected || pu.isExpired) continue;
       if (pu.lane === playerLane && pu.depth <= rimDepth) {
@@ -133,24 +142,24 @@ export class PowerUpSpawner {
   }
 
   /** Remove and dispose all power-ups (call on level reset / player death). */
-  clearAll () {
+  clearAll() {
     for (const pu of this._activePowerUps) {
       pu.dispose(this._scene);
     }
     this._activePowerUps = [];
-  this._webGeometry = null;
+    this._webGeometry = null;
   }
 
   /** Read-only count of live power-ups (useful for debug HUD). */
-  get count () {
+  get count() {
     return this._activePowerUps.length;
   }
-  
-  set webGeometry (value) {
+
+  set webGeometry(value) {
     this._webGeometry = value;
   }
-  
-  get webGeometry () {
+
+  get webGeometry() {
     return this._webGeometry;
   }
 }

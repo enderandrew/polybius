@@ -43,7 +43,7 @@ export default class Level {
    * @param {function} shooterKilledCallback
    * @param {function} getCurrentScore
    */
-  constructor (
+  constructor(
     surface,
     currentLevel,
     levelInitScore,
@@ -52,7 +52,7 @@ export default class Level {
     levelWonCallback,
     shooterKilledCallback,
     getCurrentScore,
-  game
+    game,
   ) {
     this.surface = surface;
 
@@ -64,11 +64,11 @@ export default class Level {
     this.levelWonCallback = levelWonCallback;
     this.shooterKilledCallback = shooterKilledCallback;
     this.getCurrentScore = getCurrentScore;
-  this.game = game;
+    this.game = game;
 
     this.surfaceObjectsManager = new SurfaceObjectsManager(surface);
     this.projectileManager = new ProjectileManager(this.surfaceObjectsManager);
-  this.projectileManager.game = this.game;
+    this.projectileManager.game = this.game;
     this.enemySpawner = new EnemySpawner(
       this.surfaceObjectsManager,
       this.projectileManager,
@@ -76,7 +76,7 @@ export default class Level {
       this.currentLevel,
       this.levelInitScore,
       this.targetScore,
-    this.game
+      this.game,
     );
 
     this.shooter = new Shooter(
@@ -84,14 +84,14 @@ export default class Level {
       this.projectileManager,
       this.surfaceObjectsManager,
       this.shooterKilled.bind(this),
-      7
+      7,
     );
-  this.shooter.game = this.game;
+    this.shooter.game = this.game;
 
     this.surfaceObjectsManager.addShooter(this.shooter);
   }
 
-  release () {
+  release() {
     this.surfaceObjectsManager.removeEnemies();
     this.surfaceObjectsManager.removeShooters();
     this.surfaceObjectsManager.removeSpikes();
@@ -106,29 +106,51 @@ export default class Level {
     this.unregisterKeys();
   }
 
-registerKeys () {
+  registerKeys() {
     // Player 1 - WASD
-    keyboardInput.register('KeyA', () => { this.shooter.moveLeft(); });
-    keyboardInput.register('KeyD', () => { this.shooter.moveRight(); });
-    keyboardInput.register('KeyW', () => { this.shooter.jump(); });
-    keyboardInput.register('Space', () => { this.shooter.fire(); });
-    keyboardInput.register('KeyE', () => { this.shooter.fireSuperzapper(); });
-    keyboardInput.register('End', () => { this.shooter.setState(Shooter.STATE_GOING_DOWN_THE_TUBE); });
+    keyboardInput.register('KeyA', () => {
+      this.shooter.moveLeft();
+    });
+    keyboardInput.register('KeyD', () => {
+      this.shooter.moveRight();
+    });
+    keyboardInput.register('KeyW', () => {
+      this.shooter.jump();
+    });
+    keyboardInput.register('Space', () => {
+      this.shooter.fire();
+    });
+    keyboardInput.register('KeyE', () => {
+      this.shooter.fireSuperzapper();
+    });
+    keyboardInput.register('End', () => {
+      this.shooter.setState(Shooter.STATE_GOING_DOWN_THE_TUBE);
+    });
 
     // Player 1 - Arrows
-    keyboardInput.register('ArrowLeft', () => { this.shooter.moveLeft(); });
-    keyboardInput.register('ArrowRight', () => { this.shooter.moveRight(); });
-    keyboardInput.register('ArrowUp', () => { this.shooter.jump(); });
-    keyboardInput.register('ArrowDown', () => { this.shooter.fireSuperzapper(); });
+    keyboardInput.register('ArrowLeft', () => {
+      this.shooter.moveLeft();
+    });
+    keyboardInput.register('ArrowRight', () => {
+      this.shooter.moveRight();
+    });
+    keyboardInput.register('ArrowUp', () => {
+      this.shooter.jump();
+    });
+    keyboardInput.register('ArrowDown', () => {
+      this.shooter.fireSuperzapper();
+    });
 
     // Global Pause
-    keyboardInput.register('Escape', () => { this.game.togglePause(); });
+    keyboardInput.register('Escape', () => {
+      this.game.togglePause();
+    });
   }
 
-  unregisterKeys () {
+  unregisterKeys() {
     keyboardInput.unregister('KeyA');
     keyboardInput.unregister('KeyD');
-  keyboardInput.unregister('KeyW');
+    keyboardInput.unregister('KeyW');
     keyboardInput.unregister('Space');
     keyboardInput.unregister('KeyE');
     keyboardInput.unregister('End');
@@ -139,7 +161,7 @@ registerKeys () {
     keyboardInput.unregister('Escape');
   }
 
-  update (delta = 1 / 60) {
+  update(delta = 1 / 60) {
     this.projectileManager.update(delta);
     this.surfaceObjectsManager.update(delta);
     this.enemySpawner.updateScore(this.getCurrentScore());
@@ -148,13 +170,17 @@ registerKeys () {
       this.enemySpawner.spawn();
     }
 
-    if (this.enemySpawner.reachedScoreTarget()
-      && this.surfaceObjectsManager.getAmountOfAliveEnemies() <= 3
-      && !this.shooter.inState(Shooter.STATE_GOING_DOWN_THE_TUBE)
-      && !this.shooter.inState(Shooter.STATE_REACHED_TUBE_BOTTOM)
+    if (
+      this.enemySpawner.reachedScoreTarget() &&
+      this.surfaceObjectsManager.getAmountOfAliveEnemies() <= 3 &&
+      !this.shooter.inState(Shooter.STATE_GOING_DOWN_THE_TUBE) &&
+      !this.shooter.inState(Shooter.STATE_REACHED_TUBE_BOTTOM)
     ) {
       this.shooter.setState(Shooter.STATE_GOING_DOWN_THE_TUBE);
-      messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_NEXT_LEVEL);
+      messageBroker.publish(
+        MessageBroker.TOPIC_AUDIO,
+        MessageBroker.MESSAGE_NEXT_LEVEL,
+      );
     }
 
     if (this.shooter.inState(Shooter.STATE_REACHED_TUBE_BOTTOM)) {
@@ -162,7 +188,7 @@ registerKeys () {
     }
   }
 
-  shooterKilled () {
+  shooterKilled() {
     this.surfaceObjectsManager.removeEnemies();
 
     if (this.shooterKilledCallback()) {

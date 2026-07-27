@@ -18,7 +18,7 @@ export default class Projectile extends SurfaceObject {
    * @param {number} source
    * @param {?number} zPosition
    */
-  constructor (surface, laneId, source, zPosition = null, damage = 1) {
+  constructor(surface, laneId, source, zPosition = null, damage = 1) {
     super(surface, laneId, SurfaceObject.TYPE_PROJECTILE);
 
     this.source = source;
@@ -27,8 +27,8 @@ export default class Projectile extends SurfaceObject {
     this.killRadiusBackward = Projectile.PROJECTILE_KILL_RADIUS_BACKWARD;
     this.isLaser = false;
     this.isGrenade = false;
-    this.isExploding = false;     
-    this.explosionProgress = 0;   
+    this.isExploding = false;
+    this.explosionProgress = 0;
     this.needsAoECheck = false;
 
     if (this.source === Projectile.SOURCE_SHOOTER) {
@@ -40,7 +40,7 @@ export default class Projectile extends SurfaceObject {
     }
   }
 
-  update (delta = 1 / 60) {
+  update(delta = 1 / 60) {
     if (!this.alive) {
       return;
     }
@@ -48,9 +48,9 @@ export default class Projectile extends SurfaceObject {
     // Constants below were tuned per-frame at 60fps; `* 60 * delta` keeps
     // them frame-rate independent while preserving the original feel.
     if (this.isExploding) {
-        this.explosionProgress += 0.08 * 60 * delta;
-        if (this.explosionProgress >= 1) this.alive = false;
-        return; 
+      this.explosionProgress += 0.08 * 60 * delta;
+      if (this.explosionProgress >= 1) this.alive = false;
+      return;
     }
 
     if (this.isLaser) {
@@ -69,7 +69,7 @@ export default class Projectile extends SurfaceObject {
     }
   }
 
-  triggerExplosion () {
+  triggerExplosion() {
     this.isExploding = true;
     this.needsAoECheck = true; // Flags the manager to run the sweep!
   }
@@ -78,7 +78,7 @@ export default class Projectile extends SurfaceObject {
    * @param {array} laneObjects
    * @return {number} index of colliding object or -1
    */
-  detectCollision (laneObjects) {
+  detectCollision(laneObjects) {
     if (!this.alive || this.isExploding || !laneObjects) {
       return -1;
     }
@@ -86,9 +86,10 @@ export default class Projectile extends SurfaceObject {
     if (this.isLaser) {
       // THE RAILGUN: Pierce through everything in the hitbox without dying!
       let hitSomething = false;
-      laneObjects.forEach(object => {
+      laneObjects.forEach((object) => {
         if (
-          object.hittable && object.alive &&
+          object.hittable &&
+          object.alive &&
           object.zPosition >= this.zPosition - this.killRadiusBackward &&
           object.zPosition <= this.zPosition + this.killRadiusForward
         ) {
@@ -97,33 +98,35 @@ export default class Projectile extends SurfaceObject {
         }
       });
       // Return 1 so the game knows a hit occurred, but DO NOT set this.alive = false!
-      return hitSomething ? 1 : -1; 
+      return hitSomething ? 1 : -1;
     } else {
       // NORMAL WEAPONS: Hit exactly one target and die
-      let collision = laneObjects.findIndex(object => (
-        object.hittable && object.alive &&
-        object.zPosition >= this.zPosition - this.killRadiusBackward &&
-        object.zPosition <= this.zPosition + this.killRadiusForward
-      ));
+      let collision = laneObjects.findIndex(
+        (object) =>
+          object.hittable &&
+          object.alive &&
+          object.zPosition >= this.zPosition - this.killRadiusBackward &&
+          object.zPosition <= this.zPosition + this.killRadiusForward,
+      );
 
       if (collision >= 0) {
         if (this.isGrenade) {
-           this.triggerExplosion(); // Blow up instead of dying!
+          this.triggerExplosion(); // Blow up instead of dying!
         } else {
-           laneObjects[collision].hitByProjectile(this.damage);
-           this.alive = false;
+          laneObjects[collision].hitByProjectile(this.damage);
+          this.alive = false;
         }
       }
       return collision;
     }
   }
 
-  hitByProjectile () {
-  // console.log('Projectile collision detected');                        
+  hitByProjectile() {
+    // console.log('Projectile collision detected');
     this.alive = false;
   }
 
-  disappear () {
+  disappear() {
     this.alive = false;
   }
 }

@@ -1,7 +1,14 @@
 import EnemyPulsar from '@/Object/Enemies/EnemyPulsar';
 
 export default class EnemyMegaPulsar extends EnemyPulsar {
-  constructor(surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
+  constructor(
+    surface,
+    projectileManager,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
     super(surface, projectileManager, rewardCallback, laneId, zPosition, game);
 
     this.isMega = true;
@@ -11,8 +18,12 @@ export default class EnemyMegaPulsar extends EnemyPulsar {
 
   // Override the hook we just made!
   getShortedLanes() {
-    const leftLane = this.surface.getActualLaneIdFromProjectedMovement(this.laneId - 1);
-    const rightLane = this.surface.getActualLaneIdFromProjectedMovement(this.laneId + 1);
+    const leftLane = this.surface.getActualLaneIdFromProjectedMovement(
+      this.laneId - 1,
+    );
+    const rightLane = this.surface.getActualLaneIdFromProjectedMovement(
+      this.laneId + 1,
+    );
     return [leftLane, this.laneId, rightLane];
   }
 }

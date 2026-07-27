@@ -1,6 +1,5 @@
 import Canvas3d from '@/Object/Screen/Canvas3d';
 import ScreenContentManager from '@/Object/Screen/ScreenContentManager';
-import keyboardInput from '@/utils/KeyboardInput';
 import surfaces from '@/Assets/Surfaces';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
@@ -12,78 +11,107 @@ const centerTarget = new Vector2();
 
 export default class ScreenSelectSurface extends Canvas3d {
   static SURFACE_COLORS = [
-    'rgba(0, 100, 255, 1)',   // 0: Blue
-    'rgba(255, 0, 0, 1)',     // 1: Red
-    'rgba(255, 255, 0, 1)',   // 2: Yellow
-    'rgba(0, 255, 0, 1)',     // 3: Green
-    'rgba(255, 128, 0, 1)',   // 4: Orange
-    'rgba(255, 0, 255, 1)',   // 5: Purple
+    'rgba(0, 100, 255, 1)', // 0: Blue
+    'rgba(255, 0, 0, 1)', // 1: Red
+    'rgba(255, 255, 0, 1)', // 2: Yellow
+    'rgba(0, 255, 0, 1)', // 3: Green
+    'rgba(255, 128, 0, 1)', // 4: Orange
+    'rgba(255, 0, 255, 1)', // 5: Purple
     'rgba(255, 255, 255, 1)', // 6: White
-    'rgba(0, 255, 255, 1)'    // 7: Rainbow (Represented by Neon Cyan on the HUD)
+    'rgba(0, 255, 255, 1)', // 7: Rainbow (Represented by Neon Cyan on the HUD)
   ];
 
   // Modern ES class field
   selectedLevel = 1;
-  
+
   // Add the glitch timer property to track frames
   glitchTimer = 0;
 
-  constructor (screenContentManager, width = 8, height = 8, canvasResX = 1024, canvasResY = 1024) {
+  constructor(
+    screenContentManager,
+    width = 8,
+    height = 8,
+    canvasResX = 1024,
+    canvasResY = 1024,
+  ) {
     super(screenContentManager, width, height, canvasResX, canvasResY);
     this.registerKeys();
   }
 
-  release () {
+  release() {
     this.unregisterKeys();
   }
 
-  registerKeys () {
-    keyboardInput.register('KeyA', () => { this.moveLeft(); });
-    keyboardInput.register('KeyD', () => { this.moveRight(); });
-    keyboardInput.register('Space', () => { this.selectLevel(); });
-	keyboardInput.register('ArrowLeft',  () => { this.moveLeft(); });
-    keyboardInput.register('ArrowRight', () => { this.moveRight(); });
+  registerKeys() {
+    this._boundKeyHandler = (e) => {
+      if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
+        this.moveLeft();
+      } else if (e.code === 'KeyD' || e.code === 'ArrowRight') {
+        this.moveRight();
+      } else if (e.code === 'Space' || e.code === 'Enter') {
+        this.selectLevel();
+      }
+    };
+    window.addEventListener('keydown', this._boundKeyHandler);
   }
 
-  unregisterKeys () {
-    keyboardInput.unregister('KeyA');
-    keyboardInput.unregister('KeyD');
-    keyboardInput.unregister('Space');
-    keyboardInput.unregister('ArrowLeft');
-    keyboardInput.unregister('ArrowRight');
-  }
-
-  selectLevel () {
-    if (this.keyInputDelay()) {
-      this.screenContentManager.get(ScreenContentManager.KEY_LEVEL_SELECTED_CALLBACK)(this.selectedLevel, true);
-      messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_MENU_SELECT);
+  unregisterKeys() {
+    if (this._boundKeyHandler) {
+      window.removeEventListener('keydown', this._boundKeyHandler);
+      this._boundKeyHandler = null;
     }
   }
 
-  moveLeft () {
+  selectLevel() {
+    if (this.keyInputDelay()) {
+      this.screenContentManager.get(
+        ScreenContentManager.KEY_LEVEL_SELECTED_CALLBACK,
+      )(this.selectedLevel, true);
+      messageBroker.publish(
+        MessageBroker.TOPIC_AUDIO,
+        MessageBroker.MESSAGE_MENU_SELECT,
+      );
+    }
+  }
+
+  moveLeft() {
     if (this.keyInputDelay()) {
       this.moveSelection(-1);
-      messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_MENU_CHANGE);
+      this._dirty = true;
+      messageBroker.publish(
+        MessageBroker.TOPIC_AUDIO,
+        MessageBroker.MESSAGE_MENU_CHANGE,
+      );
     }
   }
 
-  moveRight () {
+  moveRight() {
     if (this.keyInputDelay()) {
       this.moveSelection(1);
-      messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_MENU_CHANGE);
+      this._dirty = true;
+      messageBroker.publish(
+        MessageBroker.TOPIC_AUDIO,
+        MessageBroker.MESSAGE_MENU_CHANGE,
+      );
     }
   }
 
-  moveSelection (direction) {
-    let currentActive = this.screenContentManager.get(ScreenContentManager.KEY_SELECT_ACTIVE);
-    let currentOffset = this.screenContentManager.get(ScreenContentManager.KEY_SELECT_OFFSET);
+  moveSelection(direction) {
+    let currentActive = this.screenContentManager.get(
+      ScreenContentManager.KEY_SELECT_ACTIVE,
+    );
+    let currentOffset = this.screenContentManager.get(
+      ScreenContentManager.KEY_SELECT_OFFSET,
+    );
     let desiredSelection = currentActive + currentOffset + direction;
 
     if (desiredSelection < 0) {
       return;
     }
 
-    let levelsLength = this.screenContentManager.get(ScreenContentManager.KEY_LEVELS).length;
+    let levelsLength = this.screenContentManager.get(
+      ScreenContentManager.KEY_LEVELS,
+    ).length;
     if (desiredSelection >= levelsLength) {
       return;
     }
@@ -102,13 +130,21 @@ export default class ScreenSelectSurface extends Canvas3d {
       }
     }
 
-    this.selectedLevel = this.screenContentManager.get(ScreenContentManager.KEY_LEVELS)[desiredSelection].id;
+    this.selectedLevel = this.screenContentManager.get(
+      ScreenContentManager.KEY_LEVELS,
+    )[desiredSelection].id;
 
-    this.screenContentManager.set(ScreenContentManager.KEY_SELECT_ACTIVE, currentActive);
-    this.screenContentManager.set(ScreenContentManager.KEY_SELECT_OFFSET, currentOffset);
+    this.screenContentManager.set(
+      ScreenContentManager.KEY_SELECT_ACTIVE,
+      currentActive,
+    );
+    this.screenContentManager.set(
+      ScreenContentManager.KEY_SELECT_OFFSET,
+      currentOffset,
+    );
   }
 
-  draw () {
+  draw() {
     this.clearCanvas();
     this.glitchTimer++; // Increment timer every frame
 
@@ -122,12 +158,12 @@ export default class ScreenSelectSurface extends Canvas3d {
 
     this.setFontSizePx(30);
     // Glitch 2: Frame-based subliminal instruction flash
-    if (this.glitchTimer % 180 === 0) { 
+    if (this.glitchTimer % 180 === 0) {
       this.drawText('SUBMIT YOUR WILL', 350, 480, Canvas3d.COLOR_RED);
     } else {
       this.drawText('rate yourself', 371, 480, Canvas3d.COLOR_GREEN);
     }
-    
+
     this.drawText('Use A and D to change', 270, 530, Canvas3d.COLOR_CYAN);
     this.drawText('Press fire to select', 284, 580, Canvas3d.COLOR_YELLOW);
     this.drawText('novice', 140, 750, Canvas3d.COLOR_RED);
@@ -138,51 +174,72 @@ export default class ScreenSelectSurface extends Canvas3d {
     this.drawText('hole', 30, 860, Canvas3d.COLOR_GREEN);
     this.drawText('bonus', 30, 920, Canvas3d.COLOR_GREEN);
 
-    let offset = this.screenContentManager.get(ScreenContentManager.KEY_SELECT_OFFSET);
+    let offset = this.screenContentManager.get(
+      ScreenContentManager.KEY_SELECT_OFFSET,
+    );
     let levels = this.screenContentManager.get(ScreenContentManager.KEY_LEVELS);
     let xOffset = 160;
     let xStep = 175;
 
     for (let i = 0; i < levels.length - offset && i < 5; i++) {
       let level = levels[i + offset];
-      
+
       // The surface shape ID (1-32)
       let surfaceId = ((level.id - 1) % 32) + 1;
 
       this.drawText(
-        this.alignNumberToRight(level.id), xOffset + (i * xStep) - 40, 800, Canvas3d.COLOR_GREEN
+        this.alignNumberToRight(level.id),
+        xOffset + i * xStep - 40,
+        800,
+        Canvas3d.COLOR_GREEN,
       );
 
       let surfaceColor = Math.floor((level.id - 1) / 32) % 8;
-      
-      this.context.strokeStyle = ScreenSelectSurface.SURFACE_COLORS[surfaceColor];
-      this.drawMapIcon(xOffset + (i * xStep) + 58, 845, surfaceId);
+
+      this.context.strokeStyle =
+        ScreenSelectSurface.SURFACE_COLORS[surfaceColor];
+      this.drawMapIcon(xOffset + i * xStep + 58, 845, surfaceId);
 
       this.drawText(
-        this.alignNumberToRight(level.scoreBonus), xOffset + (i * xStep), 920, Canvas3d.COLOR_RED
+        this.alignNumberToRight(level.scoreBonus),
+        xOffset + i * xStep,
+        920,
+        Canvas3d.COLOR_RED,
       );
     }
 
     this.setFontSizePx(75);
     // Glitch 3: Title text jitter and color flash
-    let titleOffset = Math.random() > 0.995 ? (Math.random() * 8 - 4) : 0;
-    let titleColor = Math.random() > 0.997 ? Canvas3d.COLOR_RED : Canvas3d.COLOR_WHITE;
+    let titleOffset = Math.random() > 0.995 ? Math.random() * 8 - 4 : 0;
+    let titleColor =
+      Math.random() > 0.997 ? Canvas3d.COLOR_RED : Canvas3d.COLOR_WHITE;
     this.drawText('POLYBIUS', 275 + titleOffset, 300, titleColor);
 
     // --- Satire Disclaimer ---
     this.setFontSizePx(14);
     this.context.textAlign = 'center';
     this.drawText(
-      'DISCLAIMER: THIS GAME IS A SATIRICAL PARODY. NO BRAINWAVES WILL BE HARVESTED.', 
-      512, 1000, 
-      'rgba(100, 100, 100, 1)' 
+      'SINNESLÖSCHEN SAFETY NOTICE: THERE ARE BRIGHT FLASHING LIGHTS AND GLITCHES.',
+      512,
+      975,
+      'rgba(100, 100, 100, 1)',
+    );
+    this.drawText(
+      'DISCLAIMER: THIS GAME IS A SATIRICAL PARODY. NO BRAINWAVES WILL BE HARVESTED.',
+      512,
+      1000,
+      'rgba(100, 100, 100, 1)',
     );
     this.context.textAlign = 'left'; // Reset alignment
 
     this.drawRect(
-      140 + xStep * this.screenContentManager.get(ScreenContentManager.KEY_SELECT_ACTIVE),
-      765, xStep - 20, 165,
-      ScreenSelectSurface.COLOR_BLUE
+      140 +
+        xStep *
+          this.screenContentManager.get(ScreenContentManager.KEY_SELECT_ACTIVE),
+      765,
+      xStep - 20,
+      165,
+      ScreenSelectSurface.COLOR_BLUE,
     );
   }
 
@@ -192,18 +249,18 @@ export default class ScreenSelectSurface extends Canvas3d {
    * @param {number} surfaceId
    * @param {number} scale
    */
-  drawMapIcon (x, y, surfaceId, scale = 1) {
+  drawMapIcon(x, y, surfaceId, scale = 1) {
     let unit = 10 * scale;
 
-    let surface = surfaces.find(surface => surface.id === surfaceId);
+    let surface = surfaces.find((surface) => surface.id === surfaceId);
     if (surface === undefined) {
       return;
     }
 
     // Convert raw {x, y} coordinates to Three.js Vector2 objects
-    let vectorCoords = surface.coords.map(c => new Vector2(c.x, c.y));
+    let vectorCoords = surface.coords.map((c) => new Vector2(c.x, c.y));
     let boundingBox2 = new Box2().setFromPoints(vectorCoords);
-    
+
     // Calculate center ONCE, before the loop
     boundingBox2.getCenter(centerTarget);
 

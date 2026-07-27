@@ -44,7 +44,6 @@
 import EnemyFlipperTanker from '@/Object/Enemies/EnemyFlipperTanker';
 
 export default class EnemyPhantomTanker extends EnemyFlipperTanker {
-
   /**
    * @param {Surface}           surface
    * @param {ProjectileManager} projectileManager
@@ -54,12 +53,28 @@ export default class EnemyPhantomTanker extends EnemyFlipperTanker {
    * @param {number}            zPosition
    * @param {Game}              game
    */
-  constructor (surface, projectileManager, spawnStealthFlipper, rewardCallback, laneId = 0, zPosition = 1, game) {
-    super(surface, projectileManager, spawnStealthFlipper, rewardCallback, laneId, zPosition, game);
+  constructor(
+    surface,
+    projectileManager,
+    spawnStealthFlipper,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
+    super(
+      surface,
+      projectileManager,
+      spawnStealthFlipper,
+      rewardCallback,
+      laneId,
+      zPosition,
+      game,
+    );
 
-    this.isPhantom     = true;
-    this.valueInPoints = 150;   // Same as normal Flipper Tanker — the extra danger
-                                // comes from the Stealth Flippers, not extra points
+    this.isPhantom = true;
+    this.valueInPoints = 150; // Same as normal Flipper Tanker — the extra danger
+    // comes from the Stealth Flippers, not extra points
   }
 
   // No createEnemies() override needed.

@@ -25,14 +25,14 @@ export default class EnemyRendererManager extends Group {
    * @param {SurfaceObjectsManager} surfaceObjectsManager
    * @param {Surface} surface
    */
-  constructor (surfaceObjectsManager, surface) {
+  constructor(surfaceObjectsManager, surface) {
     super();
 
     this.surfaceObjectsManager = surfaceObjectsManager;
     this.surface = surface;
   }
 
-  update () {
+  update() {
     if (this.surfaceObjectsManager.rendererHelperNewObjectsIds.length !== 0) {
       const newIds = this.surfaceObjectsManager.rendererHelperNewObjectsIds;
       if (newIds.length > 0) {
@@ -42,7 +42,7 @@ export default class EnemyRendererManager extends Group {
             this.pushEnemy(enemy);
           }
         }
-        
+
         for (let i = 0; i < this.surfaceObjectsManager.spikes.length; i++) {
           const spike = this.surfaceObjectsManager.spikes[i];
           if (newIds.includes(spike.objectId)) {
@@ -64,7 +64,9 @@ export default class EnemyRendererManager extends Group {
           this.enemyRenderersAvailabilityMap[enemyRenderer.objectType] = [];
         }
 
-        this.enemyRenderersAvailabilityMap[enemyRenderer.objectType].push(index);
+        this.enemyRenderersAvailabilityMap[enemyRenderer.objectType].push(
+          index,
+        );
 
         enemyRenderer.breakObjectRef();
       } else {
@@ -76,15 +78,20 @@ export default class EnemyRendererManager extends Group {
   /**
    * @param {Enemy} enemy
    */
-  pushEnemy (enemy) {
+  pushEnemy(enemy) {
     let renderType = enemy.type;
     if (enemy.isMutant) renderType = Enemy.TYPE_MUTANT_FLIPPER;
     else if (enemy.isStealth) renderType = Enemy.TYPE_STEALTH_FLIPPER;
     else if (enemy.isDemonHead) renderType = Enemy.TYPE_DEMON_HEAD;
     else if (enemy.isDemonHorn) renderType = Enemy.TYPE_DEMON_HORN;
 
-    if (renderType in this.enemyRenderersAvailabilityMap && this.enemyRenderersAvailabilityMap[renderType].length) {
-      this.enemyRenderers[this.enemyRenderersAvailabilityMap[renderType].shift()].setObjectRef(enemy);
+    if (
+      renderType in this.enemyRenderersAvailabilityMap &&
+      this.enemyRenderersAvailabilityMap[renderType].length
+    ) {
+      this.enemyRenderers[
+        this.enemyRenderersAvailabilityMap[renderType].shift()
+      ].setObjectRef(enemy);
     } else {
       this.enemyRenderers.push(this.enemyRendererFactory(enemy));
       this.add(this.enemyRenderers[this.enemyRenderers.length - 1]);
@@ -94,18 +101,18 @@ export default class EnemyRendererManager extends Group {
   /**
    * @param {Enemy|EnemyFlipper|EnemySpiker|EnemySpike|EnemyFlipperTanker|EnemyPulsar} enemy
    */
-  enemyRendererFactory (enemy) {
+  enemyRendererFactory(enemy) {
     let renderType = enemy.type;
     if (enemy.isMutant) renderType = Enemy.TYPE_MUTANT_FLIPPER;
     else if (enemy.isStealth) renderType = Enemy.TYPE_STEALTH_FLIPPER;
     else if (enemy.isDemonHead) renderType = Enemy.TYPE_DEMON_HEAD;
     else if (enemy.isDemonHorn) renderType = Enemy.TYPE_DEMON_HORN;
-    
+
     switch (renderType) {
       case Enemy.TYPE_FLIPPER:
       case Enemy.TYPE_MUTANT_FLIPPER:
       case Enemy.TYPE_STEALTH_FLIPPER:
-      case Enemy.TYPE_DEMON_HEAD: 
+      case Enemy.TYPE_DEMON_HEAD:
         return new EnemyFlipperRenderer(enemy, this.surface, renderType);
       case Enemy.TYPE_SPIKER:
       case Enemy.TYPE_DEMON_HORN:
@@ -125,16 +132,18 @@ export default class EnemyRendererManager extends Group {
       case Enemy.TYPE_MIRROR:
         return new EnemyMirrorRenderer(enemy, this.surface);
       default:
-        throw new Error(`Can't find constructor for enemy of type ${enemy.type}`);
+        throw new Error(
+          `Can't find constructor for enemy of type ${enemy.type}`,
+        );
     }
   }
 
   /**
    * Safely disposes of all pooled and active renderers when the level ends.
    */
-  dispose () {
+  dispose() {
     // Trigger the custom dispose on every renderer we created
-    this.enemyRenderers.forEach(renderer => {
+    this.enemyRenderers.forEach((renderer) => {
       if (typeof renderer.dispose === 'function') {
         renderer.dispose();
       }

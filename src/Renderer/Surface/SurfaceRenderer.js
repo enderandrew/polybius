@@ -1,4 +1,11 @@
-import { BufferGeometry, Group, Line, LineBasicMaterial, MeshBasicMaterial, Vector3 } from 'three';
+import {
+  BufferGeometry,
+  Group,
+  Line,
+  LineBasicMaterial,
+  MeshBasicMaterial,
+  Vector3,
+} from 'three';
 import Surface from '@/Object/Surface/Surface';
 import Angle from '@/utils/Angle';
 
@@ -24,7 +31,7 @@ export default class SurfaceRenderer extends Group {
    * @param {Surface} surface
    * @param {number} level
    */
-  constructor (surface, level) {
+  constructor(surface, level) {
     super();
 
     this.castShadow = false;
@@ -36,14 +43,14 @@ export default class SurfaceRenderer extends Group {
   /**
    * @param {Surface} surface
    */
-  setSurface (surface) {
+  setSurface(surface) {
     this.surface = surface;
 
     this.createLanes();
     this.update();
   }
 
-  update () {
+  update() {
     let activeLaneId = this.surface.activeLaneId;
 
     //Normal lanes
@@ -60,21 +67,32 @@ export default class SurfaceRenderer extends Group {
     //Shorted lanes
     let shortedLanesIds = this.surface.shortedLanes
       .map((shortedStrength, laneId) => (shortedStrength > 0 ? laneId : -1))
-      .filter(laneId => laneId !== -1);
+      .filter((laneId) => laneId !== -1);
 
     for (let i = 0; i < shortedLanesIds.length; i++) {
       let thisLaneId = shortedLanesIds[i];
-      let prevShortedLaneId = (i - 1 >= 0) ? shortedLanesIds[i - 1] : shortedLanesIds[shortedLanesIds.length - 1];
+      let prevShortedLaneId =
+        i - 1 >= 0
+          ? shortedLanesIds[i - 1]
+          : shortedLanesIds[shortedLanesIds.length - 1];
 
       this.setConnectorsAppearance(thisLaneId, this.laneShortedMaterial, false);
 
       let hole = prevShortedLaneId + 1 === thisLaneId;
-      this.setLinesAppearance(shortedLanesIds[i], this.laneShortedMaterial, !hole);
-      this.setLinesAppearance(shortedLanesIds[i] + 1, this.laneShortedMaterial, true);
+      this.setLinesAppearance(
+        shortedLanesIds[i],
+        this.laneShortedMaterial,
+        !hole,
+      );
+      this.setLinesAppearance(
+        shortedLanesIds[i] + 1,
+        this.laneShortedMaterial,
+        true,
+      );
     }
   }
 
-  createLanes () {
+  createLanes() {
     this.clear();
 
     this.connectorBackDepth = this.surface.depth;
@@ -85,9 +103,15 @@ export default class SurfaceRenderer extends Group {
 
     let surfaceColor = Math.floor(this.level / 16) % 3;
 
-    this.laneDefaultMaterial = new LineBasicMaterial({ color: SurfaceRenderer.DEFAULT_LANE_COLOR[surfaceColor] });
-    this.laneActiveMaterial = new LineBasicMaterial({ color: SurfaceRenderer.ACTIVE_LANE_COLOR });
-    this.laneShortedMaterial = new LineBasicMaterial({ color: SurfaceRenderer.SHORTED_LANE_COLOR });
+    this.laneDefaultMaterial = new LineBasicMaterial({
+      color: SurfaceRenderer.DEFAULT_LANE_COLOR[surfaceColor],
+    });
+    this.laneActiveMaterial = new LineBasicMaterial({
+      color: SurfaceRenderer.ACTIVE_LANE_COLOR,
+    });
+    this.laneShortedMaterial = new LineBasicMaterial({
+      color: SurfaceRenderer.SHORTED_LANE_COLOR,
+    });
 
     for (let i = 0; i < this.getAmountOfLanes(); i++) {
       let current = this.surface.lanesCoords[i];
@@ -95,11 +119,14 @@ export default class SurfaceRenderer extends Group {
       //Create lines
       let linePoints = [
         new Vector3(current.x, current.y, 0),
-        new Vector3(current.x, current.y, this.surface.depth)
+        new Vector3(current.x, current.y, this.surface.depth),
       ];
 
       this.lanesLines.push(
-        new Line(new BufferGeometry().setFromPoints(linePoints), this.laneDefaultMaterial)
+        new Line(
+          new BufferGeometry().setFromPoints(linePoints),
+          this.laneDefaultMaterial,
+        ),
       );
     }
 
@@ -110,26 +137,32 @@ export default class SurfaceRenderer extends Group {
       //Create connectors
       let connectorFrontPoints = [
         new Vector3(current.x, current.y, this.connectorFrontDepth),
-        new Vector3(next.x, next.y, this.connectorFrontDepth)
+        new Vector3(next.x, next.y, this.connectorFrontDepth),
       ];
 
       let connectorBackPoints = [
         new Vector3(current.x, current.y, this.connectorBackDepth),
-        new Vector3(next.x, next.y, this.connectorBackDepth)
+        new Vector3(next.x, next.y, this.connectorBackDepth),
       ];
 
       this.lanesConnectors.push(
-        new Line(new BufferGeometry().setFromPoints(connectorFrontPoints), this.laneDefaultMaterial),
-        new Line(new BufferGeometry().setFromPoints(connectorBackPoints), this.laneDefaultMaterial)
+        new Line(
+          new BufferGeometry().setFromPoints(connectorFrontPoints),
+          this.laneDefaultMaterial,
+        ),
+        new Line(
+          new BufferGeometry().setFromPoints(connectorBackPoints),
+          this.laneDefaultMaterial,
+        ),
       );
     }
 
-    this.lanesLines.forEach(line => this.add(line));
-    this.lanesConnectors.forEach(connector => this.add(connector));
+    this.lanesLines.forEach((line) => this.add(line));
+    this.lanesConnectors.forEach((connector) => this.add(connector));
     // this.createCenterIndicators();
   }
 
-  createCenterIndicators () {
+  createCenterIndicators() {
     const material = new MeshBasicMaterial({
       color: 0x00ff00,
     });
@@ -154,7 +187,7 @@ export default class SurfaceRenderer extends Group {
    * @param {LineBasicMaterial} material
    * @param {boolean} visible
    */
-  setConnectorsAppearance (connectorId, material, visible = true) {
+  setConnectorsAppearance(connectorId, material, visible = true) {
     connectorId %= this.surface.lanesAmount;
 
     this.lanesConnectors[connectorId * 2].material = material;
@@ -169,15 +202,17 @@ export default class SurfaceRenderer extends Group {
    * @param {LineBasicMaterial} material
    * @param {boolean} visible
    */
-  setLinesAppearance (lineId, material, visible = true) {
-    // Open surfaces have an extra boundary line (lanesAmount + 1), 
+  setLinesAppearance(lineId, material, visible = true) {
+    // Open surfaces have an extra boundary line (lanesAmount + 1),
     // so we don't want to wrap around using modulo.
     const maxIndex = this.lanesLines.length - 1;
-    
+
     if (this.surface.isOpen) {
       if (lineId < 0 || lineId > maxIndex) return;
     } else {
-      lineId = ((lineId % this.surface.lanesAmount) + this.surface.lanesAmount) % this.surface.lanesAmount;
+      lineId =
+        ((lineId % this.surface.lanesAmount) + this.surface.lanesAmount) %
+        this.surface.lanesAmount;
     }
 
     if (this.lanesLines[lineId]) {
@@ -189,7 +224,9 @@ export default class SurfaceRenderer extends Group {
   /**
    * @return {boolean}
    */
-  getAmountOfLanes (includeOpen = true) {
-    return this.surface.lanesAmount + (includeOpen && this.surface.isOpen ? 1 : 0);
+  getAmountOfLanes(includeOpen = true) {
+    return (
+      this.surface.lanesAmount + (includeOpen && this.surface.isOpen ? 1 : 0)
+    );
   }
 }

@@ -40,13 +40,19 @@
 import EnemySpiker from '@/Object/Enemies/EnemySpiker';
 
 export default class EnemyHydraSpiker extends EnemySpiker {
-
-  constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
+  constructor(
+    surface,
+    projectileManager,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
     super(surface, projectileManager, rewardCallback, laneId, zPosition, game);
 
-    this.isHydra       = true;
-    this.valueInPoints = 250;   // Worth more than standard Spiker (150)
-    this.hitPoints     = this.isStrong ? 3 : 2;  // Tougher — gives time to react
+    this.isHydra = true;
+    this.valueInPoints = 250; // Worth more than standard Spiker (150)
+    this.hitPoints = this.isStrong ? 3 : 2; // Tougher — gives time to react
 
     this._hasSplit = false;
   }
@@ -58,7 +64,7 @@ export default class EnemyHydraSpiker extends EnemySpiker {
   // The children are spawned at this enemy's current zPosition so
   // proximity-to-rim matters: early kills = safer children, late kills = panic.
   // ---------------------------------------------------------------------------
-  die () {
+  die() {
     // EnemySpiker.die() guards STATE_DEAD already; guard EXPLODING too so
     // that if die() is somehow invoked twice we don't re-enter the split logic.
     if (
@@ -82,15 +88,19 @@ export default class EnemyHydraSpiker extends EnemySpiker {
   // Private
   // ---------------------------------------------------------------------------
 
-  _spawnChildren () {
+  _spawnChildren() {
     if (!this.game?.levelObject) return;
-  
-    const mgr       = this.game.levelObject.surfaceObjectsManager;
-    const spawner   = this.game.levelObject.enemySpawner;
-    const leftLane  = this.surface.getActualLaneIdFromProjectedMovement(this.laneId - 1);
-    const rightLane = this.surface.getActualLaneIdFromProjectedMovement(this.laneId + 1);
-    const zPos      = this.zPosition;   // Capture now — 'this' may be garbage collected before the queue drains
-  
+
+    const mgr = this.game.levelObject.surfaceObjectsManager;
+    const spawner = this.game.levelObject.enemySpawner;
+    const leftLane = this.surface.getActualLaneIdFromProjectedMovement(
+      this.laneId - 1,
+    );
+    const rightLane = this.surface.getActualLaneIdFromProjectedMovement(
+      this.laneId + 1,
+    );
+    const zPos = this.zPosition; // Capture now — 'this' may be garbage collected before the queue drains
+
     if (leftLane !== this.laneId) {
       mgr.queueSpawn(() => spawner.spawnSpiker(leftLane, zPos));
     }

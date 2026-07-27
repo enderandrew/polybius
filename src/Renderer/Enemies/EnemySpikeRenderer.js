@@ -9,7 +9,7 @@ export default class EnemySpikeRenderer extends EnemyRenderer {
    * @param {EnemySpike} enemySpike
    * @param {Surface} surface
    */
-  constructor (enemySpike, surface) {
+  constructor(enemySpike, surface) {
     super(enemySpike, surface, Enemy.TYPE_SPIKE);
   }
 
@@ -21,35 +21,36 @@ export default class EnemySpikeRenderer extends EnemyRenderer {
   // renderer reused for a normal spike (or vice versa) would show the wrong
   // opacity for its lifetime.
 
-  setObjectRef (object) {
+  setObjectRef(object) {
     super.setObjectRef(object);
     this._applyPhantomOpacity();
   }
 
   // ── State update ───────────────────────────────────────────────────────────
 
-  updateState () {
+  updateState() {
     if (this.object.shouldRerenderSpikeDueToSpikeLengthChange()) {
       this.updateModel();
     }
 
-    this.positionBase  = this.surface.lanesMiddleCoords[this.object.laneId].clone();
-    this.zRotationBase = this.surface.lanesCenterDirectionRadians[this.object.laneId];
+    this.positionBase.copy(this.surface.lanesMiddleCoords[this.object.laneId]);
+    this.zRotationBase =
+      this.surface.lanesCenterDirectionRadians[this.object.laneId];
   }
 
-  updateModel () {
+  updateModel() {
     this.children[0].geometry = new BufferGeometry().setFromPoints([
       new Vector3(0, 0, 0),
-      new Vector3(0, 0, (1 - this.object.zPosition) * this.surface.depth)
+      new Vector3(0, 0, (1 - this.object.zPosition) * this.surface.depth),
     ]);
     // Geometry changed but material is the same object — opacity is preserved.
   }
 
   // ── Model construction ─────────────────────────────────────────────────────
 
-  loadModel () {
+  loadModel() {
     this.clear();
-    this.geometry  = [];
+    this.geometry = [];
     this.materials = [];
 
     // Always create with transparent enabled.  Opacity is set by
@@ -57,17 +58,17 @@ export default class EnemySpikeRenderer extends EnemyRenderer {
     // also applies the correct value.
     this.materials.push(
       new MeshBasicMaterial({
-        color:       EnemySpikeRenderer.SPIKE_COLOR,
+        color: EnemySpikeRenderer.SPIKE_COLOR,
         transparent: true,
-        opacity:     1.0,   // _applyPhantomOpacity corrects this after construction
-      })
+        opacity: 1.0, // _applyPhantomOpacity corrects this after construction
+      }),
     );
 
     this.geometry.push(
       new BufferGeometry().setFromPoints([
         new Vector3(0, 0, 0),
-        new Vector3(0, 0, (1 - this.object.zPosition) * this.surface.depth)
-      ])
+        new Vector3(0, 0, (1 - this.object.zPosition) * this.surface.depth),
+      ]),
     );
 
     this.add(new Line(this.geometry[0], this.materials[0]));
@@ -80,11 +81,11 @@ export default class EnemySpikeRenderer extends EnemyRenderer {
 
   // ── Private ────────────────────────────────────────────────────────────────
 
-  _applyPhantomOpacity () {
+  _applyPhantomOpacity() {
     if (!this.materials || !this.materials[0]) return;
 
-    const isPhantom             = this.object && this.object.isPhantom;
-    this.materials[0].opacity   = isPhantom ? 0.08 : 1.0;
-    this.materials[0].transparent = true;   // Stays true — cheaper than toggling
+    const isPhantom = this.object && this.object.isPhantom;
+    this.materials[0].opacity = isPhantom ? 0.08 : 1.0;
+    this.materials[0].transparent = true; // Stays true — cheaper than toggling
   }
 }

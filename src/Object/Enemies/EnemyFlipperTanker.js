@@ -11,15 +11,36 @@ export default class EnemyFlipperTanker extends EnemyTanker {
    * @param {number} laneId
    * @param zPosition
    */
-  constructor (surface, projectileManager, enemySpawnFunction, rewardCallback, laneId = 0, zPosition = 1, game) {
-    super(surface, projectileManager, enemySpawnFunction, rewardCallback, Enemy.TYPE_FLIPPER_TANKER, laneId, zPosition, game);
+  constructor(
+    surface,
+    projectileManager,
+    enemySpawnFunction,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
+    super(
+      surface,
+      projectileManager,
+      enemySpawnFunction,
+      rewardCallback,
+      Enemy.TYPE_FLIPPER_TANKER,
+      laneId,
+      zPosition,
+      game,
+    );
     this.firstLevel = 3;
   }
 
-  createEnemies () {
-    let CWLaneId = this.surface.getActualLaneIdFromProjectedMovement(this.laneId + 1);
+  createEnemies() {
+    let CWLaneId = this.surface.getActualLaneIdFromProjectedMovement(
+      this.laneId + 1,
+    );
     let canSpawnEnemyCW = CWLaneId !== this.laneId;
-    let CWWLaneId = this.surface.getActualLaneIdFromProjectedMovement(this.laneId - 1);
+    let CWWLaneId = this.surface.getActualLaneIdFromProjectedMovement(
+      this.laneId - 1,
+    );
     let canSpawnEnemyCCW = CWWLaneId !== this.laneId;
 
     let enemyCW = this.enemySpawnFunction(this.laneId, this.zPosition, true);

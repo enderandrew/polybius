@@ -7,7 +7,7 @@ export default class ScreenPlay extends Canvas3d {
   targetScore = 0;
   scoreRisingSpeed = 10;
   displaySuperzapperHint = true;
-  
+
   // Polybius Parody: Sanity Meter mechanic
   sanityLevel = 100;
 
@@ -15,13 +15,21 @@ export default class ScreenPlay extends Canvas3d {
   isGlitchingScore = false;
   isGlitchingHint = false;
 
-  constructor (screenContentManager, width = 8, height = 8, canvasResX = 1024, canvasResY = 1024) {
+  constructor(
+    screenContentManager,
+    width = 8,
+    height = 8,
+    canvasResX = 1024,
+    canvasResY = 1024,
+  ) {
     super(screenContentManager, width, height, canvasResX, canvasResY);
     this.score = this.screenContentManager.get(ScreenContentManager.KEY_SCORE);
   }
 
-  update () {
-    this.targetScore = this.screenContentManager.get(ScreenContentManager.KEY_SCORE);
+  update() {
+    this.targetScore = this.screenContentManager.get(
+      ScreenContentManager.KEY_SCORE,
+    );
 
     // Track score changes
     if (this.score !== this.targetScore) {
@@ -45,11 +53,11 @@ export default class ScreenPlay extends Canvas3d {
       // Only recalculate glitches every 100ms (10 times a second)
       if (now - this.lastGlitchTimestamp > 100) {
         this.lastGlitchTimestamp = now;
-        
+
         // Cache the visual state to be used by draw()
         this.isGlitchingScore = Math.random() > 0.8;
         this.isGlitchingHint = Math.random() > 0.9;
-        
+
         this._dirty = true; // Force redraw to show the flicker
       }
     } else if (this.isGlitchingScore || this.isGlitchingHint) {
@@ -63,7 +71,7 @@ export default class ScreenPlay extends Canvas3d {
     super.update();
   }
 
-  messageBrokerScreenTopicConsumer () {
+  messageBrokerScreenTopicConsumer() {
     let message = messageBroker.consume(MessageBroker.TOPIC_SCREEN);
 
     if (message === null) {
@@ -76,7 +84,7 @@ export default class ScreenPlay extends Canvas3d {
     }
   }
 
-  draw () {
+  draw() {
     this.clearCanvas();
 
     // Determine if graphics should alter based on player status
@@ -86,11 +94,11 @@ export default class ScreenPlay extends Canvas3d {
       // Only recalculate glitches every 100ms (10 times a second)
       if (now - this.lastGlitchTimestamp > 100) {
         this.lastGlitchTimestamp = now;
-        
+
         // Cache the visual state to be used by draw()
         this.isGlitchingScore = Math.random() > 0.8;
         this.isGlitchingHint = Math.random() > 0.9;
-        
+
         this._dirty = true; // Force redraw to show the flicker
       }
     } else if (this.isGlitchingScore || this.isGlitchingHint) {
@@ -99,50 +107,63 @@ export default class ScreenPlay extends Canvas3d {
       this.isGlitchingHint = false;
       this._dirty = true;
     }
-    const scoreColor = this.isGlitchingScore ? Canvas3d.COLOR_RED : Canvas3d.COLOR_BLUE;
+    const scoreColor = this.isGlitchingScore
+      ? Canvas3d.COLOR_RED
+      : Canvas3d.COLOR_BLUE;
 
     this.setFontSizePx(60);
-    this.drawText(
-      this.alignNumberToRight(this.score),
-      50, 120,
-      scoreColor
-    );
+    this.drawText(this.alignNumberToRight(this.score), 50, 120, scoreColor);
 
-    for (let i = 0; i < this.screenContentManager.get(ScreenContentManager.KEY_LIVES); i++) {
+    for (
+      let i = 0;
+      i < this.screenContentManager.get(ScreenContentManager.KEY_LIVES);
+      i++
+    ) {
       this.drawLiveIcon(50 + i * 62, 150);
     }
 
     this.setFontSizePx(25);
 
     if (this.displaySuperzapperHint) {
-      if (this.screenContentManager.get(ScreenContentManager.KEY_SUPERZAPPER_USED) === false) {
+      if (
+        this.screenContentManager.get(
+          ScreenContentManager.KEY_SUPERZAPPER_USED,
+        ) === false
+      ) {
         // Use the cached glitch state for the subliminal hint
-        const hintText = this.isGlitchingHint ? 'OBEY' : 'Press E to use SuperZapper';
-        
-        this.drawText(
-          hintText,
-          240, 1000,
-          Canvas3d.COLOR_BLUE
-        );
+        const hintText = this.isGlitchingHint
+          ? 'OBEY'
+          : 'Press E to use SuperZapper';
+
+        this.drawText(hintText, 240, 1000, Canvas3d.COLOR_BLUE);
       }
     }
 
     this.drawText(
-      this.alignNumberToRight(this.screenContentManager.get(ScreenContentManager.KEY_HIGHEST_SCORE).score),
-      400, 90,
-      Canvas3d.COLOR_BLUE
+      this.alignNumberToRight(
+        this.screenContentManager.get(ScreenContentManager.KEY_HIGHEST_SCORE)
+          .score,
+      ),
+      400,
+      90,
+      Canvas3d.COLOR_BLUE,
     );
     this.drawText(
-      this.screenContentManager.get(ScreenContentManager.KEY_HIGHEST_SCORE).name,
-      580, 90,
-      Canvas3d.COLOR_BLUE
+      this.screenContentManager.get(ScreenContentManager.KEY_HIGHEST_SCORE)
+        .name,
+      580,
+      90,
+      Canvas3d.COLOR_BLUE,
     );
 
     this.drawText('LEVEL', 400, 140, Canvas3d.COLOR_GREEN);
     this.drawText(
-      this.alignNumberToRight(this.screenContentManager.get(ScreenContentManager.KEY_LEVEL)),
-      505, 140,
-      Canvas3d.COLOR_GREEN
+      this.alignNumberToRight(
+        this.screenContentManager.get(ScreenContentManager.KEY_LEVEL),
+      ),
+      505,
+      140,
+      Canvas3d.COLOR_GREEN,
     );
   }
 
@@ -151,7 +172,7 @@ export default class ScreenPlay extends Canvas3d {
    * @param {number} y
    * @param scale
    */
-  drawLiveIcon (x, y, scale = 1) {
+  drawLiveIcon(x, y, scale = 1) {
     let unit = 3 * scale;
     this.context.strokeStyle = Canvas3d.COLOR_RED;
 

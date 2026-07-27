@@ -30,70 +30,74 @@ import Enemy from '@/Object/Enemies/Enemy';
 import EnemyMirror from '@/Object/Enemies/EnemyMirror';
 
 export default class EnemyMirrorRenderer extends EnemyRenderer {
+  static ROTATION_SPEED = 0.018; // Slower than Spiker — deliberate, menacing
 
-  static ROTATION_SPEED = 0.018;  // Slower than Spiker — deliberate, menacing
-
-  constructor (enemy, surface) {
+  constructor(enemy, surface) {
     super(enemy, surface, Enemy.TYPE_MIRROR);
   }
 
   // ── Per-frame update ───────────────────────────────────────────────────────
 
-  updateState () {
+  updateState() {
+    if (!this.object || typeof this.object.inState !== 'function') {
+      return;
+    }
+
     const mirror = this.object;
 
-    this.positionBase  = this.surface.lanesMiddleCoords[mirror.laneId].clone();
-    this.zRotationBase = this.surface.lanesCenterDirectionRadians[mirror.laneId];
+    this.positionBase.copy(this.surface.lanesMiddleCoords[mirror.laneId]);
+    this.zRotationBase =
+      this.surface.lanesCenterDirectionRadians[mirror.laneId];
 
     if (mirror.inState(EnemyMirror.STATE_EXPLODING)) {
       this.explodeAnimation();
-
     } else if (mirror.inState(EnemyMirror.STATE_DISAPPEARING)) {
       this.disappearingAnimation();
-
     } else {
       this.zRotationOffset += EnemyMirrorRenderer.ROTATION_SPEED;
       this._animateMirror();
     }
   }
 
-  _animateMirror () {
+  _animateMirror() {
     if (!this.modelGroup) return;
 
-    const mirror   = this.object;
-    const t        = performance.now();
+    const mirror = this.object;
+    const t = performance.now();
     const children = this.modelGroup.children;
 
     if (mirror.inState(EnemyMirror.STATE_REFLECTING)) {
-      const progress = mirror.stateProgressInTime();   // 0 → 1 over 400ms
+      const progress = mirror.stateProgressInTime(); // 0 → 1 over 400ms
 
-      if (progress < 0.20) {
+      if (progress < 0.2) {
         // ── Initial impact flash (0–80ms) ──────────────────────────────────
         // Bright white burst that rapidly fades — the "hit" moment.
-        const intensity = 1 - (progress / 0.20);
-        children.forEach(child => {
+        const intensity = 1 - progress / 0.2;
+        children.forEach((child) => {
           if (!child.material) return;
           child.material.color.setRGB(1, 1, 1);
           child.material.opacity = 0.5 + 0.5 * intensity;
         });
-
       } else {
         // ── Vulnerability strobe (80–400ms) ─────────────────────────────────
         // Fast, irregular pulse — signals "shoot me NOW."
         const strobe = Math.abs(Math.sin(t / 70));
-        children.forEach(child => {
+        children.forEach((child) => {
           if (!child.material) return;
-          child.material.color.setRGB(0.7 + 0.3 * strobe, 0.7 + 0.3 * strobe, 0.7 + 0.3 * strobe);
+          child.material.color.setRGB(
+            0.7 + 0.3 * strobe,
+            0.7 + 0.3 * strobe,
+            0.7 + 0.3 * strobe,
+          );
           child.material.opacity = 0.45 + 0.55 * strobe;
         });
       }
-
     } else {
       // ── Normal idle / approaching ────────────────────────────────────────
       // Restore original silver/white colors every frame.
       // This also handles recovery after the REFLECTING window expires without
       // a relying on a one-shot "reset" call.
-      children.forEach(child => {
+      children.forEach((child) => {
         if (!child.material) return;
         if (child.material.userData.originalColor !== undefined) {
           child.material.color.setHex(child.material.userData.originalColor);

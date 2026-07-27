@@ -24,44 +24,56 @@ export default class EnemySpiker extends Enemy {
    * @param {number} laneId
    * @param {number} zPosition
    */
-  constructor (surface, projectileManager, rewardCallback, laneId = 0, zPosition = 1, game) {
-    super(surface, projectileManager, rewardCallback, laneId, zPosition, SurfaceObject.TYPE_SPIKER, game);
+  constructor(
+    surface,
+    projectileManager,
+    rewardCallback,
+    laneId = 0,
+    zPosition = 1,
+    game,
+  ) {
+    super(
+      surface,
+      projectileManager,
+      rewardCallback,
+      laneId,
+      zPosition,
+      SurfaceObject.TYPE_SPIKER,
+      game,
+    );
 
     this.firstLevel = 5;
     this.valueInPoints = 150;
 
     this.zSpeed = -randomRange(3, 6) * 0.001;
     this.setState(EnemySpiker.STATE_IDLE);
-  this.game = game;
+    this.game = game;
   }
 
-  updateState () {
+  updateState() {
     if (this.inState(EnemySpiker.STATE_IDLE)) {
       this.setState(
-        State.drawNextState(
-          EnemySpiker.STATE_IDLE,
-          EnemySpiker.STATE_SHOOTING
-        )
+        State.drawNextState(EnemySpiker.STATE_IDLE, EnemySpiker.STATE_SHOOTING),
       );
-
     } else if (this.inState(EnemySpiker.STATE_SHOOTING)) {
       this.setState(EnemySpiker.STATE_IDLE);
       this.unsetFlag(EnemySpiker.FLAG_SHOOTS_FIRED);
-
     } else if (this.inState(EnemySpiker.STATE_EXPLODING)) {
       this.setState(EnemySpiker.STATE_DEAD);
-
     } else if (this.inState(EnemySpiker.STATE_DISAPPEARING)) {
       this.setState(EnemySpiker.STATE_DEAD);
     }
   }
 
-  updateEntity (delta = 1 / 60) {
+  updateEntity(delta = 1 / 60) {
     if (this.inState(EnemySpiker.STATE_DEAD)) {
       this.alive = false;
     }
 
-    if (this.zPosition <= EnemySpiker.TURNAROUND_HEIGHT && this.isFlagNotSet(EnemySpiker.FLAG_REACHED_TOP)) {
+    if (
+      this.zPosition <= EnemySpiker.TURNAROUND_HEIGHT &&
+      this.isFlagNotSet(EnemySpiker.FLAG_REACHED_TOP)
+    ) {
       this.setFlag(EnemySpiker.FLAG_REACHED_TOP);
       this.zPosition = EnemySpiker.TURNAROUND_HEIGHT;
     }
@@ -70,7 +82,10 @@ export default class EnemySpiker extends Enemy {
       this.alive = false;
     }
 
-    if (this.inState(EnemySpiker.STATE_SHOOTING) && this.isFlagNotSet(EnemySpiker.FLAG_SHOOTS_FIRED)) {
+    if (
+      this.inState(EnemySpiker.STATE_SHOOTING) &&
+      this.isFlagNotSet(EnemySpiker.FLAG_SHOOTS_FIRED)
+    ) {
       this.setFlag(EnemySpiker.FLAG_SHOOTS_FIRED);
       this.fire();
     }
@@ -85,8 +100,11 @@ export default class EnemySpiker extends Enemy {
     }
   }
 
-  disappear () {
-    if (this.inState(EnemySpiker.STATE_EXPLODING) || this.inState(EnemySpiker.STATE_DEAD)) {
+  disappear() {
+    if (
+      this.inState(EnemySpiker.STATE_EXPLODING) ||
+      this.inState(EnemySpiker.STATE_DEAD)
+    ) {
       return;
     }
 
@@ -94,7 +112,7 @@ export default class EnemySpiker extends Enemy {
     super.die();
   }
 
-  die () {
+  die() {
     if (this.inState(EnemySpiker.STATE_DEAD)) {
       return;
     }

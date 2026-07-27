@@ -1,5 +1,5 @@
 import * as Three from 'three';
-import { Group, MeshBasicMaterial } from 'three';
+import { Group, MeshBasicMaterial, Vector2 } from 'three';
 import objLoader from '@/utils/objLoader';
 import compareVectors from '@/utils/compareVectors';
 import SurfaceObjectWrapper from '@/Renderer/Surface/SurfaceObjectWrapper';
@@ -15,54 +15,53 @@ export default class ShooterRenderer extends SurfaceObjectWrapper {
 
   positionChangeSpeed = 0.3;
   rotationChangeSpeed = 0.2;
+  _movementScratch = new Vector2();
 
-  constructor (shooter, surface) {
+  constructor(shooter, surface) {
     super(shooter, surface, Shooter.TYPE_SHOOTER);
   }
 
-  setVisualsToNormal () {
+  setVisualsToNormal() {
     this.explosionGroup.visible = false;
   }
 
-  setVisualsToExplode () {
+  setVisualsToExplode() {
     this.explosionGroup.visible = true;
   }
 
-  updateState () {
+  updateState() {
     if (this.modelGroup) {
-        const isPhantom = this.object.game?.powerUpManager?.hasPhantom;
+      const isPhantom = this.object.game?.powerUpManager?.hasPhantom;
 
-        this.modelGroup.traverse((child) => {
-            if (child.isLineSegments && child.material) {
-                child.material.transparent = true;
-                child.material.opacity = isPhantom ? 0.3 : 1.0;
-                child.material.color.setHex(isPhantom ? 0xb266ff : ShooterRenderer.SHOOTER_WIREFRAME_COLOR);
-            } 
-            else if (child.isMesh && child.material) {
-                child.material.transparent = true;
-                child.material.opacity = isPhantom ? 0.3 : 1.0;
-            }
-        });
+      this.modelGroup.traverse((child) => {
+        if (child.isLineSegments && child.material) {
+          child.material.transparent = true;
+          child.material.opacity = isPhantom ? 0.3 : 1.0;
+          child.material.color.setHex(
+            isPhantom ? 0xb266ff : ShooterRenderer.SHOOTER_WIREFRAME_COLOR,
+          );
+        } else if (child.isMesh && child.material) {
+          child.material.transparent = true;
+          child.material.opacity = isPhantom ? 0.3 : 1.0;
+        }
+      });
     }
     if (this.shieldMesh) {
-       this.shieldMesh.visible = !!this.object.game?.powerUpManager?.hasShield;
+      this.shieldMesh.visible = !!this.object.game?.powerUpManager?.hasShield;
     }
 
     if (this.object.inState(Shooter.STATE_EXPLODING)) {
       this.explodeAnimation();
-
     } else if (this.object.inState(Shooter.STATE_DISAPPEARING)) {
       this.disappearingAnimation();
-
     } else if (this.object.inState(Shooter.STATE_RENOVATING)) {
       this.renovatingAnimation();
-
     } else {
       this.setVisualsToNormal();
     }
   }
 
-  disappearingAnimation () {
+  disappearingAnimation() {
     let scale = Math.pow(this.object.stateProgressInTime() * 2 - 1, 4);
 
     if (this.object.stateProgressInTime() <= 0.5) {
@@ -73,19 +72,23 @@ export default class ShooterRenderer extends SurfaceObjectWrapper {
     }
   }
 
-  renovatingAnimation () {
+  renovatingAnimation() {
     let modelScale = Math.pow(this.object.stateProgressInTime(), 2);
     this.modelGroup.scale.set(modelScale, modelScale, modelScale);
     this.modelGroup.visible = true;
   }
 
-  explodeAnimation () {
+  explodeAnimation() {
     this.setVisualsToExplode();
     this.zRotationOffset += ShooterRenderer.EXPLOSION_ROTATION_SPEED;
 
     let scale = Math.pow(this.object.stateProgressInTime() * 2 - 1, 4);
     let explosionScale = 1 - scale;
-    this.explosionGroup.scale.set(explosionScale, explosionScale, explosionScale);
+    this.explosionGroup.scale.set(
+      explosionScale,
+      explosionScale,
+      explosionScale,
+    );
 
     if (this.object.stateProgressInTime() <= 0.5) {
       let modelScale = scale;
@@ -95,7 +98,7 @@ export default class ShooterRenderer extends SurfaceObjectWrapper {
     }
   }
 
-  move () {
+  move() {
     this.position.z = this.object.zPosition * this.surface.depth;
     let desiredPosition = this.surface.lanesMiddleCoords[this.object.laneId];
 
@@ -103,7 +106,8 @@ export default class ShooterRenderer extends SurfaceObjectWrapper {
       return;
     }
 
-    let movement = desiredPosition.clone();
+    // Use the scratch vector instead of creating a new one!
+    let movement = this._movementScratch.copy(desiredPosition);
     movement.sub(this.position);
     movement.setLength(this.positionChangeSpeed);
 
@@ -119,19 +123,22 @@ export default class ShooterRenderer extends SurfaceObjectWrapper {
     this.position.y += movement.y;
   }
 
-  rotate () {
-    let desiredRotation = this.surface.lanesCenterDirectionRadians[this.object.laneId];
+  rotate() {
+    let desiredRotation =
+      this.surface.lanesCenterDirectionRadians[this.object.laneId];
 
     if (desiredRotation === this.rotation.z) {
       return;
     }
 
     if (this.shieldMesh && this.shieldMesh.visible) {
-       this.shieldMesh.rotation.y += 0.02;
-       this.shieldMesh.rotation.x += 0.01;
+      this.shieldMesh.rotation.y += 0.02;
+      this.shieldMesh.rotation.x += 0.01;
     }
 
-    if (Math.abs(desiredRotation - this.rotation.z) > this.rotationChangeSpeed) {
+    if (
+      Math.abs(desiredRotation - this.rotation.z) > this.rotationChangeSpeed
+    ) {
       let leftAngularDistance, rightAngularDistance;
 
       if (desiredRotation < this.rotation.z) {
@@ -142,7 +149,8 @@ export default class ShooterRenderer extends SurfaceObjectWrapper {
         rightAngularDistance = desiredRotation - this.rotation.z;
       }
 
-      let rotationDirection = leftAngularDistance > rightAngularDistance ? 1 : -1;
+      let rotationDirection =
+        leftAngularDistance > rightAngularDistance ? 1 : -1;
       this.rotation.z += rotationDirection * this.rotationChangeSpeed;
 
       if (this.rotation.z >= 2 * Math.PI) {
@@ -151,21 +159,29 @@ export default class ShooterRenderer extends SurfaceObjectWrapper {
         this.rotation.z += 2 * Math.PI;
       }
     } else {
-      this.rotation.z = this.surface.lanesCenterDirectionRadians[this.object.laneId];
+      this.rotation.z =
+        this.surface.lanesCenterDirectionRadians[this.object.laneId];
     }
   }
 
-  loadModel () {
+  loadModel() {
     let that = this;
     this.modelGroup = new Group();
-    const shieldGeo = new Three.SphereGeometry(ShooterRenderer.MODEL_SCALE * 3.5, 12, 12);
-    this.shieldMesh = new Three.Mesh(shieldGeo, new Three.MeshBasicMaterial({
-      color: 0x00ffff,      // Cyan
-      wireframe: true,
-      transparent: true,
-      opacity: 0.45
-    }));
-    
+    const shieldGeo = new Three.SphereGeometry(
+      ShooterRenderer.MODEL_SCALE * 3.5,
+      12,
+      12,
+    );
+    this.shieldMesh = new Three.Mesh(
+      shieldGeo,
+      new Three.MeshBasicMaterial({
+        color: 0x00ffff, // Cyan
+        wireframe: true,
+        transparent: true,
+        opacity: 0.45,
+      }),
+    );
+
     this.shieldMesh.visible = false;
     this.add(this.shieldMesh);
 
@@ -178,7 +194,7 @@ export default class ShooterRenderer extends SurfaceObjectWrapper {
               new Three.WireframeGeometry(child.geometry),
               new Three.LineBasicMaterial({
                 color: ShooterRenderer.SHOOTER_WIREFRAME_COLOR,
-              })
+              }),
             );
             child.add(shooterWireframe);
 
@@ -186,10 +202,14 @@ export default class ShooterRenderer extends SurfaceObjectWrapper {
               color: 0,
               polygonOffset: true,
               polygonOffsetFactor: 2,
-              polygonOffsetUnits: 1
+              polygonOffsetUnits: 1,
             });
 
-            child.scale.set(ShooterRenderer.MODEL_SCALE, ShooterRenderer.MODEL_SCALE, ShooterRenderer.MODEL_SCALE);
+            child.scale.set(
+              ShooterRenderer.MODEL_SCALE,
+              ShooterRenderer.MODEL_SCALE,
+              ShooterRenderer.MODEL_SCALE,
+            );
             child.rotation.y = ShooterRenderer.MODEL_ROTATION;
             child.position.z = ShooterRenderer.MODEL_Z_OFFSET;
 
@@ -198,7 +218,7 @@ export default class ShooterRenderer extends SurfaceObjectWrapper {
         });
       },
       null,
-      x => console.warn(x)
+      (x) => console.warn(x),
     );
 
     this.add(this.modelGroup);
