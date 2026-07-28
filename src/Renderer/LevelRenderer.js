@@ -1,6 +1,7 @@
 import { Color, Group } from 'three';
 import SurfaceRenderer from '@/Renderer/Surface/SurfaceRenderer';
 import ShooterRenderer from '@/Renderer/Shooters/ShooterRenderer';
+import DashTrailRenderer from '@/Renderer/Shooters/DashTrailRenderer';
 import ProjectileRendererManager from '@/Renderer/Surface/ProjectileRendererManager';
 import EnemyRendererManager from '@/Renderer/Surface/EnemyRendererManager';
 
@@ -11,6 +12,7 @@ export default class LevelRenderer extends Group {
   camera;
   surfaceRenderer;
   shooterRenderer;
+  dashTrailRenderer;
   projectileRendererManager;
   enemyRendererManager;
 
@@ -43,7 +45,10 @@ export default class LevelRenderer extends Group {
       this.level.surface,
     );
 
+    this.dashTrailRenderer = new DashTrailRenderer(this.level.surface);
+
     this.add(this.surfaceRenderer);
+    this.add(this.dashTrailRenderer);
     this.add(this.shooterRenderer);
     this.add(this.enemyRendererManager);
     this.add(this.projectileRendererManager);
@@ -55,6 +60,12 @@ export default class LevelRenderer extends Group {
     if (this.bgmManager) {
       this.bgmManager.stop();
     }
+    if (this.dashTrailRenderer) {
+      this.dashTrailRenderer.dispose();
+      this.remove(this.dashTrailRenderer);
+      this.dashTrailRenderer = undefined;
+    }
+
     this.remove(this.surfaceRenderer);
     this.remove(this.shooterRenderer);
     this.remove(this.enemyRendererManager);
@@ -143,6 +154,9 @@ export default class LevelRenderer extends Group {
 
       this.surfaceRenderer.update();
       this.shooterRenderer.update();
+      if (this.dashTrailRenderer) {
+        this.dashTrailRenderer.update(this.shooterRenderer.object);
+      }
       this.enemyRendererManager.update();
       this.projectileRendererManager.update();
       this.followShooter();
