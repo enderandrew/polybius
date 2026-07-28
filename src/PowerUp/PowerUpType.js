@@ -19,6 +19,12 @@ export const PowerUpType = Object.freeze({
     shape: 'bomb',
     duration: 15000,
     isWeapon: true,
+    // Only GRENADE/LASER/MISSILE/PARTICLE_BLASTER carry this. PowerUpManager
+    // uses it to keep exactly one "damage weapon" active at a time — see the
+    // comment in collect() for why. RAPID_FIRE, SPREAD_GUN and SYNTH_SURGE
+    // deliberately do NOT have it: they're rate/pattern/trigger modifiers
+    // meant to stack on top of whichever damage weapon is equipped.
+    determinesWeaponType: true,
     dropWeight: 5,
     description: 'Fires explosive charges that deal Area-of-Effect damage',
   },
@@ -31,6 +37,7 @@ export const PowerUpType = Object.freeze({
     shape: 'beam', // Elongated hexagon
     duration: 18000,
     isWeapon: true,
+    determinesWeaponType: true,
     dropWeight: 5,
     description: 'Long beam, double damage — slow rate of fire',
   },
@@ -43,6 +50,7 @@ export const PowerUpType = Object.freeze({
     shape: 'missile',
     duration: 15000,
     isWeapon: true,
+    determinesWeaponType: true,
     dropWeight: 6,
     description: 'Fires a single homing missile that tracks the nearest enemy',
   },
@@ -55,6 +63,7 @@ export const PowerUpType = Object.freeze({
     shape: 'diamond', // See PowerUpRenderer for shape definitions
     duration: 15000, // ms — how long the effect lasts (null = permanent until death)
     isWeapon: true,
+    determinesWeaponType: true,
     dropWeight: 8, // Relative probability weight for enemy drops
     description: 'Enhanced blaster — destroys enemies and clears spikes faster',
   },

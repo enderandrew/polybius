@@ -126,6 +126,29 @@ export class PowerUpManager {
 
     // --- Timed weapon effects ---
     if (type.duration) {
+      // ProjectileManager.fire() (and getBulletDamage()/getBulletColor())
+      // pick ONE damage weapon by fixed priority: grenade > laser > missile >
+      // particle blaster > normal. Without this, picking up e.g. LASER while
+      // GRENADE was still active left both simultaneously "active" per
+      // _active, but the priority chain always resolved to GRENADE — so the
+      // LASER pickup produced no visible or behavioural change at all until
+      // the grenade happened to expire on its own. Expiring the previous
+      // damage weapon on pickup guarantees the one just collected is the one
+      // that actually fires.
+      //
+      // RAPID_FIRE, SPREAD_GUN and SYNTH_SURGE are deliberately excluded
+      // (see determinesWeaponType's definition comment) — they modify
+      // whichever damage weapon is equipped rather than competing to BE it,
+      // so they keep stacking freely.
+      if (type.determinesWeaponType) {
+        for (const [id, entry] of this._active) {
+          if (entry.type.determinesWeaponType && id !== type.id) {
+            this._active.delete(id);
+            this._emit('powerup:expired', { type: entry.type });
+          }
+        }
+      }
+
       const remaining = type.duration / 1000;
       this._active.set(type.id, { type, remaining });
       this._emit('powerup:collected', { type, remaining });
