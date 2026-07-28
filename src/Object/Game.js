@@ -833,6 +833,7 @@ export default class Game {
     // tolerates that rather than crashing the warp bonus.
     const allTypes = [
       PowerUpType.AI_DROID,
+      PowerUpType.FIREWALL,
       PowerUpType.GRENADE,
       PowerUpType.ONE_UP,
       PowerUpType.LASER,
@@ -844,6 +845,7 @@ export default class Game {
       PowerUpType.SHIELD,
       PowerUpType.SPREAD_GUN,
       PowerUpType.SYNTH_SURGE,
+      PowerUpType.TIME_DILATION,
       PowerUpType.TIMER_EXTEND,
     ].filter(Boolean);
 

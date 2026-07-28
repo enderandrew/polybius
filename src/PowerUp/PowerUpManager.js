@@ -28,6 +28,9 @@ import { PowerUpType } from '@/PowerUp/PowerUpType';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
 export class PowerUpManager {
+  /** Enemy delta multiplier while TIME_DILATION is active. */
+  static TIME_DILATION_SCALE = 0.45;
+
   constructor() {
     // Map of PowerUpType.id → { type, remaining: DOMHighResTimeStamp | null }
     this._active = new Map();
@@ -270,6 +273,31 @@ export class PowerUpManager {
 
   get hasPhaseDash() {
     return this.isActive(PowerUpType.PHASE_DASH.id);
+  }
+
+  get hasFirewall() {
+    return this.isActive(PowerUpType.FIREWALL.id);
+  }
+
+  get hasTimeDilation() {
+    return this.isActive(PowerUpType.TIME_DILATION.id);
+  }
+
+  /**
+   * Multiplier applied to the delta driving enemies, spikes and enemy
+   * projectiles. The player, player projectiles and all input stay at 1.0.
+   *
+   * IMPORTANT: this only scales delta-driven motion. Enemy state machines
+   * (Flipper rotation, Pulsar pulse timing) run on Date.now() via
+   * SurfaceObject.stateProgressInTime(), so those are NOT slowed. Enemy fire
+   * rate is compensated separately in ShootingSurfaceObject.fire(). Making
+   * state timing scale too would require replacing the wall clock with a
+   * scalable game clock across SurfaceObject.
+   *
+   * @return {number}
+   */
+  getEnemyTimeScale() {
+    return this.hasTimeDilation ? PowerUpManager.TIME_DILATION_SCALE : 1;
   }
 
   get hasPhantom() {

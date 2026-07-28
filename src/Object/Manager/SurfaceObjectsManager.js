@@ -104,11 +104,17 @@ export default class SurfaceObjectsManager extends FIFOManager {
     });
   }
 
-  update(delta = 1 / 60) {
+  /**
+   * @param {number} delta      - real frame delta; drives the player.
+   * @param {number} enemyDelta - possibly slowed delta (TIME_DILATION);
+   *                              drives enemies and spikes. Defaults to delta
+   *                              so existing callers are unaffected.
+   */
+  update(delta = 1 / 60, enemyDelta = delta) {
     this._drainPendingSpawns();
 
     this.shooters.forEach((shooter) => shooter.update(delta));
-    this.enemies.forEach((enemy) => enemy.update(delta));
+    this.enemies.forEach((enemy) => enemy.update(enemyDelta));
 
     for (let i = 0; i < this.spikes.length; i++) {
       const spike = this.spikes[i];
@@ -122,7 +128,7 @@ export default class SurfaceObjectsManager extends FIFOManager {
       }
 
       spike.extendToLowestSpiker(validSpikers);
-      spike.update(delta);
+      spike.update(enemyDelta);
     }
 
     this.runGarbageCollector();

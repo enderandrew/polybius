@@ -14,6 +14,7 @@ export default class SurfaceRenderer extends Group {
   static ACTIVE_LANE_COLOR = 0xffff00;
   static DEFAULT_LANE_COLOR = [0x0000ff, 0xff0000, 0x00ff00];
   static SHORTED_LANE_COLOR = 0xffffff;
+  static BURNING_LANE_COLOR = 0xff7a18;
 
   type = 'Group';
   surface;
@@ -25,6 +26,7 @@ export default class SurfaceRenderer extends Group {
   laneActiveMaterial;
   laneDefaultMaterial;
   laneShortedMaterial;
+  laneBurningMaterial;
 
   /**
    * @constructor
@@ -90,6 +92,20 @@ export default class SurfaceRenderer extends Group {
         true,
       );
     }
+
+    //Burning lanes (FIREWALL) — drawn last so they read clearly over the
+    //default/active passes. Distinct colour from shorted lanes because the two
+    //mean opposite things: white shorts hurt the player, orange burns hurt
+    //enemies.
+    for (let laneId = 0; laneId < this.surface.lanesAmount; laneId++) {
+      if (!this.surface.isLaneBurning(laneId)) {
+        continue;
+      }
+
+      this.setConnectorsAppearance(laneId, this.laneBurningMaterial, false);
+      this.setLinesAppearance(laneId, this.laneBurningMaterial, true);
+      this.setLinesAppearance(laneId + 1, this.laneBurningMaterial, true);
+    }
   }
 
   createLanes() {
@@ -111,6 +127,9 @@ export default class SurfaceRenderer extends Group {
     });
     this.laneShortedMaterial = new LineBasicMaterial({
       color: SurfaceRenderer.SHORTED_LANE_COLOR,
+    });
+    this.laneBurningMaterial = new LineBasicMaterial({
+      color: SurfaceRenderer.BURNING_LANE_COLOR,
     });
 
     for (let i = 0; i < this.getAmountOfLanes(); i++) {

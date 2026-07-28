@@ -2,6 +2,7 @@ import Shooter from '@/Object/Shooters/Shooter';
 import SurfaceObjectsManager from '@/Object/Manager/SurfaceObjectsManager';
 import ProjectileManager from '@/Object/Manager/ProjectileManager';
 import keyboardInput from '@/utils/KeyboardInput';
+import Firewall from '@/PowerUp/Firewall';
 import EnemySpawner from '@/Object/Enemies/EnemySpawner';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
@@ -71,6 +72,8 @@ export default class Level {
     this.surfaceObjectsManager = new SurfaceObjectsManager(surface);
     this.projectileManager = new ProjectileManager(this.surfaceObjectsManager);
     this.projectileManager.game = this.game;
+    this.firewall = new Firewall(this.surface, this.surfaceObjectsManager);
+
     this.enemySpawner = new EnemySpawner(
       this.surfaceObjectsManager,
       this.projectileManager,
@@ -95,6 +98,11 @@ export default class Level {
 
   release() {
     this.released = true;
+
+    // Counter-based ignites must be released or they would leak onto the
+    // Surface; extinguishAllLanes() is a belt-and-braces reset.
+    this.firewall.clear();
+    this.surface.extinguishAllLanes();
 
     this.surfaceObjectsManager.removeEnemies();
     this.surfaceObjectsManager.removeShooters();
@@ -198,12 +206,19 @@ export default class Level {
     this.shooter.laneLockKeyboard =
       keyboardInput.isDown('ShiftLeft') || keyboardInput.isDown('ShiftRight');
 
-    this.projectileManager.update(delta);
-    this.surfaceObjectsManager.update(delta);
+    // TIME_DILATION slows enemies only; the player keeps the real delta.
+    const powerUps = this.game?.powerUpManager ?? null;
+    const enemyDelta = delta * (powerUps ? powerUps.getEnemyTimeScale() : 1);
+
+    this.projectileManager.update(delta, enemyDelta);
+    this.surfaceObjectsManager.update(delta, enemyDelta);
 
     if (this.released) {
       return;
     }
+
+    // Runs after entities have moved so kills reflect this frame's positions.
+    this.firewall.update(powerUps, this.shooter);
 
     this.enemySpawner.updateScore(this.getCurrentScore());
 

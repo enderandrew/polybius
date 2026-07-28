@@ -14,6 +14,7 @@ export default class Surface {
   lanesMiddleCoords;
   lanesCenterDirectionRadians;
   shortedLanes;
+  burningLanes;
   zOffset;
 
   constructor(id, name, isOpen, lanesCoords, zOffset = 0) {
@@ -32,6 +33,12 @@ export default class Surface {
     this.depth = 20;
 
     this.shortedLanes = new Array(this.lanesAmount).fill(0);
+
+    // Firewall burns are tracked on their own channel rather than reusing
+    // shortedLanes, because a Pulsar short is lethal to the PLAYER while a
+    // Firewall burn is lethal to ENEMIES. Sharing one array would mean the
+    // player's own Firewall electrocuted them.
+    this.burningLanes = new Array(this.lanesAmount).fill(0);
 
     this.calculateCenteredLanesCoords();
     this.calculateLanesCenterCoords();
@@ -169,6 +176,32 @@ export default class Surface {
 
   isLaneShorted(laneId) {
     return this.shortedLanes[laneId] > 0;
+  }
+
+  /**
+   * Counter-based like shortLane() so overlapping Firewall sources compose
+   * correctly and each ignite is matched by exactly one extinguish.
+   * @param {number} laneId
+   */
+  igniteLane(laneId) {
+    if (laneId < 0 || laneId >= this.lanesAmount) return;
+    this.burningLanes[laneId]++;
+  }
+
+  /** @param {number} laneId */
+  extinguishLane(laneId) {
+    if (laneId < 0 || laneId >= this.lanesAmount) return;
+    if (this.burningLanes[laneId] > 0) this.burningLanes[laneId]--;
+  }
+
+  /** @param {number} laneId @return {boolean} */
+  isLaneBurning(laneId) {
+    return this.burningLanes[laneId] > 0;
+  }
+
+  /** Hard reset — used on level teardown so nothing survives into a new level. */
+  extinguishAllLanes() {
+    this.burningLanes.fill(0);
   }
 
   static fromDataset(dataset) {

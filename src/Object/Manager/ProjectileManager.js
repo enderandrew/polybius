@@ -132,7 +132,11 @@ export default class ProjectileManager extends FIFOManager {
     return true;
   }
 
-  update(delta = 1 / 60) {
+  /**
+   * @param {number} delta      - real frame delta; drives player projectiles.
+   * @param {number} enemyDelta - possibly slowed delta (TIME_DILATION).
+   */
+  update(delta = 1 / 60, enemyDelta = delta) {
     // Tuned as "0.15 per frame" at 60fps -> baked into a per-second rate here.
     const steeringSpeed = 0.15 * 60 * delta;
 
@@ -225,7 +229,7 @@ export default class ProjectileManager extends FIFOManager {
     });
 
     this.enemyProjectiles.forEach((projectile) => {
-      projectile.update(delta);
+      projectile.update(enemyDelta);
       projectile.detectCollision(
         this.surfaceObjectsManager.shootersMap[projectile.laneId],
       );

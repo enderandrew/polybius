@@ -110,14 +110,32 @@ export const PowerUpType = Object.freeze({
     description: 'Companion cube droid that auto-targets enemies',
   },
 
-  // Upgrades the dash rather than adding a new verb: further, faster to
-  // recharge, and briefly intangible on arrival. That last part specifically
-  // covers the base dash's one designed weakness — the destination lane is
-  // normally still lethal, so an ordinary dash can't be used to escape *into*
-  // a shorted band. Phase Dash can.
-  //
-  // Distinct from PHANTOM: this grants a short window earned by using the
-  // mechanic, not several seconds of passive immunity.
+  FIREWALL: {
+    id: 'FIREWALL',
+    label: 'FIRE\nWALL',
+    color: '#ff7a18',
+    glowColor: 'rgba(255,122,24,0.6)',
+    shape: 'fan',
+    duration: 12000,
+    isWeapon: false,
+    grantsFirewall: true,
+    dropWeight: 6,
+    description: 'Your flanks burn — enemies closing beside you are destroyed',
+  },
+
+  TIME_DILATION: {
+    id: 'TIME_DILATION',
+    label: 'TIME\nDILATION',
+    color: '#b06bff',
+    glowColor: 'rgba(176,107,255,0.6)',
+    shape: 'hourglass',
+    duration: 10000,
+    isWeapon: false,
+    grantsTimeDilation: true,
+    dropWeight: 5,
+    description: 'Enemies crawl while you move at full speed',
+  },
+
   PHASE_DASH: {
     id: 'PHASE_DASH',
     label: 'PHASE\nDASH',
