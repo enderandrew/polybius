@@ -3,6 +3,7 @@ import SurfaceObjectsManager from '@/Object/Manager/SurfaceObjectsManager';
 import ProjectileManager from '@/Object/Manager/ProjectileManager';
 import keyboardInput from '@/utils/KeyboardInput';
 import Firewall from '@/PowerUp/Firewall';
+import enemyClock from '@/utils/GameClock';
 import EnemySpawner from '@/Object/Enemies/EnemySpawner';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
@@ -74,6 +75,10 @@ export default class Level {
     this.projectileManager.game = this.game;
     this.firewall = new Firewall(this.surface, this.surfaceObjectsManager);
 
+    // Re-anchor enemy time to wall time so a long spell in menus between
+    // levels doesn't leave the clock arbitrarily behind.
+    enemyClock.reset();
+
     this.enemySpawner = new EnemySpawner(
       this.surfaceObjectsManager,
       this.projectileManager,
@@ -98,6 +103,11 @@ export default class Level {
 
   release() {
     this.released = true;
+
+    // Counter-based ignites must be released or they would leak onto the
+    // Surface; extinguishAllLanes() is a belt-and-braces reset.
+    this.firewall.clear();
+    this.surface.extinguishAllLanes();
 
     // Counter-based ignites must be released or they would leak onto the
     // Surface; extinguishAllLanes() is a belt-and-braces reset.
@@ -209,6 +219,20 @@ export default class Level {
     // TIME_DILATION slows enemies only; the player keeps the real delta.
     const powerUps = this.game?.powerUpManager ?? null;
     const enemyDelta = delta * (powerUps ? powerUps.getEnemyTimeScale() : 1);
+
+    // Advance the enemy-side clock by the SAME scaled amount, so State
+    // durations (rotation, pulsing, fire cadence) dilate along with movement.
+    // Because this only ticks here, enemy time also stops correctly while the
+    // game is paused instead of racing ahead on wall time.
+    enemyClock.advance(enemyDelta);
+
+    // Drag the music down with the world. Beat callbacks follow automatically
+    // because BgmManager derives them from audio.currentTime.
+    if (this.game?.bgmManager) {
+      this.game.bgmManager.setTimeScale(
+        powerUps ? powerUps.getEnemyTimeScale() : 1,
+      );
+    }
 
     this.projectileManager.update(delta, enemyDelta);
     this.surfaceObjectsManager.update(delta, enemyDelta);

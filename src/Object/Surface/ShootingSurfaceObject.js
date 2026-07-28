@@ -63,7 +63,9 @@ export default class ShootingSurfaceObject extends SurfaceObject {
       return;
     }
 
-    let now = Date.now();
+    // this.now() is the enemy clock for enemies and wall time for the player,
+    // so enemy fire cadence dilates automatically — no manual compensation.
+    let now = this.now();
 
     // Apply power-up cooldown modifier for player shots only
     let cooldown =

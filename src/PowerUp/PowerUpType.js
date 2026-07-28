@@ -142,7 +142,7 @@ export const PowerUpType = Object.freeze({
     color: '#00e5ff',
     glowColor: 'rgba(0,229,255,0.6)',
     shape: 'beam',
-    duration: 18000,
+    duration: 12000,
     isWeapon: false,
     grantsPhaseDash: true,
     dropWeight: 7,

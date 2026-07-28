@@ -1,4 +1,5 @@
 import SurfaceObject from '@/Object/Surface/SurfaceObject';
+import enemyClock from '@/utils/GameClock';
 
 export default class Projectile extends SurfaceObject {
   static PROJECTILE_SPEED = 0.028;
@@ -38,6 +39,18 @@ export default class Projectile extends SurfaceObject {
       this.zPosition = zPosition ?? 1;
       this.zSpeed = -Projectile.PROJECTILE_SPEED;
     }
+  }
+
+  /**
+   * Enemy projectiles dilate with their shooters; player projectiles stay on
+   * wall time so the player's own weapons are never slowed.
+   *
+   * @return {number}
+   */
+  now() {
+    return this.source === Projectile.SOURCE_ENEMY
+      ? enemyClock.now()
+      : Date.now();
   }
 
   update(delta = 1 / 60) {

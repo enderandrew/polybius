@@ -49,6 +49,13 @@ export default class Shooter extends ShootingSurfaceObject {
   static PHASE_DASH_COOLDOWN_MS = 400;
   static PHASE_DASH_IFRAME_MS = 220;
 
+  // Damage dealt to enemies the dash passes through, and how close to the rim
+  // they must be to be hit. The depth limit keeps this a melee-range punish
+  // rather than a lane-clearing wipe: at 5 lanes every 400ms an unrestricted
+  // version would out-damage every weapon in the game.
+  static PHASE_DASH_DAMAGE = 1;
+  static PHASE_DASH_HIT_DEPTH = 0.3;
+
   static FLAG_ITS_ALREADY_TOO_LATE = 0x1;
   static FLAG_SUPERZAPPER_USED = 0x2;
 
@@ -58,6 +65,11 @@ export default class Shooter extends ShootingSurfaceObject {
 
   /** Wall-clock ms until which Phase Dash i-frames are active. */
   phaseUntil = 0;
+
+  /** Lanes crossed by the most recent Phase Dash, for the trail renderer. */
+  dashTrailPath = [];
+  /** Wall-clock ms until which the dash trail should render. */
+  dashTrailUntil = 0;
 
   // Lane lock is held from two independent sources that are polled at
   // different points in the frame; tracking them separately avoids one input
@@ -527,6 +539,8 @@ export default class Shooter extends ShootingSurfaceObject {
       return;
     }
 
+    const startLane = this.laneId;
+
     this.setLane(targetLane);
     this.surface.setActiveLane(this.laneId);
 
@@ -536,15 +550,68 @@ export default class Shooter extends ShootingSurfaceObject {
     this.lastLaneChangeTimestamp = now;
 
     // Phase Dash: arrive intangible for a moment, so the destination lane's
-    // hazards can be dashed *into* and not just over.
+    // hazards can be dashed *into* and not just over, and carve through
+    // anything close to the rim on the way.
     if (this.powerUps?.hasPhaseDash) {
       this.phaseUntil = now + Shooter.PHASE_DASH_IFRAME_MS;
+      this._damageDashPath(startLane, offset);
+      this.dashTrailPath = this._dashPathLanes(startLane, offset);
+      this.dashTrailUntil = this.phaseUntil;
     }
 
     messageBroker.publish(
       MessageBroker.TOPIC_AUDIO,
       MessageBroker.MESSAGE_DASH,
     );
+  }
+
+  /**
+   * Every lane the dash crosses, including the destination.
+   *
+   * @param {number} fromLane
+   * @param {number} offset
+   * @return {number[]}
+   */
+  _dashPathLanes(fromLane, offset) {
+    const direction = Math.sign(offset);
+    const steps = Math.abs(offset);
+    const lanes = [];
+
+    for (let step = 1; step <= steps; step++) {
+      const laneId = this.surface.getTargetLaneId(fromLane, step * direction);
+      if (laneId !== null && !lanes.includes(laneId)) {
+        lanes.push(laneId);
+      }
+    }
+
+    return lanes;
+  }
+
+  /**
+   * Damage rim-adjacent enemies in every lane the dash crossed. Uses
+   * hitByProjectile so it respects hitPoints — strong enemies and tankers
+   * survive a single pass rather than being deleted.
+   *
+   * @param {number} fromLane
+   * @param {number} offset
+   */
+  _damageDashPath(fromLane, offset) {
+    const lanes = this._dashPathLanes(fromLane, offset);
+    if (lanes.length === 0) {
+      return;
+    }
+
+    const enemies = this.surfaceObjectsManager.enemies;
+
+    for (let i = 0; i < enemies.length; i++) {
+      const enemy = enemies[i];
+
+      if (!enemy.alive || !enemy.hittable) continue;
+      if (enemy.zPosition > Shooter.PHASE_DASH_HIT_DEPTH) continue;
+      if (!lanes.includes(enemy.laneId)) continue;
+
+      enemy.hitByProjectile(Shooter.PHASE_DASH_DAMAGE);
+    }
   }
 
   /**

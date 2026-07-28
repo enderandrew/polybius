@@ -10,6 +10,41 @@ export default class BgmManager {
     // Callbacks for the visual engine
     this.onBeat = () => {};
     this.onAccent = () => {};
+
+    this._timeScale = 1;
+  }
+
+  /**
+   * Slow the track (and therefore the beat callbacks) to match TIME_DILATION.
+   *
+   * Beat detection reads audio.currentTime, which advances at playbackRate, so
+   * onBeat/onAccent — and every visual driven off them, like LevelRenderer's
+   * lane pulse — dilate for free without any extra plumbing.
+   *
+   * Pitch preservation is deliberately disabled: letting the pitch sag with
+   * the speed is the tape-slowdown effect that actually sells "time is
+   * slowing", whereas the browser default keeps it sounding normal-but-slow.
+   *
+   * @param {number} scale
+   */
+  setTimeScale(scale) {
+    // Browsers reject rates outside roughly 0.0625–16; clamp well inside that.
+    const clamped = Math.max(0.25, Math.min(1, scale || 1));
+
+    if (clamped === this._timeScale) {
+      return;
+    }
+
+    this._timeScale = clamped;
+
+    try {
+      this.audio.preservesPitch = false;
+      this.audio.mozPreservesPitch = false;
+      this.audio.webkitPreservesPitch = false;
+      this.audio.playbackRate = clamped;
+    } catch (error) {
+      console.debug('[BgmManager] playbackRate change failed:', error);
+    }
   }
 
   playForLevel(level) {
@@ -73,6 +108,8 @@ export default class BgmManager {
   stop() {
     this.audio.pause();
     this.audio.currentTime = 0;
+    this._timeScale = 1;
+    this.audio.playbackRate = 1;
     this.isPlaying = false;
     this.currentTrack = 0;
     this.beatData = null;

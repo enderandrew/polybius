@@ -1,5 +1,6 @@
 import ShootingSurfaceObject from '@/Object/Surface/ShootingSurfaceObject';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
+import enemyClock from '@/utils/GameClock';
 
 export default class Enemy extends ShootingSurfaceObject {
   static SHOOT_TIMEOUT_MS = 100;
@@ -39,6 +40,17 @@ export default class Enemy extends ShootingSurfaceObject {
       throw new Error("Abstract classes can't be instantiated.");
     }
     //console.log("Enemy spawned with game:", this.game);
+  }
+
+  /**
+   * Enemies run on the dilatable clock, so every State duration — Flipper
+   * rotation, Pulsar pulse, explosion timing, fire cadence — slows with
+   * TIME_DILATION rather than only their z-movement.
+   *
+   * @return {number}
+   */
+  now() {
+    return enemyClock.now();
   }
 
   hitByProjectile(damage = 1) {
