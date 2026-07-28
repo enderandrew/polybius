@@ -68,25 +68,11 @@ export default class ShootingSurfaceObject extends SurfaceObject {
     let now = this.now();
 
     // Apply power-up cooldown modifier for player shots only
-    let cooldown =
+    const cooldown =
       this.projectileSource === Projectile.SOURCE_SHOOTER &&
       this.game?.powerUpManager
         ? this.game.powerUpManager.getShotCooldown(this.shootTimeoutMs)
         : this.shootTimeoutMs;
-
-    // TIME_DILATION scales the delta that drives enemy movement, but this
-    // cooldown is wall-clock, so enemies would otherwise keep firing at full
-    // rate while crawling. Stretch it by the inverse of the time scale.
-    if (this.projectileSource === Projectile.SOURCE_ENEMY) {
-      const powerUps =
-        this.game?.powerUpManager ??
-        this.projectileManager?.game?.powerUpManager ??
-        null;
-      const scale = powerUps ? powerUps.getEnemyTimeScale() : 1;
-      if (scale > 0 && scale < 1) {
-        cooldown /= scale;
-      }
-    }
 
     if (now - this.lastShootTimestamp < cooldown) {
       return;

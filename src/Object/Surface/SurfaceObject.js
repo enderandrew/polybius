@@ -84,18 +84,29 @@ export default class SurfaceObject {
     return this.laneId !== this.prevLaneId;
   }
 
+  /**
+   * Time source for this object's state machine. Overridden by Enemy and
+   * Projectile to read the scalable enemy clock; Shooter keeps wall time so
+   * the player is never slowed by TIME_DILATION.
+   *
+   * @return {number} milliseconds
+   */
+  now() {
+    return Date.now();
+  }
+
   /** @param {State} state */
   setState(state) {
     this.prevState = this.state;
     this.state = state;
-    this.lastStateChange = Date.now();
+    this.lastStateChange = this.now();
   }
 
   /**
    * @return {number}
    */
   timeSinceLastStateChange() {
-    return Date.now() - this.lastStateChange;
+    return this.now() - this.lastStateChange;
   }
 
   /**

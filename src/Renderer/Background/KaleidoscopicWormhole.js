@@ -59,10 +59,13 @@ export default class KaleidoscopicWormhole extends Group {
   }
 
   update(delta) {
+    // Accumulate our own clock from the (possibly dilated) delta rather than
+    // reading performance.now(), so TIME_DILATION slows background motion too.
+    this.elapsed = (this.elapsed ?? 0) + delta;
     this.speedMultiplier += (1.0 - this.speedMultiplier) * delta * 6.0;
     this.colorCycle += delta * 0.4; // Continuous rainbow shift
 
-    const time = performance.now() * 0.001;
+    const time = this.elapsed;
 
     // Update Rings
     for (let i = 0; i < this.rings.length; i++) {

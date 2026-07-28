@@ -656,7 +656,13 @@ export default class Game {
 
     // Handle global background elements
     if (this.currentBackground) {
-      this.currentBackground.update(delta);
+      // The background is the "outside world", so it dilates with the enemies
+      // while the player stays at full speed. Its renderers accumulate their
+      // own clock from this delta, so oscillations slow too, not just motion.
+      const backgroundScale = this.powerUpManager
+        ? this.powerUpManager.getEnemyTimeScale()
+        : 1;
+      this.currentBackground.update(delta * backgroundScale);
     }
 
     if (this.screenObject !== null) {

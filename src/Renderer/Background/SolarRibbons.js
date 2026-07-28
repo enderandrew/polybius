@@ -83,10 +83,13 @@ export default class SolarRibbons extends Group {
   }
 
   update(delta) {
+    // Accumulate our own clock from the (possibly dilated) delta rather than
+    // reading performance.now(), so TIME_DILATION slows background motion too.
+    this.elapsed = (this.elapsed ?? 0) + delta;
     if (!this.ribbons.length) return;
 
     this.speedMultiplier += (1.0 - this.speedMultiplier) * delta * 6.0;
-    const time = performance.now() * 0.001;
+    const time = this.elapsed;
 
     for (let i = 0; i < this.ribbons.length; i++) {
       const ribbon = this.ribbons[i];

@@ -60,6 +60,9 @@ export default class EtherealNebula extends Group {
   }
 
   update(delta) {
+    // Accumulate our own clock from the (possibly dilated) delta rather than
+    // reading performance.now(), so TIME_DILATION slows background motion too.
+    this.elapsed = (this.elapsed ?? 0) + delta;
     if (!this.clouds.length) return;
 
     this.speedMultiplier += (1.0 - this.speedMultiplier) * delta * 6.0;
@@ -90,7 +93,7 @@ export default class EtherealNebula extends Group {
     for (let i = this.aliens.length - 1; i >= 0; i--) {
       const alien = this.aliens[i];
       alien.position.z -= distance * 1.5; 
-      alien.rotation.z = Math.sin(performance.now() * 0.001) * 0.05;
+      alien.rotation.z = Math.sin(this.elapsed) * 0.05;
 
       if (alien.position.z < -10) {
         this.remove(alien);

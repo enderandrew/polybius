@@ -52,6 +52,9 @@ export default class SignalDegradation extends Group {
   }
 
   update(delta) {
+    // Accumulate our own clock from the (possibly dilated) delta rather than
+    // reading performance.now(), so TIME_DILATION slows background motion too.
+    this.elapsed = (this.elapsed ?? 0) + delta;
     this.speedMultiplier += (1.0 - this.speedMultiplier) * delta * 6.0;
 
     // Randomly flash glitch strips for 1-2 frames
@@ -61,7 +64,9 @@ export default class SignalDegradation extends Group {
       if (g.material.opacity > 0) {
         g.material.opacity -= delta * 4.0; // Rapid fade out
         if (g.material.opacity < 0) g.material.opacity = 0;
-      } else if (Math.random() < 0.02) {
+      } else if (Math.random() < 0.02 * 60 * delta) {
+        // Rate expressed per-second (tuned as 2% per frame at 60fps) so the
+        // glitch cadence is frame-rate independent AND slows under dilation.
         // Random flash trigger
         this._resetGlitch(g);
         g.material.opacity = 0.1 + Math.random() * 0.3;
@@ -83,7 +88,7 @@ export default class SignalDegradation extends Group {
       ghost.position.addScaledVector(ghost.userData.velocity, delta);
 
       // Floating / undulating bobbing motion
-      ghost.position.y += Math.sin(performance.now() * 0.003 + ghost.userData.phase) * 0.1;
+      ghost.position.y += Math.sin(this.elapsed * 3 + ghost.userData.phase) * 0.1;
 
       // Clean up when it drifts far out of frame
       if (Math.abs(ghost.position.x) > 160 || Math.abs(ghost.position.y) > 100) {

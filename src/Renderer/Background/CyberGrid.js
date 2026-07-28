@@ -34,6 +34,9 @@ export default class CyberGrid extends Group {
   }
 
   update(delta) {
+    // Accumulate our own clock from the (possibly dilated) delta rather than
+    // reading performance.now(), so TIME_DILATION slows background motion too.
+    this.elapsed = (this.elapsed ?? 0) + delta;
     if (!this.grid) return;
 
     this.speedMultiplier += (1.0 - this.speedMultiplier) * delta * 6.0;

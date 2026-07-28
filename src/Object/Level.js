@@ -109,11 +109,6 @@ export default class Level {
     this.firewall.clear();
     this.surface.extinguishAllLanes();
 
-    // Counter-based ignites must be released or they would leak onto the
-    // Surface; extinguishAllLanes() is a belt-and-braces reset.
-    this.firewall.clear();
-    this.surface.extinguishAllLanes();
-
     this.surfaceObjectsManager.removeEnemies();
     this.surfaceObjectsManager.removeShooters();
     this.surfaceObjectsManager.removeSpikes();

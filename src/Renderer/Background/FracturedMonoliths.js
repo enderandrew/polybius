@@ -67,6 +67,9 @@ export default class FracturedMonoliths extends Group {
   }
 
   update(delta) {
+    // Accumulate our own clock from the (possibly dilated) delta rather than
+    // reading performance.now(), so TIME_DILATION slows background motion too.
+    this.elapsed = (this.elapsed ?? 0) + delta;
     if (!this.monoliths.length) return;
 
     this.speedMultiplier += (1.0 - this.speedMultiplier) * delta * 6.0;
@@ -93,7 +96,7 @@ export default class FracturedMonoliths extends Group {
       bf.position.addScaledVector(bf.userData.velocity, delta);
 
       // Give a subtle bob to simulate walking
-      bf.position.y = -20 + Math.abs(Math.sin(performance.now() * 0.008)) * 2;
+      bf.position.y = -20 + Math.abs(Math.sin(this.elapsed * 8)) * 2;
 
       if (Math.abs(bf.position.x) > 160) {
         this.remove(bf);

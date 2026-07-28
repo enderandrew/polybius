@@ -53,6 +53,9 @@ export default class Starfield extends Group {
   }
 
   update(delta) {
+    // Accumulate our own clock from the (possibly dilated) delta rather than
+    // reading performance.now(), so TIME_DILATION slows background motion too.
+    this.elapsed = (this.elapsed ?? 0) + delta;
     if (!this.points) return;
 
     // Smoothly decay the multiplier back to 1.0 (normal speed)
