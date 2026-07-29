@@ -140,7 +140,9 @@ export default class ProjectileManager extends FIFOManager {
     this.shooterProjectiles.forEach((projectile) => {
       if (projectile.isGrenade && projectile.needsAoECheck) {
         projectile.needsAoECheck = false;
-        JuiceManager.emit('grenade');
+        JuiceManager.emit('grenade', {
+          zPosition: projectile.zPosition,
+        });
 
         // Wipe Enemies in blast radius
         this.surfaceObjectsManager.enemies.forEach((enemy) => {

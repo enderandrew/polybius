@@ -1,4 +1,5 @@
 import EnemyFlipper from '@/Object/Enemies/EnemyFlipper';
+import JuiceManager from '@/utils/JuiceManager';
 import Enemy from '@/Object/Enemies/Enemy';
 
 export default class EnemyStealthFlipper extends EnemyFlipper {
@@ -60,6 +61,9 @@ export default class EnemyStealthFlipper extends EnemyFlipper {
       this.cloakTimer -= 60 * delta;
       if (this.cloakTimer <= 0) {
         this.cloakState = 'fading_in';
+        // De-cloaking is this enemy's tell — tear the screen as it reappears,
+        // so the glitch itself IS the warning.
+        JuiceManager.emit('phantom-attack');
       }
     } else if (this.cloakState === 'fading_in') {
       this.opacity += 0.05 * 60 * delta;

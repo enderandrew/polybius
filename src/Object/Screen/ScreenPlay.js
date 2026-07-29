@@ -26,6 +26,23 @@ export default class ScreenPlay extends Canvas3d {
     this.score = this.screenContentManager.get(ScreenContentManager.KEY_SCORE);
   }
 
+  /**
+   * Randomly replace characters with gaps, simulating dropped glyphs on a
+   * failing display. Only ever called when `active` is true.
+   *
+   * @param {string} text
+   * @param {boolean} active
+   * @return {string}
+   */
+  _corruptText(text, active) {
+    if (!active) return text;
+    let out = '';
+    for (const ch of text) {
+      out += Math.random() > 0.9 ? ' ' : ch;
+    }
+    return out;
+  }
+
   update() {
     this.targetScore = this.screenContentManager.get(
       ScreenContentManager.KEY_SCORE,
@@ -38,6 +55,11 @@ export default class ScreenPlay extends Canvas3d {
       if (this.score > this.targetScore) {
         this.score = this.targetScore;
       }
+      this._dirty = true;
+    }
+
+    // The failing-HUD jitter only reads as motion if we redraw continuously.
+    if (this.screenContentManager.get(ScreenContentManager.KEY_LIVES) === 1) {
       this._dirty = true;
     }
 
@@ -112,7 +134,20 @@ export default class ScreenPlay extends Canvas3d {
       : Canvas3d.COLOR_BLUE;
 
     this.setFontSizePx(60);
-    this.drawText(this.alignNumberToRight(this.score), 50, 120, scoreColor);
+    // On the last life the HUD reads as a failing system: the score jitters
+    // and occasionally drops characters. Driven off lives rather than sanity
+    // so it's a distinct, unmistakable "you are about to die" signal.
+    const critical =
+      this.screenContentManager.get(ScreenContentManager.KEY_LIVES) === 1;
+    const jitterX = critical ? (Math.random() - 0.5) * 6 : 0;
+    const jitterY = critical ? (Math.random() - 0.5) * 4 : 0;
+
+    this.drawText(
+      this._corruptText(this.alignNumberToRight(this.score), critical),
+      50 + jitterX,
+      120 + jitterY,
+      scoreColor,
+    );
 
     for (
       let i = 0;

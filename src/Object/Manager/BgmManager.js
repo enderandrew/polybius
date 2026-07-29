@@ -12,6 +12,98 @@ export default class BgmManager {
     this.onAccent = () => {};
 
     this._timeScale = 1;
+
+    // Web Audio graph for the low-pass "muffled" effect. Built lazily on first
+    // use because createMediaElementSource() can only be called ONCE per
+    // element, and because constructing an AudioContext before any user
+    // gesture trips browser autoplay policy.
+    this._audioContext = null;
+    this._sourceNode = null;
+    this._filterNode = null;
+    this._muffleTarget = 1; // 1 = clear, 0 = fully muffled
+    this._muffleCurrent = 1;
+  }
+
+  /**
+   * Lazily route the BGM element through a BiquadFilter so it can be muffled.
+   * Safe to call repeatedly; only builds the graph once.
+   */
+  _ensureFilterGraph() {
+    if (this._audioContext) return true;
+
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return false;
+
+    try {
+      this._audioContext = new Ctx();
+      this._sourceNode = this._audioContext.createMediaElementSource(this.audio);
+      this._filterNode = this._audioContext.createBiquadFilter();
+      this._filterNode.type = 'lowpass';
+      this._filterNode.frequency.value = 22050; // wide open = inaudible effect
+      this._sourceNode.connect(this._filterNode);
+      this._filterNode.connect(this._audioContext.destination);
+      return true;
+    } catch (error) {
+      // If routing fails the music still plays through the element directly;
+      // muffling simply becomes a no-op rather than breaking audio entirely.
+      console.debug('[BgmManager] Low-pass graph unavailable:', error);
+      this._audioContext = null;
+      return false;
+    }
+  }
+
+  /**
+   * @param {number} amount 0 = fully muffled (ringing ears), 1 = clear.
+   */
+  setMuffle(amount) {
+    this._muffleTarget = Math.max(0, Math.min(1, amount));
+    if (this._muffleTarget < 1) this._ensureFilterGraph();
+  }
+
+  /**
+   * Called each frame to ease the filter back toward clarity, so a hit
+   * muffles instantly then recovers rather than cutting back abruptly.
+   * @param {number} delta
+   */
+  updateMuffle(delta) {
+    if (!this._filterNode) return;
+
+    // Muffle instantly, recover gradually — matches how a real concussive
+    // hit feels rather than a symmetric fade.
+    const rate = this._muffleTarget < this._muffleCurrent ? 25 : 1.8;
+    this._muffleCurrent +=
+      (this._muffleTarget - this._muffleCurrent) * Math.min(1, rate * delta);
+
+    // Map 0..1 onto an exponential frequency curve; linear Hz sounds wrong
+    // because pitch perception is logarithmic.
+    const minHz = 320;
+    const maxHz = 22050;
+    const hz = minHz * Math.pow(maxHz / minHz, this._muffleCurrent);
+    this._filterNode.frequency.value = hz;
+
+    // Once fully recovered, stop nudging the parameter every frame.
+    if (Math.abs(this._muffleCurrent - this._muffleTarget) < 0.005) {
+      this._muffleCurrent = this._muffleTarget;
+    }
+  }
+
+  /**
+   * Momentary pitch/speed bend, layered on top of any TIME_DILATION scaling.
+   * @param {number} multiplier
+   */
+  setPitchBend(multiplier) {
+    this._pitchBend = multiplier;
+    this._applyRate();
+  }
+
+  _applyRate() {
+    const bend = this._pitchBend ?? 1;
+    const rate = Math.max(0.25, Math.min(4, this._timeScale * bend));
+    try {
+      this.audio.playbackRate = rate;
+    } catch {
+      // Ignore: some browsers reject extreme rates mid-playback.
+    }
   }
 
   /**
@@ -41,7 +133,7 @@ export default class BgmManager {
       this.audio.preservesPitch = false;
       this.audio.mozPreservesPitch = false;
       this.audio.webkitPreservesPitch = false;
-      this.audio.playbackRate = clamped;
+      this._applyRate();
     } catch (error) {
       console.debug('[BgmManager] playbackRate change failed:', error);
     }

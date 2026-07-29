@@ -398,6 +398,11 @@ export default class Shooter extends ShootingSurfaceObject {
     } else {
       this.lastFiredTimestamp = now;
 
+      // Recoil fires here — inside the `firedAny` branch — so it triggers once
+      // per shot that ACTUALLY left the gun, not on attempts blocked by the
+      // cooldown, which would otherwise buzz constantly while the key is held.
+      JuiceManager.emit('fire');
+
       // Audio Prioritization
       if (primaryWeapon === 'LASER') {
         messageBroker.publish(
@@ -820,6 +825,15 @@ export default class Shooter extends ShootingSurfaceObject {
 
     if (powerUps && powerUps.hasShield) {
       powerUps.consumeShield();
+
+      // The shield absorbing a hit is the "took damage but lived" moment —
+      // this is what juice:player-hit / juice:shield-break were written for
+      // and previously nothing ever emitted them.
+      JuiceManager.emit('shield-break');
+      messageBroker.publish(
+        MessageBroker.TOPIC_AUDIO,
+        MessageBroker.MESSAGE_LIGHTNING,
+      );
 
       // Grant 1.5s of invincibility so they can escape the hazard they hit!
       this.hittable = false;

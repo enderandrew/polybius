@@ -191,6 +191,7 @@ export default class Game {
       'knob',
       'Konami',
       'laser',
+      'lightning',
       'menu_select',
       'missile',
       'next_level',
@@ -203,6 +204,7 @@ export default class Game {
       'shield',
       'spooky',
       'synth',
+      'thud',
       'yes',
     ];
 
@@ -792,11 +794,47 @@ export default class Game {
     // ── Camera FOV kick ───────────────────────────────────────────────────
     if (this.camera) {
       const targetFov = this.baseFov ?? (this.baseFov = this.camera.fov);
-      const desired = targetFov + this.juice.fovKick;
+      // Warp widens the FOV dramatically (75 -> ~110) on top of any impulse
+      // kick, producing the tunnel-stretch as the player dives down the tube.
+      const warpFov = this.juice.reduceMotion ? 0 : this.juice.warp * 35;
+      const desired = targetFov + this.juice.fovKick + warpFov;
       if (Math.abs(this.camera.fov - desired) > 0.01) {
         this.camera.fov = desired;
         this.camera.updateProjectionMatrix();
       }
+    }
+
+    // ── Audio: muffle + pitch bend ────────────────────────────────────────
+    if (this.bgmManager) {
+      // Ringing-ears muffle: on the last life, or briefly after any hit
+      // (trauma is a good proxy — it spikes on exactly the events that should
+      // muffle and decays on its own).
+      let muffle = 1;
+      if (this.modeManager?.currentMode?.constructor?.name === 'PlayMode') {
+        if (this.lives === 1) muffle = 0.55;
+        muffle = Math.min(muffle, 1 - Math.min(0.8, this.juice.trauma));
+      }
+      this.bgmManager.setMuffle(muffle);
+      this.bgmManager.updateMuffle(1 / 60);
+
+      // Pitch sags during hit-stop so the audio distorts with the visual.
+      this.bgmManager.setPitchBend(
+        this.juice.hitStopRemainingMs > 0 ? 0.82 : 1,
+      );
+    }
+
+    // ── Warp: FOV stretch + starfield speed lines ─────────────────────────
+    // Driven off the shooter descending the tube at level end.
+    const descending =
+      this.shooter &&
+      this.levelObject &&
+      this.shooter.inState?.(this.shooter.constructor.STATE_GOING_DOWN_THE_TUBE);
+    this.juice.setWarp(descending ? 1 : 0);
+
+    if (this.currentBackground && this.juice.warp > 0.001) {
+      // Starfield and friends already expose pulse(); reuse it to stretch the
+      // stars into lines rather than adding a parallel speed system.
+      this.currentBackground.pulse(1 + this.juice.warp * 2.5);
     }
 
     // ── CRT shell reactions ───────────────────────────────────────────────
@@ -872,7 +910,30 @@ export default class Game {
     this.levelWonCallback();
   }
 
+  /** Words flashed for a single frame on major beats. */
+  static SUBLIMINAL_WORDS = ['OBEY', 'SLEEP', 'CONSUME', 'SUBMIT', 'STAY'];
+
+  _fireSubliminal() {
+    JuiceManager.emit('subliminal', { invert: 0.9 });
+
+    if (this.levelRenderer?.pickupTextRenderer && this.shooter) {
+      const word =
+        Game.SUBLIMINAL_WORDS[
+          Math.floor(Math.random() * Game.SUBLIMINAL_WORDS.length)
+        ];
+      // Drawn at very low contrast and large scale — meant to register
+      // peripherally rather than be read.
+      this.levelRenderer.pickupTextRenderer.spawnAt(
+        this.levelRenderer.shooterRenderer.position,
+        word,
+        'rgba(255,255,255,0.06)',
+        3.2,
+      );
+    }
+  }
+
   levelWonCallback() {
+    this._fireSubliminal();
     if (this.firstLevel && this.levelData.selectable) {
       // The score bonus itself was already credited in startLevel(); only the
       // one-off extra life for a large starting bonus is granted here.

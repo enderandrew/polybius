@@ -96,6 +96,7 @@ export default class Enemy extends ShootingSurfaceObject {
         laneId: this.laneId,
         zPosition: this.zPosition,
         type: this.type,
+        points: this.valueInPoints,
       });
 
       // Power-up drop — runs for any enemy that grants a reward

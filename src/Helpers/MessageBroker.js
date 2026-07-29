@@ -12,6 +12,7 @@ export class MessageBroker {
   static MESSAGE_GAME_OVER = 'game_over';
   static MESSAGE_JUMP = 'jump';
   static MESSAGE_KONAMI = 'Konami';
+  static MESSAGE_LIGHTNING = 'lightning';
   static MESSAGE_MENU_CHANGE = 'message_menu_change';
   static MESSAGE_MENU_SELECT = 'message_menu_select';
   static MESSAGE_NEXT_LEVEL = 'message_next_level';
@@ -28,6 +29,7 @@ export class MessageBroker {
   static MESSAGE_SHIELD = 'shield';
   static MESSAGE_SPOOKY = 'spooky';
   static MESSAGE_SYNTH_SURGE = 'synth_surge';
+  static MESSAGE_THUD = 'thud';
   static MESSAGE_YES = 'yes';
 
   // Initialized as a standard object rather than an array for proper key-value topic mapping
