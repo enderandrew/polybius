@@ -59,14 +59,10 @@ export default class ProjectileManager extends FIFOManager {
         // damage of 1, so the parent's getBulletDamage() call never runs.
         projectile.damage = powerUps.getBulletDamage(projectile.damage);
 
-        // Determine exactly what weapon is being fired
-        let wType = weaponOverride;
-        if (!wType) {
-          if (powerUps.hasGrenade) wType = 'GRENADE';
-          else if (powerUps.hasLaser) wType = 'LASER';
-          else if (powerUps.hasMissile) wType = 'MISSILE';
-          else wType = 'NORMAL';
-        }
+        // Determine exactly what weapon is being fired. Resolved by most
+        // recent pickup rather than a fixed priority chain, so collecting a
+        // weapon while another is active always has an immediate effect.
+        const wType = weaponOverride ?? powerUps.getActiveWeaponType();
 
         // Apply the specific weapon logic
         let baseColor = 0xffff00;

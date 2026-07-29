@@ -31,9 +31,22 @@ export class PowerUpManager {
   /** Enemy delta multiplier while TIME_DILATION is active. */
   static TIME_DILATION_SCALE = 0.45;
 
+  /**
+   * Power-ups that compete for the PRIMARY weapon slot. Order here is
+   * irrelevant — the winner is whichever was collected last.
+   *
+   * MISSILE is deliberately absent: Shooter.fire() already treats it as a
+   * secondary that fires alongside the primary, so it stacks by design and
+   * must not be made to compete.
+   */
+  static PRIMARY_WEAPON_IDS = ['GRENADE', 'LASER'];
+
   constructor() {
     // Map of PowerUpType.id → { type, remaining: DOMHighResTimeStamp | null }
     this._active = new Map();
+    // Monotonic counter so we can tell which weapon was picked up most
+    // recently — see getPrimaryWeaponType().
+    this._collectSeq = 0;
     this.warpTokenCount = 0;
     this.bonusStageEarned = false;
     this.shieldActive = false;
@@ -126,31 +139,12 @@ export class PowerUpManager {
 
     // --- Timed weapon effects ---
     if (type.duration) {
-      // ProjectileManager.fire() (and getBulletDamage()/getBulletColor())
-      // pick ONE damage weapon by fixed priority: grenade > laser > missile >
-      // particle blaster > normal. Without this, picking up e.g. LASER while
-      // GRENADE was still active left both simultaneously "active" per
-      // _active, but the priority chain always resolved to GRENADE — so the
-      // LASER pickup produced no visible or behavioural change at all until
-      // the grenade happened to expire on its own. Expiring the previous
-      // damage weapon on pickup guarantees the one just collected is the one
-      // that actually fires.
-      //
-      // RAPID_FIRE, SPREAD_GUN and SYNTH_SURGE are deliberately excluded
-      // (see determinesWeaponType's definition comment) — they modify
-      // whichever damage weapon is equipped rather than competing to BE it,
-      // so they keep stacking freely.
-      if (type.determinesWeaponType) {
-        for (const [id, entry] of this._active) {
-          if (entry.type.determinesWeaponType && id !== type.id) {
-            this._active.delete(id);
-            this._emit('powerup:expired', { type: entry.type });
-          }
-        }
-      }
-
       const remaining = type.duration / 1000;
-      this._active.set(type.id, { type, remaining });
+      this._active.set(type.id, {
+        type,
+        remaining,
+        seq: ++this._collectSeq,
+      });
       this._emit('powerup:collected', { type, remaining });
     }
   }
@@ -237,11 +231,72 @@ export class PowerUpManager {
    * Returns the shot cooldown in ms, modified by active power-ups.
    * @param {number} baseCooldown  - The default cooldown without power-ups (ms)
    */
+  /**
+   * The primary weapon actually being fired.
+   *
+   * A single projectile can only BE one thing, so GRENADE and LASER compete.
+   * Resolving that by fixed priority (grenade always beating laser) meant
+   * collecting a Laser while a Grenade was still running did nothing at all —
+   * it sat in _active, showed on the HUD, and never fired a shot. Resolving by
+   * most-recently-collected instead means every pickup takes effect
+   * immediately, nothing is ever removed, and if the newer one expires while
+   * the older is still running the older transparently takes back over.
+   *
+   * PARTICLE_BLASTER, RAPID_FIRE, SPREAD_GUN and SYNTH_SURGE are all absent
+   * from this contest by design — they modify whatever is equipped.
+   *
+   * @return {'GRENADE'|'LASER'|'NORMAL'}
+   */
+  getPrimaryWeaponType() {
+    let winner = null;
+    let winningSeq = -1;
+
+    for (const id of PowerUpManager.PRIMARY_WEAPON_IDS) {
+      const entry = this._active.get(id);
+      if (entry && entry.seq > winningSeq) {
+        winningSeq = entry.seq;
+        winner = id;
+      }
+    }
+
+    return winner ?? 'NORMAL';
+  }
+
+  /**
+   * Weapon to use when a caller fires without naming one explicitly — the
+   * beat-synced Synth Surge volley and the AI Droid. Shooter.fire() does NOT
+   * use this; it passes the primary explicitly and fires missiles separately.
+   *
+   * @return {'GRENADE'|'LASER'|'MISSILE'|'NORMAL'}
+   */
+  getActiveWeaponType() {
+    const primary = this.getPrimaryWeaponType();
+    if (primary !== 'NORMAL') return primary;
+    return this.hasMissile ? 'MISSILE' : 'NORMAL';
+  }
+
   getShotCooldown(baseMs) {
-    if (this.hasLaser) return 1000.0; // Absolute 2 seconds!
-    if (this.hasGrenade) return 500.0; // Absolute 1 second!
-    if (this.hasRapidFire) return baseMs * 0.35; // 35% of normal timeout
-    return baseMs;
+    let cooldown = baseMs;
+
+    switch (this.getPrimaryWeaponType()) {
+      case 'LASER':
+        cooldown = 1000.0;
+        break;
+      case 'GRENADE':
+        cooldown = 500.0;
+        break;
+      default:
+        break;
+    }
+
+    // Applied as a multiplier rather than an alternative. Previously this was
+    // an early return AFTER the laser/grenade checks, so Rapid Fire was
+    // completely inert whenever either was active.
+    if (this.hasRapidFire) {
+      cooldown *= 0.35;
+    }
+
+    return cooldown;
   }
 
   /**
@@ -249,9 +304,20 @@ export class PowerUpManager {
    * @param {number} [baseDamage=1]
    */
   getBulletDamage(baseDamage = 1) {
-    if (this.hasParticleBlaster) return baseDamage * 2.5;
-    if (this.hasLaser) return baseDamage * 2.0;
-    return baseDamage;
+    let damage = baseDamage;
+
+    // Multiplied rather than exclusive, so Particle Blaster genuinely buffs
+    // the equipped weapon instead of replacing its bonus.
+    if (this.hasParticleBlaster) {
+      damage *= 2.5;
+    }
+
+    // Only when the Laser is the weapon actually firing.
+    if (this.getPrimaryWeaponType() === 'LASER') {
+      damage *= 2.0;
+    }
+
+    return damage;
   }
 
   /**
@@ -277,15 +343,26 @@ export class PowerUpManager {
    * Returns the visual length multiplier for the bullet/laser beam.
    */
   getBulletLengthMultiplier() {
-    if (this.hasLaser) return 175.0; // Stretches the visual mesh to cover the tube
+    // Only stretch when the Laser is what is actually being fired.
+    if (this.getPrimaryWeaponType() === 'LASER') return 175.0;
     if (this.hasParticleBlaster) return 1.5;
     return 1.0;
   }
 
   getBulletColor(defaultColor) {
-    if (this.hasLaser) return 0x00ff00; // Bright Green Railgun
-    if (this.hasMissile) return 0xff3333;
-    if (this.hasGrenade) return 0xff6600;
+    // Colour follows the weapon that fires, so the player can see which of
+    // several stacked weapons is currently live.
+    switch (this.getActiveWeaponType()) {
+      case 'LASER':
+        return 0x00ff00; // Bright Green Railgun
+      case 'MISSILE':
+        return 0xff3333;
+      case 'GRENADE':
+        return 0xff6600;
+      default:
+        break;
+    }
+
     if (this.hasParticleBlaster) return 0xff8c00;
     return defaultColor;
   }

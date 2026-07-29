@@ -66,7 +66,12 @@ export class PowerUpSpawner {
   tryDrop(enemy) {
     //console.log("SPAWNER: Attempting drop. Current webGeometry is:", this._webGeometry);
     const tier = enemy.tier ?? 'normal';
-    const chance = this._dropChance[tier] ?? this._dropChance.normal;
+    let chance = this._dropChance[tier] ?? this._dropChance.normal;
+
+    // Apply difficulty multiplier from the game instance
+    if (enemy.game && typeof enemy.game.getDropMultiplier === 'function') {
+      chance *= enemy.game.getDropMultiplier();
+    }
 
     if (Math.random() > chance) return null;
 

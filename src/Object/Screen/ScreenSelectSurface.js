@@ -164,8 +164,25 @@ export default class ScreenSelectSurface extends Canvas3d {
       this.drawText('rate yourself', 371, 480, Canvas3d.COLOR_GREEN);
     }
 
-    this.drawText('Use A and D to change', 270, 530, Canvas3d.COLOR_CYAN);
+    this.drawText('Use A and D to change level', 220, 530, Canvas3d.COLOR_CYAN);
     this.drawText('Press fire to select', 284, 580, Canvas3d.COLOR_YELLOW);
+
+    // --- Difficulty Rendering ---
+    let difficulty = this.screenContentManager.get('DIFFICULTY');
+    if (difficulty === undefined) difficulty = 1; // Default to Medium
+
+    const diffLabels = ['EASY', 'MEDIUM', 'HARD'];
+    let diffColor = Canvas3d.COLOR_WHITE;
+    if (difficulty === 0) diffColor = Canvas3d.COLOR_GREEN;
+    if (difficulty === 2) diffColor = Canvas3d.COLOR_RED;
+
+    this.setFontSizePx(30);
+    this.drawText(`DIFFICULTY: < ${diffLabels[difficulty]} >`, 290, 640, diffColor);
+    
+    this.setFontSizePx(20);
+    this.drawText('Use W and S to adjust', 350, 675, Canvas3d.COLOR_CYAN);
+
+    this.setFontSizePx(30);
     this.drawText('novice', 140, 750, Canvas3d.COLOR_RED);
     this.drawText('expert', 845, 750, Canvas3d.COLOR_RED);
 

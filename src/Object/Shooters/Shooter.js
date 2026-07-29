@@ -321,9 +321,10 @@ export default class Shooter extends ShootingSurfaceObject {
     let firedAny = false;
 
     // --- DETERMINE PRIMARY WEAPON ---
-    let primaryWeapon = 'NORMAL';
-    if (powerUps && powerUps.hasGrenade) primaryWeapon = 'GRENADE';
-    else if (powerUps && powerUps.hasLaser) primaryWeapon = 'LASER';
+    // Most-recently-collected wins, so picking up a Laser while a Grenade is
+    // still running actually changes what you fire. Missiles are handled
+    // separately below and stack on top of whichever primary is live.
+    const primaryWeapon = powerUps ? powerUps.getPrimaryWeaponType() : 'NORMAL';
 
     let primaryLanes = [this.laneId];
 

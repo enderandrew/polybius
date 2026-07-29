@@ -28,9 +28,25 @@ export default class MenuMode extends GameMode {
       MessageBroker.MESSAGE_GAME,
     );
 
-    // Reset activity timer on any physical input
-    this._boundActivityHandler = () => {
+    this._boundActivityHandler = (e) => {
       game._lastMenuActivity = Date.now();
+
+      // Cycle difficulty UP (Hard -> Medium -> Easy)
+      if (e.code === 'ArrowUp' || e.code === 'KeyW') {
+        game.difficulty = Math.max(0, game.difficulty - 1);
+		game.screenContentManager.set('DIFFICULTY', game.difficulty);
+        game.saveGameState();
+        messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_MENU_CHANGE);
+        if (game.screenObject) game.screenObject._dirty = true;
+      }
+      // Cycle difficulty DOWN (Easy -> Medium -> Hard)
+      else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+        game.difficulty = Math.min(2, game.difficulty + 1);
+		game.screenContentManager.set('DIFFICULTY', game.difficulty);
+        game.saveGameState();
+        messageBroker.publish(MessageBroker.TOPIC_AUDIO, MessageBroker.MESSAGE_MENU_CHANGE);
+        if (game.screenObject) game.screenObject._dirty = true;
+      }
     };
     window.addEventListener('keydown', this._boundActivityHandler);
   }
@@ -40,7 +56,6 @@ export default class MenuMode extends GameMode {
       game.screenObject.update();
     }
 
-    // Trigger Attract Mode after 6 seconds of absolute inactivity
     if (!game._inAttractMode && Date.now() - game._lastMenuActivity > 6000) {
       game._startAttractMode();
     }
@@ -59,14 +74,18 @@ export default class MenuMode extends GameMode {
     const wasRight = game.prevGamepadAxis > 0.5;
     const justRight = isRight && !wasRight;
 
-    // Reset activity timer when gamepad is used
+    const isUp = gp.axes[1] < -0.5;
+    const wasUp = (game.prevGamepadAxisY || 0) < -0.5;
+    const justUp = isUp && !wasUp;
+
+    const isDown = gp.axes[1] > 0.5;
+    const wasDown = (game.prevGamepadAxisY || 0) > 0.5;
+    const justDown = isDown && !wasDown;
+
     if (
-      justPressed(0) ||
-      justPressed(9) ||
-      justPressed(14) ||
-      justPressed(15) ||
-      justLeft ||
-      justRight
+      justPressed(0) || justPressed(9) ||
+      justPressed(14) || justPressed(15) || justPressed(12) || justPressed(13) ||
+      justLeft || justRight || justUp || justDown
     ) {
       game._lastMenuActivity = Date.now();
     }

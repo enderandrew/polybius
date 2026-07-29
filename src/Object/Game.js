@@ -55,6 +55,12 @@ export default class Game {
 
   static FLAG_LOAD_NEXT_LEVEL = 0x1;
 
+  static DIFFICULTY_EASY = 0;
+  static DIFFICULTY_MEDIUM = 1;
+  static DIFFICULTY_HARD = 2;
+
+  difficulty = Game.DIFFICULTY_MEDIUM;
+
   flags;
 
   level = 1;
@@ -209,14 +215,11 @@ export default class Game {
     this.firstLevel = firstLevel;
     this.level = levelId;
 
-    // Starting on an advanced level credits that level's score bonus up front,
-    // the way the arcade original does. This used to be awarded in
-    // levelWonCallback() instead, which left the HUD reading 0 for the whole
-    // first level and only jumping to the real total once it was cleared.
     if (firstLevel) {
       const startingLevelData = this._findLevelData(levelId);
       if (startingLevelData?.selectable && startingLevelData.scoreBonus > 0) {
-        this.score += startingLevelData.scoreBonus;
+        // Apply the multiplier to the initial warp-in bonus
+        this.score += Math.round(startingLevelData.scoreBonus * this.getScoreMultiplier());
       }
     }
 
@@ -382,36 +385,30 @@ export default class Game {
 
     // 2. Try loading the versioned save data
     const storedSave = localStorage.getItem(Game.SAVE_DATA_KEY);
-
-    if (storedSave !== null) {
-      try {
-        const saveData = JSON.parse(storedSave);
-
-        // Version 1 parsing logic
-        if (saveData.version === 1) {
-          if (
-            Array.isArray(saveData.highScores) &&
-            saveData.highScores.length === 8
-          ) {
-            this.highScores = saveData.highScores;
+    
+        if (storedSave !== null) {
+          try {
+            const saveData = JSON.parse(storedSave);
+            if (saveData.version === 1) {
+              if (Array.isArray(saveData.highScores) && saveData.highScores.length === 8) {
+                this.highScores = saveData.highScores;
+              }
+              if (typeof saveData.highestLevel === 'number') {
+                this.highestLevel = saveData.highestLevel;
+              }
+              // Add this line to pull difficulty:
+              if (typeof saveData.difficulty === 'number') {
+                this.difficulty = saveData.difficulty;
+              }
+            }
+          } catch {
+            console.warn('[Game] Corrupted versioned save data. Reverting to defaults.');
           }
-          if (typeof saveData.highestLevel === 'number') {
-            this.highestLevel = saveData.highestLevel;
-          }
+        } else {
+          this._migrateLegacySaveData();
         }
-        // Future: else if (saveData.version === 2) { ... handle v1 to v2 migration ... }
-      } catch {
-        console.warn(
-          '[Game] Corrupted versioned save data. Reverting to defaults.',
-        );
+        this.highestLevel = Math.min(this.highestLevel, 256);
       }
-    } else {
-      // 3. Fallback: No versioned save found. Attempt to migrate legacy data.
-      this._migrateLegacySaveData();
-    }
-
-    this.highestLevel = Math.min(this.highestLevel, 256);
-  }
 
   _migrateLegacySaveData() {
     let requiresSave = false;
@@ -458,12 +455,14 @@ export default class Game {
       version: Game.SAVE_VERSION,
       highScores: this.highScores,
       highestLevel: this.highestLevel,
+      difficulty: this.difficulty, // Add to save payload
     };
 
     localStorage.setItem(Game.SAVE_DATA_KEY, JSON.stringify(saveData));
   }
 
   populateScreenContentManager() {
+    this.screenContentManager.set('DIFFICULTY', this.difficulty);
     this.screenContentManager.setLives(this.lives);
     this.screenContentManager.setLevel(this.level);
     this.screenContentManager.setScore(this.score);
@@ -680,12 +679,14 @@ export default class Game {
   }
 
   rewardCallback(reward) {
-    this.score += reward;
+    // Apply the multiplier to all incoming points
+    const modifiedReward = Math.round(reward * this.getScoreMultiplier());
+    this.score += modifiedReward;
 
     if (
       this.lives < 5 &&
       Math.floor(this.score / Game.BONUS_EVERY) !==
-        Math.floor((this.score - reward) / Game.BONUS_EVERY)
+        Math.floor((this.score - modifiedReward) / Game.BONUS_EVERY)
     ) {
       this.lives++;
       this.screenContentManager.set(ScreenContentManager.KEY_LIVES, this.lives);
@@ -932,12 +933,24 @@ export default class Game {
 
       if (justPressed(15) || justRight) dispatchKey('ArrowRight', 'keydown');
       if (!isRight && wasRight) dispatchKey('ArrowRight', 'keyup');
+
+      // NEW: Send Up/Down synthetic keys for the menu!
+      const isUp = gp.axes[1] < -0.5;
+      const wasUp = (this.prevGamepadAxisY || 0) < -0.5;
+      if (justPressed(12) || (isUp && !wasUp)) dispatchKey('ArrowUp', 'keydown');
+      if (!isUp && wasUp) dispatchKey('ArrowUp', 'keyup');
+
+      const isDown = gp.axes[1] > 0.5;
+      const wasDown = (this.prevGamepadAxisY || 0) > 0.5;
+      if (justPressed(13) || (isDown && !wasDown)) dispatchKey('ArrowDown', 'keydown');
+      if (!isDown && wasDown) dispatchKey('ArrowDown', 'keyup');
     }
 
     for (let i = 0; i < gp.buttons.length; i++) {
       this.prevGamepadState[i] = isPressed(i);
     }
     this.prevGamepadAxis = gp.axes[0];
+    this.prevGamepadAxisY = gp.axes[1]; // Track the Y axis globally
   }
 
   _startAttractMode() {
@@ -1006,5 +1019,17 @@ export default class Game {
     }
 
     this.scene.add(this.currentBackground);
+  }
+
+  getScoreMultiplier() {
+    if (this.difficulty === Game.DIFFICULTY_EASY) return 1.5; // Beat levels faster
+    if (this.difficulty === Game.DIFFICULTY_HARD) return 0.75; // Grind longer
+    return 1.0;
+  }
+
+  getDropMultiplier() {
+    if (this.difficulty === Game.DIFFICULTY_EASY) return 1.5; // More power-ups
+    if (this.difficulty === Game.DIFFICULTY_HARD) return 0.5; // Far fewer drops
+    return 1.0;
   }
 }
