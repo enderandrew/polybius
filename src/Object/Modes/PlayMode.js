@@ -60,7 +60,7 @@ export default class PlayMode extends GameMode {
         return;
       }
 
-      game.levelRenderer.update();
+      game.levelRenderer.update(delta);
 
       // Power-up subsystem ticks
       game.powerUpSpawner.update(delta);

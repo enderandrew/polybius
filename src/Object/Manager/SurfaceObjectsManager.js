@@ -1,4 +1,5 @@
 import FIFOManager from '@/Object/Manager/FIFOManager';
+import JuiceManager from '@/utils/JuiceManager';
 import Enemy from '@/Object/Enemies/Enemy';
 import EnemySpike from '@/Object/Enemies/EnemySpike';
 
@@ -166,6 +167,10 @@ export default class SurfaceObjectsManager extends FIFOManager {
   }
 
   handleSuperzapper() {
+    // Fire the juice event BEFORE the kills so the flash/shake lands on the
+    // same frame the enemies vanish, rather than one frame late.
+    JuiceManager.emit('superzapper');
+
     this.enemies.forEach((enemy) => {
       enemy.reward = true;
       enemy.die();

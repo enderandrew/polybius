@@ -1,4 +1,5 @@
 import SurfaceObject from '@/Object/Surface/SurfaceObject';
+import JuiceManager from '@/utils/JuiceManager';
 import ShootingSurfaceObject from '@/Object/Surface/ShootingSurfaceObject';
 import State from '@/Object/State';
 import EnemyFlipper from '@/Object/Enemies/EnemyFlipper';
@@ -120,6 +121,7 @@ export default class Shooter extends ShootingSurfaceObject {
       this.setState(Shooter.STATE_ALIVE);
     } else if (this.inState(Shooter.STATE_EXPLODING)) {
       this.setState(Shooter.STATE_DEAD);
+      JuiceManager.emit('player-death');
       this.killedCallback();
     } else if (this.inState(Shooter.STATE_DISAPPEARING)) {
       this.setState(Shooter.STATE_DEAD);
@@ -564,6 +566,7 @@ export default class Shooter extends ShootingSurfaceObject {
       MessageBroker.TOPIC_AUDIO,
       MessageBroker.MESSAGE_DASH,
     );
+    JuiceManager.emit('dash');
   }
 
   /**

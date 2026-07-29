@@ -1,4 +1,5 @@
 import Projectile from '@/Object/Projectiles/Projectile';
+import JuiceManager from '@/utils/JuiceManager';
 import FIFOManager from '@/Object/Manager/FIFOManager';
 
 export default class ProjectileManager extends FIFOManager {
@@ -139,6 +140,7 @@ export default class ProjectileManager extends FIFOManager {
     this.shooterProjectiles.forEach((projectile) => {
       if (projectile.isGrenade && projectile.needsAoECheck) {
         projectile.needsAoECheck = false;
+        JuiceManager.emit('grenade');
 
         // Wipe Enemies in blast radius
         this.surfaceObjectsManager.enemies.forEach((enemy) => {

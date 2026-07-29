@@ -1,4 +1,5 @@
 import ShootingSurfaceObject from '@/Object/Surface/ShootingSurfaceObject';
+import JuiceManager from '@/utils/JuiceManager';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 import enemyClock from '@/utils/GameClock';
 
@@ -88,6 +89,14 @@ export default class Enemy extends ShootingSurfaceObject {
         MessageBroker.TOPIC_AUDIO,
         MessageBroker.MESSAGE_ENEMY_DEATH,
       );
+
+      // Carries position so the particle burst can be placed at the kill,
+      // and the enemy type so the debris can inherit its colour.
+      JuiceManager.emit('enemy-death', {
+        laneId: this.laneId,
+        zPosition: this.zPosition,
+        type: this.type,
+      });
 
       // Power-up drop — runs for any enemy that grants a reward
       if (this.game && this.game.powerUpSpawner) {

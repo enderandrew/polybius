@@ -26,6 +26,8 @@ import { PowerUpSpawner } from '@/PowerUp/PowerUpSpawner';
 import { PowerUpType } from '@/PowerUp/PowerUpType';
 import { PowerUpHUD } from '@/PowerUp/PowerUpHUD';
 import PowerUpAnnouncer from '@/utils/PowerUpAnnouncer';
+import JuiceManager from '@/utils/JuiceManager';
+import JuicePass from '@/Renderer/Effects/JuicePass';
 import { AIDroid } from '@/PowerUp/AIDroid';
 import Starfield from '@/Renderer/Background/Starfield';
 import CyberGrid from '@/Renderer/Background/CyberGrid';
@@ -550,6 +552,13 @@ export default class Game {
       this.composer.addPass(new SMAAPass(width, height));
     }
 
+    // Added last so flash/vignette/chromatic apply to the FINAL composited
+    // image, including bloom — a flash that bloom then re-blooms would blow
+    // out completely, and a vignette applied before bloom would just get
+    // bloomed back into brightness at the edges.
+    this.juicePass = new JuicePass(width, height);
+    this.composer.addPass(this.juicePass);
+
     this.levelRenderer = new LevelRenderer(this.camera);
     this.scene.add(this.levelRenderer);
 
@@ -561,6 +570,22 @@ export default class Game {
     this.powerUpSpawner.scene = this.scene;
     this.powerUpHUD = new PowerUpHUD(this.powerUpManager);
     this.powerUpAnnouncer = new PowerUpAnnouncer();
+    this.juice = new JuiceManager();
+    this.juice.reduceMotion = this.loadReduceMotionPreference();
+    this.levelRenderer.juice = this.juice;
+
+    // All 8 background renderers implement pulse(intensity) but it was only
+    // ever called from the music beat. Driving it from gameplay too makes the
+    // environment react to PLAY, not just to the soundtrack.
+    window.addEventListener('juice:superzapper', () => {
+      this.currentBackground?.pulse(2.5);
+    });
+    window.addEventListener('juice:player-death', () => {
+      this.currentBackground?.pulse(3.0);
+    });
+    window.addEventListener('juice:combo-milestone', ({ detail }) => {
+      this.currentBackground?.pulse(1.2 + Math.min(1.2, detail.combo / 20));
+    });
     window.addEventListener('powerup:collected', ({ detail: { type } }) => {
       if (type.id === 'AI_DROID' && this.levelObject) {
         this._spawnAIDroid();
@@ -612,6 +637,9 @@ export default class Game {
         if (this.composer) {
           this.composer.setSize(w, h);
         }
+        if (this.juicePass) {
+          this.juicePass.setSize(w, h);
+        }
         if (this.bloomPass) {
           this.bloomPass.setSize(w, h);
         }
@@ -631,9 +659,23 @@ export default class Game {
       : 0;
     this._lastTime = now;
 
+    // ── Hit-stop ─────────────────────────────────────────────────────────
+    // Juice decays in REAL time (a slowed world shouldn't shake for longer),
+    // so it is updated before delta is zeroed for the frozen frames.
+    let gameplayDelta = delta;
+    if (this.juice) {
+      this.juice.difficultyScale = this.getJuiceDifficultyScale();
+      const frozenMs = this.juice.update(delta);
+      if (frozenMs > 0) {
+        // Freeze the simulation but keep rendering, so the frame the player is
+        // staring at during the freeze is still the impact frame.
+        gameplayDelta = 0;
+      }
+    }
+
     try {
       // Delegate active operational logic entirely to the ModeManager
-      this.modeManager.update(delta);
+      this.modeManager.update(gameplayDelta);
     } catch (err) {
       console.error('[CRITICAL ERROR CAUGHT IN UPDATE]:', err);
       throw err;
@@ -651,9 +693,20 @@ export default class Game {
       this.levelRenderer.scale.set(pulseScale, pulseScale, 1.0);
     }
 
-    if (this.bloomPass) {
-      this.bloomPass.strength = this.baseBloom + this.beatGlow;
+    // ── Bloom budget ─────────────────────────────────────────────────────
+    // The beat is now just ANOTHER request rather than writing strength
+    // directly, so it shares one clamped budget with combo, superzapper and
+    // damage instead of stacking on top of them into a white smear.
+    if (this.juice) {
+      this.juice.requestBloom(this.beatGlow);
     }
+
+    if (this.bloomPass) {
+      const boost = this.juice ? this.juice.bloomBoost : this.beatGlow;
+      this.bloomPass.strength = this.baseBloom + boost;
+    }
+
+    this.updateReactiveState();
 
     // Handle global background elements
     if (this.currentBackground) {
@@ -677,12 +730,129 @@ export default class Game {
     // Audio & rendering pipeline
     this.bgmManager.update();
     this.audioManager.update();
+
+    if (this.juicePass && this.juice) {
+      this.juicePass.syncFrom(this.juice, delta);
+    }
+
     this.composer.render();
   }
 
+  /**
+   * Harsher juice on higher difficulty — the same events shake and glitch
+   * more. Free thematic reinforcement now that difficulty modes exist.
+   * @return {number}
+   */
+  getJuiceDifficultyScale() {
+    if (this.difficulty === Game.DIFFICULTY_EASY) return 0.7;
+    if (this.difficulty === Game.DIFFICULTY_HARD) return 1.3;
+    return 1.0;
+  }
+
+  /**
+   * Per-frame environment reactions that aren't impulse-driven: vignette from
+   * low lives, desaturation from Time Dilation, FOV kick, CRT shell classes,
+   * and the sanity link.
+   *
+   */
+  updateReactiveState() {
+    if (!this.juice) return;
+
+    // ── Sanity link ────────────────────────────────────────────────────────
+    // ScreenPlay already drains a sanityLevel and glitches its own HUD text
+    // with it, but nothing else consumed that signal. Feeding it to the juice
+    // layer makes the whole IMAGE degrade as the machine "gets to you" —
+    // which is rather the point of a game called Polybius.
+    if (this.screenObject && this.screenObject.sanityLevel !== undefined) {
+      this.juice.sanity = Math.max(0, Math.min(1, this.screenObject.sanityLevel / 100));
+    } else {
+      this.juice.sanity = 1;
+    }
+
+    // ── Low-life vignette ─────────────────────────────────────────────────
+    let vignette = 0;
+    if (this.modeManager?.currentMode?.constructor?.name === 'PlayMode') {
+      if (this.lives === 1) {
+        // Pulsing rather than static, so it reads as an alarm not a filter.
+        vignette = 0.35 + Math.sin(performance.now() * 0.006) * 0.12;
+      } else if (this.lives === 2) {
+        vignette = 0.15;
+      }
+    }
+    this.juice.setVignette(vignette);
+
+    // ── Time Dilation visual signature ────────────────────────────────────
+    // Audio, motion and backgrounds all slow, but the IMAGE was unchanged,
+    // so the power-up had no visual tell at all. A cold desaturation makes it
+    // instantly readable.
+    if (this.powerUpManager?.hasTimeDilation) {
+      this.juice.setDesaturateFloor(0.4);
+    }
+
+    // ── Camera FOV kick ───────────────────────────────────────────────────
+    if (this.camera) {
+      const targetFov = this.baseFov ?? (this.baseFov = this.camera.fov);
+      const desired = targetFov + this.juice.fovKick;
+      if (Math.abs(this.camera.fov - desired) > 0.01) {
+        this.camera.fov = desired;
+        this.camera.updateProjectionMatrix();
+      }
+    }
+
+    // ── CRT shell reactions ───────────────────────────────────────────────
+    // crt.css already defines con-high / brt-low and they were only reachable
+    // by clicking the physical knobs. Driving them from gameplay is free juice
+    // with no new rendering code.
+    this._updateCrtClasses();
+  }
+
+  _updateCrtClasses() {
+    const screen = document.getElementById('screen');
+    if (!screen) return;
+
+    const wantContrast = this.juice.flash > 0.15;
+    if (wantContrast !== this._crtContrastOn) {
+      this._crtContrastOn = wantContrast;
+      screen.classList.toggle('con-high', wantContrast);
+    }
+
+    const wantDim = this.juice.sanity < 0.35;
+    if (wantDim !== this._crtDimOn) {
+      this._crtDimOn = wantDim;
+      screen.classList.toggle('brt-low', wantDim);
+    }
+  }
+
+  /** @return {boolean} */
+  loadReduceMotionPreference() {
+    try {
+      const stored = localStorage.getItem('polybius_reduce_motion');
+      if (stored !== null) return stored === 'true';
+    } catch {
+      // localStorage can throw in private browsing; fall through to the OS hint.
+    }
+    // Respect the OS-level accessibility setting when we have no explicit choice.
+    return (
+      window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false
+    );
+  }
+
+  /** @param {boolean} value */
+  setReduceMotion(value) {
+    if (this.juice) this.juice.reduceMotion = value;
+    try {
+      localStorage.setItem('polybius_reduce_motion', String(value));
+    } catch {
+      // Non-fatal — the setting just won't persist.
+    }
+  }
+
   rewardCallback(reward) {
-    // Apply the multiplier to all incoming points
-    const modifiedReward = Math.round(reward * this.getScoreMultiplier());
+    // Apply difficulty AND combo multipliers to all incoming points
+    const comboMultiplier = this.juice ? this.juice.getComboMultiplier() : 1;
+    const modifiedReward = Math.round(
+      reward * this.getScoreMultiplier() * comboMultiplier,
+    );
     this.score += modifiedReward;
 
     if (

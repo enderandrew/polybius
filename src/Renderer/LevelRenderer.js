@@ -3,11 +3,24 @@ import SurfaceRenderer from '@/Renderer/Surface/SurfaceRenderer';
 import ShooterRenderer from '@/Renderer/Shooters/ShooterRenderer';
 import DashTrailRenderer from '@/Renderer/Shooters/DashTrailRenderer';
 import PickupTextRenderer from '@/Renderer/Effects/PickupTextRenderer';
+import ShockwaveRenderer from '@/Renderer/Effects/ShockwaveRenderer';
+import ParticleBurstRenderer from '@/Renderer/Effects/ParticleBurstRenderer';
 import ProjectileRendererManager from '@/Renderer/Surface/ProjectileRendererManager';
 import EnemyRendererManager from '@/Renderer/Surface/EnemyRendererManager';
 
 export default class LevelRenderer extends Group {
   static CAMERA_TO_SHOOTER_DISTANCE = 6;
+
+  /** Debris colour per enemy type, so kills read as that enemy coming apart. */
+  static DEBRIS_COLORS = {
+    flipper: 0xff2266,
+    tanker: 0xffcc00,
+    spiker: 0x00ff88,
+    pulsar: 0xff00ff,
+    fuseball: 0x00ffff,
+    mirror: 0xaaaaff,
+    flipper_tanker: 0xffcc00,
+  };
 
   level = null;
   camera;
@@ -15,6 +28,9 @@ export default class LevelRenderer extends Group {
   shooterRenderer;
   dashTrailRenderer;
   pickupTextRenderer;
+  shockwaveRenderer;
+  particleBurstRenderer;
+  juice = null;
   projectileRendererManager;
   enemyRendererManager;
 
@@ -52,6 +68,50 @@ export default class LevelRenderer extends Group {
     // Reads shooterRenderer.position live at spawn time, so it must be
     // constructed after shooterRenderer above, not before.
     this.pickupTextRenderer = new PickupTextRenderer(this.shooterRenderer, this);
+    this.shockwaveRenderer = new ShockwaveRenderer(this.level.surface, this);
+    this.particleBurstRenderer = new ParticleBurstRenderer(this);
+
+    // Positional effects are placed here rather than inside JuiceManager,
+    // because only the renderer knows how to convert (laneId, zPosition) into
+    // world coordinates for THIS surface.
+    this._onJuiceSuperzapper = () => {
+      if (!this.shockwaveRenderer) return;
+      // Two rings: a fast bright leading edge and a slower wide trailing one,
+      // which reads as a single thick wave rather than a thin hoop.
+      this.shockwaveRenderer.spawn({
+        fromZ: 0, toZ: 1.05, color: 0xffffff, durationMs: 520,
+        scaleFrom: 0.7, scaleTo: 1.15,
+      });
+      this.shockwaveRenderer.spawn({
+        fromZ: 0, toZ: 0.85, color: 0x66ccff, durationMs: 720,
+        scaleFrom: 0.9, scaleTo: 1.35,
+      });
+    };
+
+    this._onJuiceEnemyDeath = ({ detail }) => {
+      if (!this.particleBurstRenderer || !this.level) return;
+      const mid = this.level.surface.lanesMiddleCoords[detail.laneId];
+      if (!mid) return;
+      this.particleBurstRenderer.burst(
+        { x: mid.x, y: mid.y, z: detail.zPosition * this.level.surface.depth },
+        LevelRenderer.DEBRIS_COLORS[detail.type] ?? 0xffaa33,
+      );
+    };
+
+    this._onJuicePlayerDeath = () => {
+      if (!this.particleBurstRenderer || !this.shooterRenderer) return;
+      this.particleBurstRenderer.burst(this.shooterRenderer.position, 0xffff66, 40);
+      if (this.shockwaveRenderer) {
+        this.shockwaveRenderer.spawn({
+          fromZ: 0, toZ: 0.7, color: 0xff3333, durationMs: 800,
+          scaleFrom: 0.6, scaleTo: 1.4,
+        });
+      }
+    };
+
+    window.addEventListener('juice:superzapper', this._onJuiceSuperzapper);
+    window.addEventListener('juice:enemy-death', this._onJuiceEnemyDeath);
+    window.addEventListener('juice:player-death', this._onJuicePlayerDeath);
 
     this.add(this.surfaceRenderer);
     this.add(this.dashTrailRenderer);
@@ -75,6 +135,20 @@ export default class LevelRenderer extends Group {
     if (this.pickupTextRenderer) {
       this.pickupTextRenderer.dispose();
       this.pickupTextRenderer = undefined;
+    }
+
+    window.removeEventListener('juice:superzapper', this._onJuiceSuperzapper);
+    window.removeEventListener('juice:enemy-death', this._onJuiceEnemyDeath);
+    window.removeEventListener('juice:player-death', this._onJuicePlayerDeath);
+
+    if (this.shockwaveRenderer) {
+      this.shockwaveRenderer.dispose();
+      this.shockwaveRenderer = undefined;
+    }
+
+    if (this.particleBurstRenderer) {
+      this.particleBurstRenderer.dispose();
+      this.particleBurstRenderer = undefined;
     }
 
     this.remove(this.surfaceRenderer);
@@ -103,14 +177,33 @@ export default class LevelRenderer extends Group {
 
     this.camera.position.z =
       cameraZPosition - LevelRenderer.CAMERA_TO_SHOOTER_DISTANCE;
+
+    // Screen shake is applied as a positional offset AFTER the follow logic
+    // has settled the base position, and the lookAt target is offset by the
+    // same amount. Shaking the position alone would swing the view direction
+    // wildly (the camera would keep staring at a fixed point while jittering
+    // around it); offsetting both keeps the shake a translation, not a swivel.
+    const shakeX = this.juice ? this.juice.shakeX : 0;
+    const shakeY = this.juice ? this.juice.shakeY : 0;
+
+    this.camera.position.x = shakeX;
+    this.camera.position.y = shakeY;
+
     this.camera.lookAt(
       this.camera.position.x,
       this.camera.position.y,
       this.camera.position.z + 10,
     );
+
+    // Roll is applied after lookAt, which always resets rotation.z to 0.
+    if (this.juice) {
+      this.camera.rotation.z += this.juice.shakeRoll;
+    }
   }
 
-  update() {
+  update(delta = 1 / 60) {
+    this._lastDelta = delta;
+
     if (this.level !== null) {
       if (this.beatPulse === undefined) {
         this.beatPulse = 0.0;
@@ -154,8 +247,18 @@ export default class LevelRenderer extends Group {
         // Shift the hue by 0.5 (180 degrees) to get the exact opposite color
         this._activeColor.setHSL((hsl.h + 0.5) % 1.0, 1.0, 0.5);
 
-        // Apply the complementary color to the active lane material
+        // Apply the complementary color to the active lane material, then
+        // push it toward white as the combo builds — the lane the player
+        // occupies visibly heats up with their streak, tying the ship to the
+        // tube instead of the combo living only in the HUD.
         this.surfaceRenderer.laneActiveMaterial.color.copy(this._activeColor);
+        if (this.juice && this.juice.combo > 0) {
+          const heat = Math.min(0.6, this.juice.combo / 25);
+          this.surfaceRenderer.laneActiveMaterial.color.lerp(
+            this.whiteColor,
+            heat + this.juice.comboFlash * 0.3,
+          );
+        }
 
         // --- APPLY TO DEFAULT MATERIAL ONLY ---
         this.surfaceRenderer.laneDefaultMaterial.color
@@ -170,6 +273,12 @@ export default class LevelRenderer extends Group {
       }
       if (this.pickupTextRenderer) {
         this.pickupTextRenderer.update();
+      }
+      if (this.shockwaveRenderer) {
+        this.shockwaveRenderer.update();
+      }
+      if (this.particleBurstRenderer) {
+        this.particleBurstRenderer.update(this._lastDelta ?? 1 / 60);
       }
       this.enemyRendererManager.update();
       this.projectileRendererManager.update();
