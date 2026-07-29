@@ -115,11 +115,28 @@ export default class PickupTextRenderer {
   }
 
   /**
+   * Spawn at an explicit world position rather than at the ship — used for
+   * score pop-ups, which must appear where the ENEMY died, not where the
+   * player happens to be standing.
+   *
+   * @param {{x:number,y:number,z:number}} position
+   * @param {string} text
+   * @param {string} color
+   * @param {number} [scale] multiplier on the default sprite size
+   */
+  spawnAt(position, text, color, scale = 1) {
+    this._spawn(text, color, position, scale);
+  }
+
+  /**
    * @param {string} text
    * @param {string} color - CSS color string.
+   * @param {?object} position - world position; defaults to the ship.
+   * @param {number} [scale]
    */
-  _spawn(text, color) {
-    if (!this.shooterRenderer) return;
+  _spawn(text, color, position = null, scale = 1) {
+    const origin = position ?? this.shooterRenderer?.position;
+    if (!origin) return;
 
     // All slots busy: steal the one that has been running longest rather than
     // silently dropping the new pickup — a rapid multi-pickup should always
@@ -145,7 +162,15 @@ export default class PickupTextRenderer {
     context.fillText(text, canvas.width / 2, canvas.height / 2);
     slot.texture.needsUpdate = true;
 
-    slot.startPos.copy(this.shooterRenderer.position);
+    const aspect =
+      PickupTextRenderer.CANVAS_WIDTH / PickupTextRenderer.CANVAS_HEIGHT;
+    slot.sprite.scale.set(
+      PickupTextRenderer.SPRITE_WORLD_WIDTH * scale,
+      (PickupTextRenderer.SPRITE_WORLD_WIDTH * scale) / aspect,
+      1,
+    );
+
+    slot.startPos.copy(origin);
     slot.startedAt = performance.now();
     slot.active = true;
     slot.sprite.visible = true;

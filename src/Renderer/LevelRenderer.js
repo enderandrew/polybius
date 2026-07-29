@@ -86,16 +86,35 @@ export default class LevelRenderer extends Group {
         fromZ: 0, toZ: 0.85, color: 0x66ccff, durationMs: 720,
         scaleFrom: 0.9, scaleTo: 1.35,
       });
+      this.surfaceRenderer?.rippleFrom(0, 0.5);
     };
 
     this._onJuiceEnemyDeath = ({ detail }) => {
       if (!this.particleBurstRenderer || !this.level) return;
       const mid = this.level.surface.lanesMiddleCoords[detail.laneId];
       if (!mid) return;
+      const worldPos = {
+        x: mid.x,
+        y: mid.y,
+        z: detail.zPosition * this.level.surface.depth,
+      };
+
       this.particleBurstRenderer.burst(
-        { x: mid.x, y: mid.y, z: detail.zPosition * this.level.surface.depth },
+        worldPos,
         LevelRenderer.DEBRIS_COLORS[detail.type] ?? 0xffaa33,
       );
+
+      // Score pop-up at the exact kill position. Deliberately smaller and
+      // dimmer than a power-up label so a busy screen full of kills doesn't
+      // drown out an actual pickup.
+      if (this.pickupTextRenderer && detail.points) {
+        this.pickupTextRenderer.spawnAt(
+          worldPos,
+          `+${detail.points}`,
+          '#ffee88',
+          0.62,
+        );
+      }
     };
 
     this._onJuicePlayerDeath = () => {
@@ -109,6 +128,12 @@ export default class LevelRenderer extends Group {
       }
     };
 
+    this._onJuiceGrenade = ({ detail }) => {
+      if (!this.surfaceRenderer) return;
+      this.surfaceRenderer.rippleFrom(detail?.zPosition ?? 0.5, 0.4);
+    };
+
+    window.addEventListener('juice:grenade', this._onJuiceGrenade);
     window.addEventListener('juice:superzapper', this._onJuiceSuperzapper);
     window.addEventListener('juice:enemy-death', this._onJuiceEnemyDeath);
     window.addEventListener('juice:player-death', this._onJuicePlayerDeath);
@@ -137,6 +162,7 @@ export default class LevelRenderer extends Group {
       this.pickupTextRenderer = undefined;
     }
 
+    window.removeEventListener('juice:grenade', this._onJuiceGrenade);
     window.removeEventListener('juice:superzapper', this._onJuiceSuperzapper);
     window.removeEventListener('juice:enemy-death', this._onJuiceEnemyDeath);
     window.removeEventListener('juice:player-death', this._onJuicePlayerDeath);
@@ -274,6 +300,18 @@ export default class LevelRenderer extends Group {
       if (this.pickupTextRenderer) {
         this.pickupTextRenderer.update();
       }
+      // Weapon recoil: nudge the ship model backwards along Z. Applied to the
+      // ship rather than the camera because followShooter() derives the camera
+      // FROM the ship position — recoiling the camera would be cancelled out.
+      if (this.juice && this.shooterRenderer) {
+        this.shooterRenderer.position.z =
+          this.shooterRenderer.position.z + this.juice.recoil * 0.12;
+      }
+
+      if (this.surfaceRenderer) {
+        this.surfaceRenderer.updateRipples();
+      }
+
       if (this.shockwaveRenderer) {
         this.shockwaveRenderer.update();
       }

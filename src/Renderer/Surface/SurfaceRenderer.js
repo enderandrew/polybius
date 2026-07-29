@@ -16,6 +16,9 @@ export default class SurfaceRenderer extends Group {
   static SHORTED_LANE_COLOR = 0xffffff;
   static BURNING_LANE_COLOR = 0xff7a18;
 
+  /** Subdivisions per lane line — the resolution of the ripple effect. */
+  static RIPPLE_SEGMENTS = 12;
+
   type = 'Group';
   surface;
   level;
@@ -108,6 +111,81 @@ export default class SurfaceRenderer extends Group {
     }
   }
 
+  /**
+   * Start a bulge travelling down the tube from a given depth.
+   *
+   * @param {number} zNormalized 0 (rim) .. 1 (back)
+   * @param {number} strength radial displacement scale
+   */
+  rippleFrom(zNormalized, strength = 0.35) {
+    this._ripples ??= [];
+    // Cap concurrent ripples; a grenade spam shouldn't turn the tube to soup.
+    if (this._ripples.length >= 4) this._ripples.shift();
+    this._ripples.push({
+      z: zNormalized,
+      strength,
+      startedAt: performance.now(),
+      durationMs: 700,
+    });
+  }
+
+  /**
+   * Rewrite lane vertex positions from their rest pose plus any active
+   * ripples. Rest positions are recomputed rather than stored so this stays
+   * correct if the surface is ever rebuilt.
+   */
+  updateRipples() {
+    if (!this._ripples || this._ripples.length === 0) {
+      if (this._rippleDirty) {
+        this._writeLaneVertices(null);
+        this._rippleDirty = false;
+      }
+      return;
+    }
+
+    const now = performance.now();
+    this._ripples = this._ripples.filter(
+      (r) => now - r.startedAt < r.durationMs,
+    );
+
+    this._writeLaneVertices(now);
+    this._rippleDirty = true;
+  }
+
+  _writeLaneVertices(now) {
+    const depth = this.surface.depth;
+
+    for (let i = 0; i < this.lanesLines.length; i++) {
+      const line = this.lanesLines[i];
+      const coord = this.surface.lanesCoords[i];
+      if (!coord) continue;
+
+      const positions = line.geometry.getAttribute('position');
+
+      for (let seg = 0; seg <= SurfaceRenderer.RIPPLE_SEGMENTS; seg++) {
+        const t = seg / SurfaceRenderer.RIPPLE_SEGMENTS;
+        let scale = 1;
+
+        if (now !== null && this._ripples) {
+          for (const r of this._ripples) {
+            const progress = (now - r.startedAt) / r.durationMs;
+            // The ripple's centre travels outward from its origin over time.
+            const centre = r.z + progress * 0.9;
+            const distance = Math.abs(t - centre);
+            // Narrow gaussian-ish falloff, fading as the ripple ages.
+            const falloff = Math.exp(-(distance * distance) / 0.004);
+            scale += falloff * r.strength * (1 - progress);
+          }
+        }
+
+        positions.setXYZ(seg, coord.x * scale, coord.y * scale, t * depth);
+      }
+
+      positions.needsUpdate = true;
+      line.geometry.computeBoundingSphere();
+    }
+  }
+
   createLanes() {
     this.clear();
 
@@ -135,11 +213,19 @@ export default class SurfaceRenderer extends Group {
     for (let i = 0; i < this.getAmountOfLanes(); i++) {
       let current = this.surface.lanesCoords[i];
 
-      //Create lines
-      let linePoints = [
-        new Vector3(current.x, current.y, 0),
-        new Vector3(current.x, current.y, this.surface.depth),
-      ];
+      // Lane lines are subdivided into RIPPLE_SEGMENTS spans rather than a
+      // single 2-vertex line. A 2-vertex line has no interior points, so a
+      // travelling bulge would be geometrically impossible to express — there
+      // is literally nothing between the endpoints to displace. The extra
+      // vertices cost almost nothing (16 lanes x 13 verts) and are what make
+      // rippleFrom() possible at all.
+      let linePoints = [];
+      for (let seg = 0; seg <= SurfaceRenderer.RIPPLE_SEGMENTS; seg++) {
+        const t = seg / SurfaceRenderer.RIPPLE_SEGMENTS;
+        linePoints.push(
+          new Vector3(current.x, current.y, t * this.surface.depth),
+        );
+      }
 
       this.lanesLines.push(
         new Line(

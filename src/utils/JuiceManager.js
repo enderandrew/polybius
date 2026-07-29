@@ -83,6 +83,19 @@ export default class JuiceManager {
     this.vignette = 0;
     this.desaturate = 0;
     this.flash = 0;
+    this.invert = 0;
+    this.tear = 0;
+
+    /** Z-axis recoil offset for the ship model; spring-damped in update(). */
+    this.recoil = 0;
+    this._recoilVelocity = 0;
+
+    /** 0..1 warp intensity — drives FOV stretch and starfield speed. */
+    this.warp = 0;
+    this._warpTarget = 0;
+
+    this._tearRequests = 0;
+    this._invertRequests = 0;
 
     this._bindEvents();
   }
@@ -117,6 +130,27 @@ export default class JuiceManager {
   /** @param {number} amount */
   requestChromatic(amount) {
     this._chromaticRequests += amount;
+  }
+
+  /** @param {number} amount 0..1 digital tearing */
+  requestTear(amount) {
+    this._tearRequests = Math.max(this._tearRequests, amount);
+  }
+
+  /** @param {number} amount 0..1 full-screen colour inversion */
+  requestInvert(amount) {
+    this._invertRequests = Math.max(this._invertRequests, amount);
+  }
+
+  /** Kick the ship backwards; spring returns it. @param {number} amount */
+  addRecoil(amount) {
+    if (this.reduceMotion) return;
+    this._recoilVelocity += amount;
+  }
+
+  /** @param {number} target 0..1 — held until cleared. */
+  setWarp(target) {
+    this._warpTarget = Math.max(0, Math.min(1, target));
   }
 
   /** @param {number} amount 0..1 full-screen white flash */
@@ -213,6 +247,35 @@ export default class JuiceManager {
     this.flash = Math.max(0, Math.max(this.flash - delta * 4.5, this._flashRequests));
     this._flashRequests = 0;
 
+    // ── Tearing and inversion: sharp impulses, decay faster than flash ─────
+    this.tear = Math.max(0, Math.max(this.tear - delta * 5.0, this._tearRequests));
+    this._tearRequests = 0;
+
+    // Inversion decays fastest of all — a subliminal frame should be gone
+    // almost before it registers consciously.
+    this.invert = Math.max(0, Math.max(this.invert - delta * 12.0, this._invertRequests));
+    this._invertRequests = 0;
+
+    // ── Recoil spring ──────────────────────────────────────────────────────
+    // Critically-damped-ish spring: strong restoring force, heavy damping, so
+    // it snaps back without oscillating into a wobble.
+    const RECOIL_STIFFNESS = 260;
+    const RECOIL_DAMPING = 22;
+    this._recoilVelocity += -RECOIL_STIFFNESS * this.recoil * delta;
+    this._recoilVelocity -= this._recoilVelocity * Math.min(1, RECOIL_DAMPING * delta);
+    this.recoil += this._recoilVelocity * delta;
+    if (Math.abs(this.recoil) < 0.0005 && Math.abs(this._recoilVelocity) < 0.005) {
+      this.recoil = 0;
+      this._recoilVelocity = 0;
+    }
+
+    // ── Warp easing ────────────────────────────────────────────────────────
+    // Asymmetric: ramps in fast (the lurch), eases out slowly (the rubber-band
+    // release) rather than snapping back.
+    const warpRate = this._warpTarget > this.warp ? 4.5 : 1.6;
+    this.warp += (this._warpTarget - this.warp) * Math.min(1, warpRate * delta);
+    if (Math.abs(this.warp - this._warpTarget) < 0.002) this.warp = this._warpTarget;
+
     // ── Sanity also desaturates and darkens the edges ───────────────────────
     this.desaturate = Math.max(this.desaturate * 0.9, (1 - this.sanity) * 0.35);
 
@@ -264,6 +327,9 @@ export default class JuiceManager {
       this.addTrauma(0.75);
       this.addHitStop(90);
       this.addFovKick(6);
+      this.requestTear(0.6);
+      // Subliminal inverted frame on the biggest moment in the game.
+      this.requestInvert(0.85);
     };
     this._onPlayerDeath = () => {
       this.requestFlash(0.5);
@@ -286,10 +352,30 @@ export default class JuiceManager {
       this.addTrauma(0.06);
     };
     this._onPlayerHit = () => {
+      // Violent channel separation for a moment — the "took a hit" tell.
       this.addTrauma(0.4);
-      this.requestChromatic(0.45);
+      this.requestChromatic(0.9);
+      this.requestTear(0.7);
       this.addHitStop(60);
+      this.combo = 0;
     };
+    this._onShieldBreak = () => {
+      this.requestTear(1.0);
+      this.requestChromatic(1.0);
+      this.addTrauma(0.5);
+      this.requestFlash(0.3);
+      this.addHitStop(70);
+    };
+    this._onPhantomAttack = () => {
+      this.requestTear(0.85);
+      this.requestChromatic(0.6);
+      this.addTrauma(0.25);
+    };
+    this._onSubliminal = ({ detail }) => {
+      // A single inverted frame plus a barely-visible word.
+      this.requestInvert(detail?.invert ?? 0.9);
+    };
+    this._onFire = () => this.addRecoil(-1.6);
 
     window.addEventListener('juice:superzapper', this._onSuperzapper);
     window.addEventListener('juice:player-death', this._onPlayerDeath);
@@ -297,6 +383,10 @@ export default class JuiceManager {
     window.addEventListener('juice:grenade', this._onGrenade);
     window.addEventListener('juice:dash', this._onDash);
     window.addEventListener('juice:player-hit', this._onPlayerHit);
+    window.addEventListener('juice:shield-break', this._onShieldBreak);
+    window.addEventListener('juice:phantom-attack', this._onPhantomAttack);
+    window.addEventListener('juice:subliminal', this._onSubliminal);
+    window.addEventListener('juice:fire', this._onFire);
   }
 
   dispose() {
@@ -306,6 +396,10 @@ export default class JuiceManager {
     window.removeEventListener('juice:grenade', this._onGrenade);
     window.removeEventListener('juice:dash', this._onDash);
     window.removeEventListener('juice:player-hit', this._onPlayerHit);
+    window.removeEventListener('juice:shield-break', this._onShieldBreak);
+    window.removeEventListener('juice:phantom-attack', this._onPhantomAttack);
+    window.removeEventListener('juice:subliminal', this._onSubliminal);
+    window.removeEventListener('juice:fire', this._onFire);
   }
 
   /** Convenience so callers don't all import CustomEvent boilerplate. */
