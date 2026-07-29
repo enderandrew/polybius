@@ -25,6 +25,7 @@ import { PowerUpManager } from '@/PowerUp/PowerUpManager';
 import { PowerUpSpawner } from '@/PowerUp/PowerUpSpawner';
 import { PowerUpType } from '@/PowerUp/PowerUpType';
 import { PowerUpHUD } from '@/PowerUp/PowerUpHUD';
+import PowerUpAnnouncer from '@/utils/PowerUpAnnouncer';
 import { AIDroid } from '@/PowerUp/AIDroid';
 import Starfield from '@/Renderer/Background/Starfield';
 import CyberGrid from '@/Renderer/Background/CyberGrid';
@@ -559,6 +560,7 @@ export default class Game {
     this.powerUpSpawner = new PowerUpSpawner(this.scene, null);
     this.powerUpSpawner.scene = this.scene;
     this.powerUpHUD = new PowerUpHUD(this.powerUpManager);
+    this.powerUpAnnouncer = new PowerUpAnnouncer();
     window.addEventListener('powerup:collected', ({ detail: { type } }) => {
       if (type.id === 'AI_DROID' && this.levelObject) {
         this._spawnAIDroid();

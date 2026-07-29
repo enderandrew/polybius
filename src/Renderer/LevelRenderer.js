@@ -2,6 +2,7 @@ import { Color, Group } from 'three';
 import SurfaceRenderer from '@/Renderer/Surface/SurfaceRenderer';
 import ShooterRenderer from '@/Renderer/Shooters/ShooterRenderer';
 import DashTrailRenderer from '@/Renderer/Shooters/DashTrailRenderer';
+import PickupTextRenderer from '@/Renderer/Effects/PickupTextRenderer';
 import ProjectileRendererManager from '@/Renderer/Surface/ProjectileRendererManager';
 import EnemyRendererManager from '@/Renderer/Surface/EnemyRendererManager';
 
@@ -13,6 +14,7 @@ export default class LevelRenderer extends Group {
   surfaceRenderer;
   shooterRenderer;
   dashTrailRenderer;
+  pickupTextRenderer;
   projectileRendererManager;
   enemyRendererManager;
 
@@ -47,6 +49,10 @@ export default class LevelRenderer extends Group {
 
     this.dashTrailRenderer = new DashTrailRenderer(this.level.surface);
 
+    // Reads shooterRenderer.position live at spawn time, so it must be
+    // constructed after shooterRenderer above, not before.
+    this.pickupTextRenderer = new PickupTextRenderer(this.shooterRenderer, this);
+
     this.add(this.surfaceRenderer);
     this.add(this.dashTrailRenderer);
     this.add(this.shooterRenderer);
@@ -64,6 +70,11 @@ export default class LevelRenderer extends Group {
       this.dashTrailRenderer.dispose();
       this.remove(this.dashTrailRenderer);
       this.dashTrailRenderer = undefined;
+    }
+
+    if (this.pickupTextRenderer) {
+      this.pickupTextRenderer.dispose();
+      this.pickupTextRenderer = undefined;
     }
 
     this.remove(this.surfaceRenderer);
@@ -156,6 +167,9 @@ export default class LevelRenderer extends Group {
       this.shooterRenderer.update();
       if (this.dashTrailRenderer) {
         this.dashTrailRenderer.update(this.shooterRenderer.object);
+      }
+      if (this.pickupTextRenderer) {
+        this.pickupTextRenderer.update();
       }
       this.enemyRendererManager.update();
       this.projectileRendererManager.update();
