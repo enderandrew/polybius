@@ -20,6 +20,7 @@
  */
 
 import Canvas3d from '@/Object/Screen/Canvas3d';
+import AuditorProgress from '@/utils/AuditorProgress';
 import enemyAssets from '@/Assets/Enemies';
 
 export default class ScreenAttractMode extends Canvas3d {
@@ -258,6 +259,42 @@ export default class ScreenAttractMode extends Canvas3d {
     });
   }
 
+  /**
+   * Once the arc has been completed the attract mode carries one extra frame:
+   * a single ember, for one frame, never acknowledged. Read straight from the
+   * save rather than passed in, so it survives even though scene 12 appears to
+   * reset the counter.
+   *
+   * @return {boolean}
+   */
+  _auditorFinished() {
+    if (this._auditorChecked === undefined) {
+      try {
+        this._auditorChecked = new AuditorProgress().finished;
+      } catch {
+        this._auditorChecked = false;
+      }
+    }
+    return this._auditorChecked;
+  }
+
+  _drawEmberFrame(ctx) {
+    // One frame in roughly every 400 — long enough between appearances that a
+    // player second-guesses whether they saw it.
+    if (!this._auditorFinished()) return;
+    if (Math.random() > 0.0025) return;
+
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = '#ff6a1a';
+    ctx.shadowColor = '#ff6a1a';
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.arc(this.canvasResX - 110, this.canvasResY - 130, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   _redraw() {
     const ctx = this.context;
     const W = this.canvasResX; // 1024
@@ -279,6 +316,8 @@ export default class ScreenAttractMode extends Canvas3d {
     this._applyGlitches(ctx, W, H);
 
     if (this.texture) this.texture.needsUpdate = true;
+
+    this._drawEmberFrame(ctx);
   }
 
   _prerenderStaticPages() {

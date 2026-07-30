@@ -28,6 +28,10 @@ import { PowerUpHUD } from '@/PowerUp/PowerUpHUD';
 import PowerUpAnnouncer from '@/utils/PowerUpAnnouncer';
 import JuiceManager from '@/utils/JuiceManager';
 import JuicePass from '@/Renderer/Effects/JuicePass';
+import AuditorProgress from '@/utils/AuditorProgress';
+import AUDITOR_SCENES from '@/Assets/AuditorScenes';
+import ScreenAuditor from '@/Object/Screen/ScreenAuditor';
+import AuditorMode from '@/Object/Modes/AuditorMode';
 import { AIDroid } from '@/PowerUp/AIDroid';
 import Starfield from '@/Renderer/Background/Starfield';
 import CyberGrid from '@/Renderer/Background/CyberGrid';
@@ -180,6 +184,7 @@ export default class Game {
       '1up',
       'achievement',
       'bigfoot',
+      'cigarette',
       'crt',
 	  'dash',
       'enemy_death',
@@ -230,6 +235,38 @@ export default class Game {
 
     this.screenContentManager.setLevel(this.level);
     this.screenContentManager.setScore(this.score);
+
+    // ── Hidden arc check ──────────────────────────────────────────────────
+    // Replaces the parody screen entirely when it fires. The parody narrator
+    // is suppressed, not layered — the absence of the joke is the signal.
+    const auditorScene = this._checkAuditorTrigger();
+    if (auditorScene) {
+      const tokens = this.auditorProgress.buildTokens({
+        highestLevel: this.highestLevel,
+      });
+      const auditorScreen = new ScreenAuditor(
+        this.screenContentManager,
+        auditorScene,
+        tokens,
+      );
+
+      this.auditorProgress.recordSceneSeen(AUDITOR_SCENES.length);
+
+      // The final scene appears to wipe progress. `finished` survives, which
+      // is what keeps the attract-mode ember there forever afterward.
+      if (auditorScene.special === 'wait-for-input') {
+        this.auditorProgress.performFakeReset();
+      }
+
+      this.modeManager.switchMode(
+        new AuditorMode(
+          auditorScreen,
+          auditorScene,
+          () => new PlayMode(this.level),
+        ),
+      );
+      return;
+    }
 
     const parodyScreen = new ScreenParodySurface(this.screenContentManager);
 
@@ -572,6 +609,16 @@ export default class Game {
     this.powerUpSpawner.scene = this.scene;
     this.powerUpHUD = new PowerUpHUD(this.powerUpManager);
     this.powerUpAnnouncer = new PowerUpAnnouncer();
+    this.auditorProgress = new AuditorProgress();
+
+    // Persist accumulated playtime periodically and on unload, so scene 3's
+    // "total time on file" survives a browser crash rather than only a clean
+    // exit.
+    setInterval(() => this.auditorProgress.flush(), 30000);
+    window.addEventListener('beforeunload', () =>
+      this.auditorProgress.flush(),
+    );
+
     this.juice = new JuiceManager();
     this.juice.reduceMotion = this.loadReduceMotionPreference();
     this.levelRenderer.juice = this.juice;
@@ -912,6 +959,29 @@ export default class Game {
 
   /** Words flashed for a single frame on major beats. */
   static SUBLIMINAL_WORDS = ['OBEY', 'SLEEP', 'CONSUME', 'SUBMIT', 'STAY'];
+
+  /**
+   * @return {?object} the scene to show, or null for a normal parody screen.
+   */
+  _checkAuditorTrigger() {
+    if (!this.auditorProgress) return null;
+
+    // Never on the very first level of a run — the player needs the parody
+    // established as the norm before it can be broken.
+    if (this.firstLevel) return null;
+
+    const sanity =
+      this.screenObject && this.screenObject.sanityLevel !== undefined
+        ? this.screenObject.sanityLevel / 100
+        : 1;
+
+    if (!this.auditorProgress.shouldTrigger(sanity, AUDITOR_SCENES.length)) {
+      return null;
+    }
+
+    const id = this.auditorProgress.nextSceneId(AUDITOR_SCENES.length);
+    return AUDITOR_SCENES.find((scene) => scene.id === id) ?? null;
+  }
 
   _fireSubliminal() {
     JuiceManager.emit('subliminal', { invert: 0.9 });

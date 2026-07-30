@@ -6,6 +6,7 @@ export default class AudioManager {
   static SOUND_ACHIEVEMENT = 'achievement';
   static SOUND_BIGFOOT = 'bigfoot';
   static SOUND_DASH = 'dash';
+  static SOUND_CIGARETTE = 'cigarette';
   static SOUND_LIGHTNING = 'lightning';
   static SOUND_THUD = 'thud';
   static SOUND_ENEMY_DEATH = 'enemy_death';
