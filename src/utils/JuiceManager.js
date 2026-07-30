@@ -376,6 +376,18 @@ export default class JuiceManager {
       this.requestInvert(detail?.invert ?? 0.9);
     };
     this._onFire = () => this.addRecoil(-1.6);
+    this._onAuditorCut = () => {
+      // A hard signal break on arrival, so the scene reads as an interruption
+      // rather than a normal screen transition. No shake — he is never
+      // announced by violence.
+      this.requestTear(1.0);
+      this.requestChromatic(0.8);
+      this.requestInvert(0.5);
+    };
+    this._onAuditorTone = ({ detail }) => {
+      // Slow chromatic climb across the scene that never resolves.
+      this.requestChromatic(0.15 + (detail?.progress ?? 0) * 0.45);
+    };
 
     window.addEventListener('juice:superzapper', this._onSuperzapper);
     window.addEventListener('juice:player-death', this._onPlayerDeath);
@@ -387,6 +399,8 @@ export default class JuiceManager {
     window.addEventListener('juice:phantom-attack', this._onPhantomAttack);
     window.addEventListener('juice:subliminal', this._onSubliminal);
     window.addEventListener('juice:fire', this._onFire);
+    window.addEventListener('juice:auditor-cut', this._onAuditorCut);
+    window.addEventListener('juice:auditor-tone', this._onAuditorTone);
   }
 
   dispose() {
@@ -400,6 +414,8 @@ export default class JuiceManager {
     window.removeEventListener('juice:phantom-attack', this._onPhantomAttack);
     window.removeEventListener('juice:subliminal', this._onSubliminal);
     window.removeEventListener('juice:fire', this._onFire);
+    window.removeEventListener('juice:auditor-cut', this._onAuditorCut);
+    window.removeEventListener('juice:auditor-tone', this._onAuditorTone);
   }
 
   /** Convenience so callers don't all import CustomEvent boilerplate. */

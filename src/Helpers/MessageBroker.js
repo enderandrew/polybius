@@ -12,6 +12,7 @@ export class MessageBroker {
   static MESSAGE_GAME_OVER = 'game_over';
   static MESSAGE_JUMP = 'jump';
   static MESSAGE_KONAMI = 'Konami';
+  static MESSAGE_CIGARETTE = 'cigarette';
   static MESSAGE_LIGHTNING = 'lightning';
   static MESSAGE_MENU_CHANGE = 'message_menu_change';
   static MESSAGE_MENU_SELECT = 'message_menu_select';
