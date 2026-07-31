@@ -78,6 +78,17 @@ export default class Game {
   highScores;
   static FORESHADOW_CHANCE = 0.05;
 
+  /**
+   * Bloom overrides while an Auditor scene is on screen.
+   *
+   * The pass is constructed with threshold 0, meaning EVERY pixel blooms —
+   * correct for a wireframe tube, ruinous for a full-frame photographic still,
+   * which washes to solid white. Raising the cutoff limits the glow to genuine
+   * highlights (the ember, phosphor text).
+   */
+  static AUDITOR_BLOOM_STRENGTH = 0.18;
+  static AUDITOR_BLOOM_THRESHOLD = 0.72;
+
   lives = 5;
   credits = 1;
 
@@ -759,18 +770,19 @@ export default class Game {
     }
 
     if (this.bloomPass) {
+      // Guarded: a non-finite value assigned to either uniform propagates as
+      // NaN through the bloom composite and blanks the whole frame to black,
+      // with no console error and nothing for the linter to catch.
+      const safe = (value, fallback) =>
+        Number.isFinite(value) ? value : fallback;
+
       if (this.auditorSceneActive) {
-        // The bloom pass runs at threshold 0, so EVERY pixel blooms. That is
-        // exactly right for a wireframe tube and completely wrong for a
-        // full-frame photographic still — with radius 0.9 and no cutoff, a
-        // bright image washes to solid white. Raise the cutoff so only genuine
-        // highlights (the ember, phosphor text) glow, and drop the strength.
-        this.bloomPass.strength = Game.AUDITOR_BLOOM_STRENGTH;
-        this.bloomPass.threshold = Game.AUDITOR_BLOOM_THRESHOLD;
+        this.bloomPass.strength = safe(Game.AUDITOR_BLOOM_STRENGTH, 0.18);
+        this.bloomPass.threshold = safe(Game.AUDITOR_BLOOM_THRESHOLD, 0.72);
       } else {
         const boost = this.juice ? this.juice.bloomBoost : this.beatGlow;
-        this.bloomPass.strength = this.baseBloom + boost;
-        this.bloomPass.threshold = this.baseBloomThreshold ?? 0;
+        this.bloomPass.strength = safe(this.baseBloom + boost, 0.8);
+        this.bloomPass.threshold = safe(this.baseBloomThreshold, 0);
       }
     }
 

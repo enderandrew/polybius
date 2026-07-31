@@ -28,6 +28,10 @@ export default class ScreenAuditor extends Canvas3d {
   /** Art is drawn below full brightness so it stays under the bloom cutoff. */
   static ART_BRIGHTNESS = 0.86;
 
+  /** Dark stroke behind the text, so it stays readable over bright art. */
+  static TEXT_OUTLINE_COLOR = 'rgba(2, 4, 6, 0.92)';
+  static TEXT_OUTLINE_WIDTH = 6;
+
   /**
    * @param {ScreenContentManager} screenContentManager
    * @param {object} scene       an entry from AuditorScenes
@@ -118,10 +122,15 @@ export default class ScreenAuditor extends Canvas3d {
   _drawTextScrim() {
     if (this.lines.length === 0) return;
 
-    const height = 120 + this.lines.length * 52;
+    // Extra padding below the last line, and the fade doesn't reach zero
+    // until past that padding — the previous version faded out exactly at the
+    // block's own edge, which under-covered the last line whenever it sat
+    // over something bright (the arcade screen behind "OR THE REST OF THEIR
+    // LIFE" in the subject-12 scene).
+    const height = 120 + this.lines.length * 52 + 40;
     const gradient = this.context.createLinearGradient(0, 60, 0, 60 + height);
-    gradient.addColorStop(0, 'rgba(0,0,0,0.82)');
-    gradient.addColorStop(0.75, 'rgba(0,0,0,0.72)');
+    gradient.addColorStop(0, 'rgba(0,0,0,0.85)');
+    gradient.addColorStop(0.85, 'rgba(0,0,0,0.78)');
     gradient.addColorStop(1, 'rgba(0,0,0,0)');
 
     this.context.fillStyle = gradient;
@@ -134,6 +143,7 @@ export default class ScreenAuditor extends Canvas3d {
     this.setFontSizePx(34);
     this.context.textAlign = 'left';
     this.context.textBaseline = 'alphabetic';
+    this.context.lineJoin = 'round';
 
     // Left-offset and high, not centred — the parody screen centres, so this
     // reads as a different system immediately.
@@ -144,12 +154,24 @@ export default class ScreenAuditor extends Canvas3d {
     // No shadowBlur on the body text. A glow here is a large area of bright
     // pixels, which is precisely what the bloom pass amplifies into an
     // unreadable smear. The ember keeps its glow; the text does not need one.
-    this.context.fillStyle = ScreenAuditor.TEXT_COLOR;
     this.context.shadowBlur = 0;
 
     this.lines.forEach((line, i) => {
       if (line === '') return;
-      this.context.fillText(line, startX, startY + i * lineHeight);
+      const y = startY + i * lineHeight;
+
+      // Dark outline drawn BEFORE the fill. The gradient scrim only helps
+      // where it's opaque; over bright art (an arcade screen's own glow, a
+      // window, a highlight) it can fade below full coverage and the text
+      // gets lost — this line from the arcade cabinet scene is where that
+      // showed up. A stroke works regardless of what's behind it, and being
+      // dark rather than bright it adds no bloom the way a glow would.
+      this.context.lineWidth = ScreenAuditor.TEXT_OUTLINE_WIDTH;
+      this.context.strokeStyle = ScreenAuditor.TEXT_OUTLINE_COLOR;
+      this.context.strokeText(line, startX, y);
+
+      this.context.fillStyle = ScreenAuditor.TEXT_COLOR;
+      this.context.fillText(line, startX, y);
     });
   }
 
