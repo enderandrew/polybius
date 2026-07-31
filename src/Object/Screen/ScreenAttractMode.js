@@ -209,7 +209,20 @@ export default class ScreenAttractMode extends Canvas3d {
       this._flashNext = now + 500;
     }
 
-    if (Math.random() < 0.1) this._spawnGlitch(now);
+    // Glitch spawn rate was a flat 10% chance per call to update(), with no
+    // notion of elapsed time at all — frame-rate dependent in the usual way,
+    // but also worse than the background renderers' version of this bug:
+    // this screen is driven both by Game.js's generic per-frame call AND by
+    // AttractMode's own direct call in the same frame, so a delta parameter
+    // threaded in from outside would double-count on every frame it's called
+    // twice. A locally-computed Date.now() delta sidesteps that automatically
+    // — two calls a few milliseconds apart just produce two tiny deltas that
+    // sum to the right total, rather than one delta counted twice.
+    const glitchDeltaMs = now - (this._lastGlitchRollAt ?? now);
+    this._lastGlitchRollAt = now;
+    if (Math.random() < 0.1 * (60 * glitchDeltaMs) / 1000) {
+      this._spawnGlitch(now);
+    }
     this._glitches = this._glitches.filter((g) => now < g.end);
 
     this._redraw();
