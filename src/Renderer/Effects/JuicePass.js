@@ -31,6 +31,7 @@ const JuiceShader = {
     uGrain: { value: 0.0 },
     uInvert: { value: 0.0 },
     uTear: { value: 0.0 },
+    uRoll: { value: 0.0 },
     uResolution: { value: new Vector2(1, 1) },
     uTime: { value: 0.0 },
   },
@@ -53,6 +54,7 @@ const JuiceShader = {
     uniform float uGrain;
     uniform float uInvert;
     uniform float uTear;
+    uniform float uRoll;
     uniform vec2  uResolution;
     uniform float uTime;
     varying vec2 vUv;
@@ -63,6 +65,17 @@ const JuiceShader = {
 
     void main() {
       vec2 uv = vUv;
+
+      // ── VHS tracking roll ─────────────────────────────────────────────────
+      // A vertical wrap offset plus a thin band of horizontal smear at the
+      // seam — the distinctive tell of a tape losing tracking, and visually
+      // distinct from the block-displacement tearing below so the two read as
+      // different failures rather than more of the same noise.
+      if (uRoll > 0.001) {
+        uv.y = fract(uv.y + uRoll);
+        float seam = smoothstep(0.02, 0.0, abs(fract(uv.y) - fract(uRoll)));
+        uv.x += seam * uRoll * 0.05;
+      }
 
       // ── Digital tearing ───────────────────────────────────────────────────
       // Horizontal bands displaced sideways by a per-band random amount. Done
@@ -165,6 +178,7 @@ export default class JuicePass extends Pass {
     u.uGrain.value = 0.12 + (1 - juice.sanity) * 0.5;
     u.uInvert.value = juice.invert;
     u.uTear.value = juice.tear;
+    u.uRoll.value = juice.roll;
     u.uTime.value = this._elapsed;
   }
 
