@@ -177,6 +177,16 @@ export default class LevelRenderer extends Group {
       this.particleBurstRenderer = undefined;
     }
 
+    // These four previously had remove() called with no dispose() at all —
+    // measured at ~48 orphaned geometries per level from SurfaceRenderer
+    // alone, projecting to over 12,000 across a full 256-level run.
+    // enemyRendererManager.dispose() already existed but was never CALLED;
+    // the other three needed dispose() written from scratch (see each file).
+    this.surfaceRenderer?.dispose();
+    this.shooterRenderer?.dispose();
+    this.enemyRendererManager?.dispose();
+    this.projectileRendererManager?.dispose();
+
     this.remove(this.surfaceRenderer);
     this.remove(this.shooterRenderer);
     this.remove(this.enemyRendererManager);

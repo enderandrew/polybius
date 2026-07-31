@@ -9,6 +9,7 @@ import {
 } from 'three';
 import enemies from '@/Assets/Enemies';
 import explosions from '@/Assets/Explosions';
+import disposeObject3D from '@/utils/disposeObject3D';
 
 export default class SurfaceObjectWrapper extends Group {
   object;
@@ -151,5 +152,19 @@ export default class SurfaceObjectWrapper extends Group {
     });
 
     this.add(this.explosionGroup);
+  }
+
+  /**
+   * Frees every geometry and material this wrapper (and any subclass'
+   * additions — the shield mesh, explosion lines, model geometry) currently
+   * owns. Subclasses that only ADD standard Three.js objects as children
+   * don't need their own override; this one traversal-based implementation
+   * is correct for both EnemyRenderer and ProjectileRenderer and everything
+   * that extends them, which is why it lives here rather than being
+   * duplicated per subclass.
+   */
+  dispose() {
+    disposeObject3D(this);
+    this.clear();
   }
 }

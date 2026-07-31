@@ -8,6 +8,7 @@ import {
 } from 'three';
 import Surface from '@/Object/Surface/Surface';
 import Angle from '@/utils/Angle';
+import disposeObject3D from '@/utils/disposeObject3D';
 
 export default class SurfaceRenderer extends Group {
   static WIREFRAME_LINE_WIDTH = 2;
@@ -333,5 +334,30 @@ export default class SurfaceRenderer extends Group {
     return (
       this.surface.lanesAmount + (includeOpen && this.surface.isOpen ? 1 : 0)
     );
+  }
+
+  /**
+   * SurfaceRenderer had no disposal path at all before this fix — measured at
+   * 48 orphaned geometries per level (272 vertices) across a 10-level sample,
+   * projecting to over 12,000 across a full 256-level run.
+   *
+   * The traversal catches every Line's geometry and whichever material it
+   * currently has assigned. That is NOT sufficient on its own:
+   * laneActiveMaterial / laneShortedMaterial / laneBurningMaterial are swapped
+   * onto lines at runtime by setLinesAppearance(), so at the moment a level
+   * ends there may be zero lines currently wearing the shorted or burning
+   * material (nothing happened to be shorted right then) — a pure traversal
+   * would silently skip disposing them. They're disposed explicitly here so
+   * that possibility can't leak one either way.
+   */
+  dispose() {
+    disposeObject3D(this);
+
+    this.laneDefaultMaterial?.dispose();
+    this.laneActiveMaterial?.dispose();
+    this.laneShortedMaterial?.dispose();
+    this.laneBurningMaterial?.dispose();
+
+    this.clear();
   }
 }

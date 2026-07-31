@@ -350,17 +350,9 @@ export default class EnemyRenderer extends SurfaceObjectWrapper {
    * Safely disposes of instance-specific GPU resources (materials).
    * Geometries are preserved because they are globally cached.
    */
-  dispose() {
-    this.traverse((child) => {
-      if (child.material) {
-        if (Array.isArray(child.material)) {
-          child.material.forEach((m) => m.dispose());
-        } else {
-          child.material.dispose();
-        }
-      }
-    });
-
-    this.clear();
-  }
+  // dispose() is inherited from SurfaceObjectWrapper. The previous override
+  // here only disposed materials, never geometry — every enemy renderer
+  // (flipper, fuseball, pulsar, spiker, all three tanker variants) was
+  // leaking a BufferGeometry per instance. Fixed once, at the shared base,
+  // rather than here.
 }

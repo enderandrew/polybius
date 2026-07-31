@@ -80,4 +80,21 @@ export default class ProjectileRendererManager extends Group {
       this.add(this.projectileRenderers[this.projectileRenderers.length - 1]);
     }
   }
+
+  /**
+   * Had no disposal path at all before this fix — releaseLevel() only ever
+   * called remove() on this manager, which detaches the whole pool from the
+   * scene graph without freeing a single geometry or material.
+   */
+  dispose() {
+    this.projectileRenderers.forEach((renderer) => {
+      if (typeof renderer.dispose === 'function') {
+        renderer.dispose();
+      }
+    });
+
+    this.projectileRenderers = [];
+    this.projectileRenderersAvailabilityMap = [];
+    this.clear();
+  }
 }
