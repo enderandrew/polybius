@@ -163,9 +163,22 @@ export default class ParticleBurstRenderer {
       this.alphas[i] = 1 - age / ParticleBurstRenderer.LIFETIME_MS;
     }
 
-    this.geometry.getAttribute('position').needsUpdate = true;
-    this.geometry.getAttribute('alpha').needsUpdate = true;
-    this.geometry.getAttribute('customColor').needsUpdate = true;
+    // Only touch the GPU buffers when there is something alive to show.
+    // points.visible = false already hides the mesh entirely regardless of
+    // what's in the buffers — nothing reads a hidden object's geometry data
+    // (frustumCulled is already false, so there's no bounding-sphere pass
+    // either) — so re-uploading position/alpha/colour every frame while the
+    // system sits empty between bursts was pure waste: ~0.67 MB/s,
+    // continuously, for the entire level regardless of whether anything had
+    // died recently. burst() itself doesn't set needsUpdate — it writes
+    // straight into the typed arrays and relies on THIS update() picking the
+    // change up — so a burst that revives the system still uploads correctly
+    // on the very frame it's spawned, since anyAlive becomes true again here.
+    if (anyAlive) {
+      this.geometry.getAttribute('position').needsUpdate = true;
+      this.geometry.getAttribute('alpha').needsUpdate = true;
+      this.geometry.getAttribute('customColor').needsUpdate = true;
+    }
     this.points.visible = anyAlive;
   }
 
