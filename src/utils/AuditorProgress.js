@@ -27,7 +27,8 @@ const OFFSET = 17;
 
 export default class AuditorProgress {
   /** Chance per level-clear with a fresh mind. */
-  static BASE_CHANCE = 0.01;
+  static BASE_CHANCE = 0.99; // Reset down to 0.01 once done testing
+  
   /** Additional chance at fully drained sanity. */
   static SANITY_BONUS = 0.05;
 

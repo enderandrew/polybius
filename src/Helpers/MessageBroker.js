@@ -13,6 +13,7 @@ export class MessageBroker {
   static MESSAGE_JUMP = 'jump';
   static MESSAGE_KONAMI = 'Konami';
   static MESSAGE_CIGARETTE = 'cigarette';
+  static MESSAGE_CIGARETTE_QUIET = 'cigarette_quiet';
   static MESSAGE_LIGHTNING = 'lightning';
   static MESSAGE_MENU_CHANGE = 'message_menu_change';
   static MESSAGE_MENU_SELECT = 'message_menu_select';
@@ -30,6 +31,7 @@ export class MessageBroker {
   static MESSAGE_SHIELD = 'shield';
   static MESSAGE_SPOOKY = 'spooky';
   static MESSAGE_SYNTH_SURGE = 'synth_surge';
+  static MESSAGE_THUG = 'thug';
   static MESSAGE_THUD = 'thud';
   static MESSAGE_YES = 'yes';
 

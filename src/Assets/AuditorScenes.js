@@ -30,6 +30,30 @@
 export const CIGARETTE_DURATION_MS = 3200;
 
 /**
+ * Reading-time floor.
+ *
+ * The cigarette length alone (3.2s) only guaranteed the SOUND finished — it
+ * was nowhere near enough to actually read a scene, which made several of them
+ * effectively unreadable in play. These constants give every scene a computed
+ * minimum derived from its own word count, so a future text edit can't
+ * silently reintroduce the problem.
+ */
+export const READING_BASE_MS = 2000;
+export const READING_MS_PER_WORD = 350;
+
+/**
+ * @param {string[]} lines
+ * @return {number} minimum time this text needs on screen, in ms.
+ */
+export function minimumHoldFor(lines) {
+  const words = lines.join(' ').split(/\s+/).filter(Boolean).length;
+  return Math.max(
+    CIGARETTE_DURATION_MS,
+    READING_BASE_MS + words * READING_MS_PER_WORD,
+  );
+}
+
+/**
  * The real 5x5 Polybius square used by scene 5 (I/J merged, keyed on
  * POLYBIUS). Exported so the art prompt and any in-game rendering can't drift
  * out of sync with the ciphertext.
@@ -79,7 +103,7 @@ const AUDITOR_SCENES = [
       "the auditor's notes classified",
     ],
     art: null,
-    holdMs: CIGARETTE_DURATION_MS,
+    holdMs: 7000,
     thud: false,
     thudAtMs: 0,
     speech: null,
@@ -97,7 +121,7 @@ const AUDITOR_SCENES = [
       'this has been noted',
     ],
     art: null,
-    holdMs: CIGARETTE_DURATION_MS,
+    holdMs: 7000,
     thud: true,
     thudAtMs: 2000,
     speech: null,
@@ -117,7 +141,7 @@ const AUDITOR_SCENES = [
       'report the most vivid dreams',
     ],
     art: 'auditor/03-chair.png',
-    holdMs: CIGARETTE_DURATION_MS,
+    holdMs: 9000,
     thud: false,
     thudAtMs: 0,
     speech: null,
@@ -134,7 +158,7 @@ const AUDITOR_SCENES = [
       'three are not yours to remember',
     ],
     art: 'auditor/04-doorway.png',
-    holdMs: CIGARETTE_DURATION_MS,
+    holdMs: 6500,
     thud: false,
     thudAtMs: 0,
     speech: null,
@@ -144,15 +168,17 @@ const AUDITOR_SCENES = [
   {
     id: 5,
     name: 'CIPHER',
-    lines: [CIPHERTEXT],
+    // No lines and no grid drawing: the art supplies the square, the
+    // ciphertext and the plaintext. Anything drawn here would print on top of
+    // artwork that already says it.
+    lines: [],
     art: 'auditor/05-cipher.png',
-    // Longer than the cigarette: photographable, not solvable in the moment.
-    holdMs: 4200,
+    holdMs: 8000,
     thud: false,
     thudAtMs: 0,
     speech: null,
     bgmCut: true,
-    special: 'cipher-grid',
+    special: null,
   },
   {
     id: 6,
@@ -166,7 +192,7 @@ const AUDITOR_SCENES = [
       'thank you for your continued participation',
     ],
     art: 'auditor/06-stamp.png',
-    holdMs: CIGARETTE_DURATION_MS,
+    holdMs: 8000,
     thud: true,
     thudAtMs: 2600,
     speech: null,
@@ -185,7 +211,7 @@ const AUDITOR_SCENES = [
       'or the rest of their life',
     ],
     art: 'auditor/07-cabinet.png',
-    holdMs: 4000,
+    holdMs: 8500,
     thud: false,
     thudAtMs: 0,
     speech: {
@@ -211,7 +237,7 @@ const AUDITOR_SCENES = [
       'but you will receive no further warnings',
     ],
     art: 'auditor/08-split.png',
-    holdMs: 4600,
+    holdMs: 10000,
     thud: false,
     thudAtMs: 0,
     speech: null,
@@ -224,7 +250,7 @@ const AUDITOR_SCENES = [
     name: 'PHOTOGRAPH',
     lines: [],
     art: 'auditor/09-photo.png',
-    holdMs: CIGARETTE_DURATION_MS,
+    holdMs: 5500,
     thud: false,
     thudAtMs: 0,
     speech: null,
@@ -243,7 +269,7 @@ const AUDITOR_SCENES = [
       'do you know what happens next?',
     ],
     art: 'auditor/10-photo-closer.png',
-    holdMs: 4000,
+    holdMs: 7500,
     thud: false,
     thudAtMs: 0,
     speech: null,
@@ -263,7 +289,7 @@ const AUDITOR_SCENES = [
       'please close this tab',
     ],
     art: 'auditor/11-close.png',
-    holdMs: 5000,
+    holdMs: 8500,
     thud: false,
     thudAtMs: 0,
     speech: {
@@ -291,7 +317,7 @@ const AUDITOR_SCENES = [
     ],
     art: 'auditor/12-empty.png',
     // Waits for input rather than auto-advancing. holdMs is the floor.
-    holdMs: CIGARETTE_DURATION_MS,
+    holdMs: 9500,
     thud: false,
     thudAtMs: 0,
     speech: null,
@@ -299,5 +325,11 @@ const AUDITOR_SCENES = [
     special: 'wait-for-input',
   },
 ];
+
+// Applied once at module load so no scene can ship with a hold shorter than
+// its own text needs.
+for (const scene of AUDITOR_SCENES) {
+  scene.holdMs = Math.max(scene.holdMs, minimumHoldFor(scene.lines));
+}
 
 export default AUDITOR_SCENES;

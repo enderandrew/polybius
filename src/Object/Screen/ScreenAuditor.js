@@ -20,12 +20,13 @@
 
 import Canvas3d from '@/Object/Screen/Canvas3d';
 import AuditorProgress from '@/utils/AuditorProgress';
-import { POLYBIUS_SQUARE } from '@/Assets/AuditorScenes';
 
 export default class ScreenAuditor extends Canvas3d {
   static TEXT_COLOR = '#7ea8b4';
   static EMBER_COLOR = '#ff6a1a';
-  static CIPHER_COLOR = '#00ff44';
+
+  /** Art is drawn below full brightness so it stays under the bloom cutoff. */
+  static ART_BRIGHTNESS = 0.86;
 
   /**
    * @param {ScreenContentManager} screenContentManager
@@ -84,10 +85,7 @@ export default class ScreenAuditor extends Canvas3d {
       this._drawArt();
     }
 
-    if (this.scene.special === 'cipher-grid') {
-      this._drawCipherGrid();
-    }
-
+    this._drawTextScrim();
     this._drawLines();
     this._drawEmber();
   }
@@ -101,15 +99,33 @@ export default class ScreenAuditor extends Canvas3d {
     );
     const w = this.image.width * scale;
     const h = this.image.height * scale;
+    const x = (this.canvasResX - w) / 2;
+    const y = (this.canvasResY - h) / 2;
 
+    // Drawn below full brightness. Even with the bloom threshold raised, a
+    // photographic still with blown highlights is a large area of near-white
+    // feeding a wide-radius bloom; pulling the whole image down keeps it under
+    // the cutoff instead of relying on the cutoff alone.
+    this.context.globalAlpha = ScreenAuditor.ART_BRIGHTNESS;
+    this.context.drawImage(this.image, x, y, w, h);
     this.context.globalAlpha = 1;
-    this.context.drawImage(
-      this.image,
-      (this.canvasResX - w) / 2,
-      (this.canvasResY - h) / 2,
-      w,
-      h,
-    );
+  }
+
+  /**
+   * Darken behind the text block so lines stay readable over bright art
+   * without having to dim the art any further.
+   */
+  _drawTextScrim() {
+    if (this.lines.length === 0) return;
+
+    const height = 120 + this.lines.length * 52;
+    const gradient = this.context.createLinearGradient(0, 60, 0, 60 + height);
+    gradient.addColorStop(0, 'rgba(0,0,0,0.82)');
+    gradient.addColorStop(0.75, 'rgba(0,0,0,0.72)');
+    gradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+    this.context.fillStyle = gradient;
+    this.context.fillRect(0, 60, this.canvasResX, height);
   }
 
   _drawLines() {
@@ -125,59 +141,16 @@ export default class ScreenAuditor extends Canvas3d {
     const startY = 180;
     const lineHeight = 52;
 
+    // No shadowBlur on the body text. A glow here is a large area of bright
+    // pixels, which is precisely what the bloom pass amplifies into an
+    // unreadable smear. The ember keeps its glow; the text does not need one.
     this.context.fillStyle = ScreenAuditor.TEXT_COLOR;
-    this.context.shadowColor = ScreenAuditor.TEXT_COLOR;
-    this.context.shadowBlur = 6;
+    this.context.shadowBlur = 0;
 
     this.lines.forEach((line, i) => {
       if (line === '') return;
       this.context.fillText(line, startX, startY + i * lineHeight);
     });
-
-    this.context.shadowBlur = 0;
-  }
-
-  _drawCipherGrid() {
-    const square = POLYBIUS_SQUARE;
-    const cell = 84;
-    const gridW = cell * 5;
-    const originX = (this.canvasResX - gridW) / 2;
-    const originY = 420;
-
-    this.context.strokeStyle = ScreenAuditor.CIPHER_COLOR;
-    this.context.globalAlpha = 0.65;
-    this.context.lineWidth = 2;
-
-    for (let i = 0; i <= 5; i++) {
-      this.context.beginPath();
-      this.context.moveTo(originX, originY + i * cell);
-      this.context.lineTo(originX + gridW, originY + i * cell);
-      this.context.stroke();
-
-      this.context.beginPath();
-      this.context.moveTo(originX + i * cell, originY);
-      this.context.lineTo(originX + i * cell, originY + gridW);
-      this.context.stroke();
-    }
-
-    this.context.globalAlpha = 1;
-    this.setFontSizePx(44);
-    this.context.textAlign = 'center';
-    this.context.textBaseline = 'middle';
-    this.context.fillStyle = ScreenAuditor.CIPHER_COLOR;
-
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
-        this.context.fillText(
-          square[r][c],
-          originX + c * cell + cell / 2,
-          originY + r * cell + cell / 2,
-        );
-      }
-    }
-
-    this.context.textAlign = 'left';
-    this.context.textBaseline = 'alphabetic';
   }
 
   /**
@@ -208,7 +181,7 @@ export default class ScreenAuditor extends Canvas3d {
       this.context.globalAlpha = flicker;
       this.context.fillStyle = ScreenAuditor.EMBER_COLOR;
       this.context.shadowColor = ScreenAuditor.EMBER_COLOR;
-      this.context.shadowBlur = 26;
+      this.context.shadowBlur = 14;
       this.context.beginPath();
       this.context.arc(pos.x, pos.y, 5, 0, Math.PI * 2);
       this.context.fill();

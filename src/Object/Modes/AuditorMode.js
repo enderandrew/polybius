@@ -42,6 +42,11 @@ export default class AuditorMode extends GameMode {
   }
 
   enter(game) {
+    // Suppress the full-frame bloom for the duration — see the override in
+    // Game.update(). Set before the screen mounts so the very first rendered
+    // frame is already correct rather than flashing white for one frame.
+    game.auditorSceneActive = true;
+
     game.releaseLevel();
     if (game.powerUpHUD) game.powerUpHUD.hide();
 
@@ -150,6 +155,8 @@ export default class AuditorMode extends GameMode {
   }
 
   exit(game) {
+    game.auditorSceneActive = false;
+
     this.sequencer.clear();
 
     if (this._keyHandler) {

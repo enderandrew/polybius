@@ -76,6 +76,8 @@ export default class Game {
   firstLevel = true;
   score = 0;
   highScores;
+  static FORESHADOW_CHANCE = 0.05;
+
   lives = 5;
   credits = 1;
 
@@ -209,6 +211,7 @@ export default class Game {
       'shield',
       'spooky',
       'synth',
+      'thug',
       'thud',
       'yes',
     ];
@@ -269,6 +272,8 @@ export default class Game {
     }
 
     const parodyScreen = new ScreenParodySurface(this.screenContentManager);
+
+    this._maybeForeshadow();
 
     this.modeManager.switchMode(
       new TransitionMode(parodyScreen, 4000, () => new PlayMode(this.level)),
@@ -587,6 +592,9 @@ export default class Game {
         0.9,
         0,
       );
+      // Remember the authored values; Auditor scenes temporarily override them.
+      this.baseBloomThreshold = this.bloomPass.threshold;
+
       this.composer.addPass(this.bloomPass);
       this.composer.addPass(new SMAAPass(width, height));
     }
@@ -751,8 +759,19 @@ export default class Game {
     }
 
     if (this.bloomPass) {
-      const boost = this.juice ? this.juice.bloomBoost : this.beatGlow;
-      this.bloomPass.strength = this.baseBloom + boost;
+      if (this.auditorSceneActive) {
+        // The bloom pass runs at threshold 0, so EVERY pixel blooms. That is
+        // exactly right for a wireframe tube and completely wrong for a
+        // full-frame photographic still — with radius 0.9 and no cutoff, a
+        // bright image washes to solid white. Raise the cutoff so only genuine
+        // highlights (the ember, phosphor text) glow, and drop the strength.
+        this.bloomPass.strength = Game.AUDITOR_BLOOM_STRENGTH;
+        this.bloomPass.threshold = Game.AUDITOR_BLOOM_THRESHOLD;
+      } else {
+        const boost = this.juice ? this.juice.bloomBoost : this.beatGlow;
+        this.bloomPass.strength = this.baseBloom + boost;
+        this.bloomPass.threshold = this.baseBloomThreshold ?? 0;
+      }
     }
 
     this.updateReactiveState();
@@ -941,7 +960,7 @@ export default class Game {
     this.score += modifiedReward;
 
     if (
-      this.lives < 5 &&
+      this.lives < this.getMaxLives() &&
       Math.floor(this.score / Game.BONUS_EVERY) !==
         Math.floor((this.score - modifiedReward) / Game.BONUS_EVERY)
     ) {
@@ -963,6 +982,50 @@ export default class Game {
   /**
    * @return {?object} the scene to show, or null for a normal parody screen.
    */
+  /**
+   * Rare, deniable hints that something else is present, layered under the
+   * ordinary joke screens.
+   *
+   * Two INDEPENDENT rolls, not one: a player who notices the sound and a
+   * player who notices the glitch shouldn't be the same player, and the two
+   * co-occurring occasionally (0.25% of transitions) should feel like a
+   * coincidence rather than a scripted beat.
+   *
+   * Deliberately NOT gated on arc progress. Foreshadowing that only starts
+   * after scene 1 isn't foreshadowing. Before the reveal these read as a
+   * failing cabinet; afterwards the player knows exactly what the sound is,
+   * which makes the same 5% land completely differently. Same trigger, two
+   * meanings, no extra content.
+   */
+  _maybeForeshadow() {
+    // Quiet enough to be mistaken for room tone under the narration. The
+    // Auditor scenes play the same cue at 0.9 — the volume gap is what keeps
+    // this ambient and those declarative.
+    if (Math.random() < Game.FORESHADOW_CHANCE) {
+      messageBroker.publish(
+        MessageBroker.TOPIC_AUDIO,
+        MessageBroker.MESSAGE_CIGARETTE_QUIET,
+      );
+    }
+
+    if (Math.random() < Game.FORESHADOW_CHANCE) {
+      JuiceManager.emit('foreshadow');
+    }
+  }
+
+  /**
+   * Completing the hidden arc permanently raises the life cap. Deliberately
+   * unannounced — the player simply has six icons one day. It also makes the
+   * ordinary ending reachable for someone who has put in the hours, since
+   * surfaces 241-256 plus the boss on five lives is the hardest ask in the
+   * game.
+   *
+   * @return {number}
+   */
+  getMaxLives() {
+    return this.auditorProgress?.finished ? 6 : 5;
+  }
+
   _checkAuditorTrigger() {
     if (!this.auditorProgress) return null;
 
@@ -1007,7 +1070,10 @@ export default class Game {
     if (this.firstLevel && this.levelData.selectable) {
       // The score bonus itself was already credited in startLevel(); only the
       // one-off extra life for a large starting bonus is granted here.
-      if (this.levelData.scoreBonus >= Game.BONUS_EVERY && this.lives < 5) {
+      if (
+        this.levelData.scoreBonus >= Game.BONUS_EVERY &&
+        this.lives < this.getMaxLives()
+      ) {
         this.lives++;
         this.screenContentManager.set(
           ScreenContentManager.KEY_LIVES,

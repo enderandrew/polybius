@@ -6,7 +6,7 @@ export default class MenuMode extends GameMode {
   enter(game) {
     game.releaseLevel();
 
-    game.lives = 5;
+    game.lives = game.getMaxLives();
     game.score = 0;
     game.bonusScoreOffset = 0;
 

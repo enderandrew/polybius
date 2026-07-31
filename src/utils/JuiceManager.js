@@ -85,6 +85,7 @@ export default class JuiceManager {
     this.flash = 0;
     this.invert = 0;
     this.tear = 0;
+    this.roll = 0;
 
     /** Z-axis recoil offset for the ship model; spring-damped in update(). */
     this.recoil = 0;
@@ -96,6 +97,8 @@ export default class JuiceManager {
 
     this._tearRequests = 0;
     this._invertRequests = 0;
+    this._rollRequests = 0;
+    this._rollPhase = 0;
 
     this._bindEvents();
   }
@@ -140,6 +143,11 @@ export default class JuiceManager {
   /** @param {number} amount 0..1 full-screen colour inversion */
   requestInvert(amount) {
     this._invertRequests = Math.max(this._invertRequests, amount);
+  }
+
+  /** @param {number} amount 0..1 VHS tracking roll */
+  requestRoll(amount) {
+    this._rollRequests = Math.max(this._rollRequests, amount);
   }
 
   /** Kick the ship backwards; spring returns it. @param {number} amount */
@@ -255,6 +263,18 @@ export default class JuiceManager {
     // almost before it registers consciously.
     this.invert = Math.max(0, Math.max(this.invert - delta * 12.0, this._invertRequests));
     this._invertRequests = 0;
+
+    // Roll: while active the offset advances continuously so the picture
+    // actually CRAWLS rather than sitting statically displaced.
+    const rollAmount = Math.max(0, Math.max(this._rollRequests, this.roll - delta * 1.8));
+    this._rollRequests = 0;
+    if (rollAmount > 0.001) {
+      this._rollPhase = (this._rollPhase + delta * 0.9) % 1;
+      this.roll = rollAmount * this._rollPhase;
+    } else {
+      this.roll = 0;
+      this._rollPhase = 0;
+    }
 
     // ── Recoil spring ──────────────────────────────────────────────────────
     // Critically-damped-ish spring: strong restoring force, heavy damping, so
@@ -376,6 +396,14 @@ export default class JuiceManager {
       this.requestInvert(detail?.invert ?? 0.9);
     };
     this._onFire = () => this.addRecoil(-1.6);
+    this._onForeshadow = () => {
+      // Deliberately WEAKER than juice:auditor-cut. This should read as the
+      // cabinet being old, not as a message. A player should be able to
+      // dismiss it — that dismissal is what makes scene 1 land later.
+      this.requestTear(0.35);
+      this.requestChromatic(0.45);
+      this.requestRoll(0.5);
+    };
     this._onAuditorCut = () => {
       // A hard signal break on arrival, so the scene reads as an interruption
       // rather than a normal screen transition. No shake — he is never
@@ -399,6 +427,7 @@ export default class JuiceManager {
     window.addEventListener('juice:phantom-attack', this._onPhantomAttack);
     window.addEventListener('juice:subliminal', this._onSubliminal);
     window.addEventListener('juice:fire', this._onFire);
+    window.addEventListener('juice:foreshadow', this._onForeshadow);
     window.addEventListener('juice:auditor-cut', this._onAuditorCut);
     window.addEventListener('juice:auditor-tone', this._onAuditorTone);
   }
@@ -414,6 +443,7 @@ export default class JuiceManager {
     window.removeEventListener('juice:phantom-attack', this._onPhantomAttack);
     window.removeEventListener('juice:subliminal', this._onSubliminal);
     window.removeEventListener('juice:fire', this._onFire);
+    window.removeEventListener('juice:foreshadow', this._onForeshadow);
     window.removeEventListener('juice:auditor-cut', this._onAuditorCut);
     window.removeEventListener('juice:auditor-tone', this._onAuditorTone);
   }

@@ -8,6 +8,7 @@ export default class AudioManager {
   static SOUND_DASH = 'dash';
   static SOUND_CIGARETTE = 'cigarette';
   static SOUND_LIGHTNING = 'lightning';
+  static SOUND_THUG = 'thug';
   static SOUND_THUD = 'thud';
   static SOUND_ENEMY_DEATH = 'enemy_death';
   static SOUND_ENEMY_SHOOT = 'enemy_shoot';
@@ -114,6 +115,20 @@ export default class AudioManager {
           break;
         case MessageBroker.MESSAGE_DASH:
           this.playSound(AudioManager.SOUND_DASH);
+          break;
+        case MessageBroker.MESSAGE_CIGARETTE:
+          this.playSound(AudioManager.SOUND_CIGARETTE, 0.9);
+          break;
+        case MessageBroker.MESSAGE_CIGARETTE_QUIET:
+          // Same asset well under the narration — meant to be noticed only
+          // half-consciously, or on a replay.
+          this.playSound(AudioManager.SOUND_CIGARETTE, 0.28);
+          break;
+        case MessageBroker.MESSAGE_LIGHTNING:
+          this.playSound(AudioManager.SOUND_LIGHTNING, 0.85);
+          break;
+        case MessageBroker.MESSAGE_THUG:
+          this.playSound(AudioManager.SOUND_THUG, 1.0);
           break;
         case MessageBroker.MESSAGE_ENEMY_DEATH:
           this.playSound(AudioManager.SOUND_ENEMY_DEATH);
