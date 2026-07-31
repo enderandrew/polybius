@@ -45,6 +45,13 @@ export default class ScreenAuditor extends Canvas3d {
     this.startedAt = performance.now();
     this.image = null;
 
+    // -Infinity, not 0: guarantees the first update() call always draws
+    // regardless of what performance.now() returns. Relying on "now will be
+    // large at construction time" held in practice but wasn't actually
+    // guaranteed, and getting it wrong means the scene opens on a blank
+    // canvas for one throttle interval.
+    this._lastRedrawAt = -Infinity;
+
     this.lines = (scene.lines ?? []).map((line) =>
       AuditorProgress.resolve(line, tokens),
     );
@@ -73,8 +80,24 @@ export default class ScreenAuditor extends Canvas3d {
     );
   }
 
+  /**
+   * Minimum time between redraws. The only thing that genuinely animates on
+   * this screen is the ember's slow sine flicker (see _drawEmber) — nothing
+   * else in draw() changes frame to frame. Redrawing at 60fps for that meant
+   * uploading the full 1024x768 canvas texture (3 MB) to the GPU 60 times a
+   * second, continuously, for the entire scene: ~180 MB/s sustained, ~2.5 GB
+   * transferred over the longest single scene. ~15 Hz is well above what a
+   * slow flicker needs and cuts that by 75%.
+   */
+  static REDRAW_INTERVAL_MS = 66;
+
   update() {
-    // Redraw continuously: the ember flickers and several scenes fade in.
+    const now = performance.now();
+    if (now - this._lastRedrawAt < ScreenAuditor.REDRAW_INTERVAL_MS) {
+      return;
+    }
+    this._lastRedrawAt = now;
+
     this.draw();
     this.queueTextureUpdate();
   }
