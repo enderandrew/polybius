@@ -53,11 +53,25 @@ export default class FIFOManager {
    * @return {boolean}
    */
   static updateMap(objects, map, forceUpdate) {
-    const mapNeedsUpdate = objects.filter((object) =>
-      object.shouldUpdateFIFOMaps(),
-    ).length;
+    // A plain loop, not objects.filter(...).length. shouldUpdateFIFOMaps()
+    // has a required side effect — it clears laneChangeMapsNeedUpdate on the
+    // object it's called on — so every object must actually be visited.
+    // .filter() was already correct on that count (it never short-circuits),
+    // but it also allocates a throwaway array every call purely to read its
+    // .length, and this runs up to 4 times per frame. .some() would be the
+    // obvious "just want a boolean" fix and would be WRONG here: it stops at
+    // the first true, leaving every object after that one with its flag
+    // still set, so a later frame could see a stale "needs update" that
+    // should have already been cleared. This loop gets both properties at
+    // once: no short-circuit, no allocation.
+    let needsUpdate = forceUpdate;
+    for (const object of objects) {
+      if (object.shouldUpdateFIFOMaps()) {
+        needsUpdate = true;
+      }
+    }
 
-    if (!(forceUpdate || mapNeedsUpdate)) {
+    if (!needsUpdate) {
       return false;
     }
 
