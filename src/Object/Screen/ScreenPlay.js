@@ -3,6 +3,9 @@ import ScreenContentManager from '@/Object/Screen/ScreenContentManager';
 import messageBroker, { MessageBroker } from '@/Helpers/MessageBroker';
 
 export default class ScreenPlay extends Canvas3d {
+  /** Sanity points lost per second. 0.02 * 60fps = 1.2, matching the old per-frame rate exactly. */
+  static SANITY_DRAIN_PER_SEC = 1.2;
+
   score = 0;
   targetScore = 0;
   scoreRisingSpeed = 10;
@@ -14,6 +17,14 @@ export default class ScreenPlay extends Canvas3d {
   lastGlitchTimestamp = 0;
   isGlitchingScore = false;
   isGlitchingHint = false;
+
+  /**
+   * Fractional sanity owed since the last whole-point deduction. Needed
+   * because delta-based drain rarely lands on an exact integer per frame —
+   * accumulating the remainder is what keeps the rate accurate over time
+   * instead of rounding error slowly drifting it.
+   */
+  _sanityDrainAccumulator = 0;
 
   constructor(
     screenContentManager,
@@ -43,7 +54,7 @@ export default class ScreenPlay extends Canvas3d {
     return out;
   }
 
-  update() {
+  update(delta = 1 / 60) {
     this.targetScore = this.screenContentManager.get(
       ScreenContentManager.KEY_SCORE,
     );
@@ -63,9 +74,23 @@ export default class ScreenPlay extends Canvas3d {
       this._dirty = true;
     }
 
-    // Gradually drain sanity
-    if (this.sanityLevel > 0 && Math.random() > 0.98) {
-      this.sanityLevel -= 1;
+    // Gradually drain sanity.
+    //
+    // This used to be `Math.random() > 0.98` evaluated once per FRAME — a 2%
+    // chance per frame, not per second, so sanity (and everything that reads
+    // it: JuicePass scanlines/grain, the CRT brt-low class, and the Auditor
+    // scene trigger's chance-to-fire) drained up to 4x faster on a 240Hz
+    // display than a 60Hz one. SANITY_DRAIN_PER_SEC = 1.2 reproduces the old
+    // 60fps rate exactly (0.02 * 60 = 1.2), so this is a pure bugfix, not a
+    // pacing change, on the display the game was tuned against.
+    if (this.sanityLevel > 0) {
+      this._sanityDrainAccumulator += ScreenPlay.SANITY_DRAIN_PER_SEC * delta;
+
+      if (this._sanityDrainAccumulator >= 1) {
+        const whole = Math.floor(this._sanityDrainAccumulator);
+        this.sanityLevel = Math.max(0, this.sanityLevel - whole);
+        this._sanityDrainAccumulator -= whole;
+      }
     }
 
     // --- GLITCH TIMER LOGIC ---

@@ -800,7 +800,7 @@ export default class Game {
     }
 
     if (this.screenObject !== null) {
-      this.screenObject.update();
+      this.screenObject.update(delta);
     }
 
     // Poll global inputs / gamepads
