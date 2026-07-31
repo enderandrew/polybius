@@ -137,10 +137,45 @@ export default class ScreenAuditor extends Canvas3d {
     this.context.fillRect(0, 60, this.canvasResX, height);
   }
 
+  /** Largest and smallest sizes auto-fit will choose between. */
+  static MAX_FONT_PX = 34;
+  static MIN_FONT_PX = 20;
+
+  /**
+   * Finds the largest font size (between MIN and MAX) at which every line
+   * fits within the available width.
+   *
+   * Computed fresh on every call rather than cached once: measureText() is
+   * only accurate once the VectorBattle font has actually loaded, and this
+   * screen's update() deliberately redraws every frame regardless of
+   * fontReady (for the ember flicker and fades). Recomputing live means an
+   * early frame that measures against the browser's fallback font
+   * self-corrects the moment the real font swaps in, rather than locking in a
+   * wrong size from the race.
+   *
+   * @param {number} maxWidth
+   * @return {number}
+   */
+  _fitFontSize(maxWidth) {
+    for (
+      let size = ScreenAuditor.MAX_FONT_PX;
+      size >= ScreenAuditor.MIN_FONT_PX;
+      size -= 1
+    ) {
+      this.setFontSizePx(size);
+      const widest = this.lines.reduce(
+        (max, line) =>
+          line === '' ? max : Math.max(max, this.context.measureText(line).width),
+        0,
+      );
+      if (widest <= maxWidth) return size;
+    }
+    return ScreenAuditor.MIN_FONT_PX;
+  }
+
   _drawLines() {
     if (this.lines.length === 0) return;
 
-    this.setFontSizePx(34);
     this.context.textAlign = 'left';
     this.context.textBaseline = 'alphabetic';
     this.context.lineJoin = 'round';
@@ -149,7 +184,16 @@ export default class ScreenAuditor extends Canvas3d {
     // reads as a different system immediately.
     const startX = 90;
     const startY = 180;
-    const lineHeight = 52;
+    const rightMargin = 40;
+    const maxWidth = this.canvasResX - startX - rightMargin;
+
+    // "thank you for your continued participation" at the old fixed 34px ran
+    // 203px past the canvas edge — several scenes were being clipped outright
+    // rather than just looking cramped. Auto-fit per scene so short lines
+    // ("OBEY") stay large and only genuinely long ones shrink.
+    const fontSize = this._fitFontSize(maxWidth);
+    this.setFontSizePx(fontSize);
+    const lineHeight = Math.round(fontSize * 1.53); // matches the original 52/34 ratio
 
     // No shadowBlur on the body text. A glow here is a large area of bright
     // pixels, which is precisely what the bloom pass amplifies into an
@@ -166,6 +210,7 @@ export default class ScreenAuditor extends Canvas3d {
       // gets lost — this line from the arcade cabinet scene is where that
       // showed up. A stroke works regardless of what's behind it, and being
       // dark rather than bright it adds no bloom the way a glow would.
+
       this.context.lineWidth = ScreenAuditor.TEXT_OUTLINE_WIDTH;
       this.context.strokeStyle = ScreenAuditor.TEXT_OUTLINE_COLOR;
       this.context.strokeText(line, startX, y);
