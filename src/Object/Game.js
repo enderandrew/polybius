@@ -177,7 +177,7 @@ export default class Game {
           e.stopImmediatePropagation();
           e.preventDefault();
 
-          console.log('[DEBUG] Hijacking End key: Forcing Bonus Stage!');
+          if (import.meta.env.DEV) console.log('[DEBUG] Hijacking End key: Forcing Bonus Stage!');
 
           // 1. Max out tokens and flag the bonus stage as earned
           this.powerUpManager.warpTokenCount = 3;
@@ -241,7 +241,7 @@ export default class Game {
 
     try {
       await this.audioManager.preload(allSoundEffects);
-      console.log('[Game] All audio pre-decoded and ready!');
+      if (import.meta.env.DEV) console.log('[Game] All audio pre-decoded and ready!');
     } catch (error) {
       console.warn('[Game] Audio preloading encountered an error:', error);
     }
@@ -509,7 +509,7 @@ export default class Game {
 
     // If we found old data, package it into the new v1 format immediately
     if (requiresSave) {
-      console.log('[Game] Legacy save data migrated to version 1.');
+      if (import.meta.env.DEV) console.log('[Game] Legacy save data migrated to version 1.');
       this.saveGameState();
 
       // Optional: Clean up the old keys so this migration only runs once
@@ -519,7 +519,7 @@ export default class Game {
   }
 
   saveGameState() {
-    console.log('[Game] STATE SAVED (v' + Game.SAVE_VERSION + ')');
+    if (import.meta.env.DEV) console.log('[Game] STATE SAVED (v' + Game.SAVE_VERSION + ')');
 
     const saveData = {
       version: Game.SAVE_VERSION,

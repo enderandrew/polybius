@@ -108,7 +108,7 @@ export default class ProjectileManager extends FIFOManager {
         this.enemyProjectiles.length >=
         ProjectileManager.MAX_AMOUNT_OF_ENEMY_PROJECTILES
       ) {
-        console.log('Too much enemy projectiles!');
+        if (import.meta.env.DEV) console.log('Too much enemy projectiles!');
         return false;
       }
 
