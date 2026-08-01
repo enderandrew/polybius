@@ -119,6 +119,17 @@ export class PowerUpHUD {
     screen.appendChild(this.flash);
   }
 
+  /**
+   * None of the 7 window.addEventListener calls here have a matching
+   * removeEventListener. Deliberate, not an oversight: PowerUpHUD is
+   * constructed exactly once, from Game's constructor (`new
+   * PowerUpHUD(this.powerUpManager)`), and — like Game itself — lives for the
+   * lifetime of the page. If that ever changes and PowerUpHUD becomes
+   * something that can be constructed more than once per page (a "return to
+   * main menu and rebuild the HUD" flow, tests), all 7 of these would need a
+   * dispose() that pairs each with removeEventListener, or every reload would
+   * stack another full set of listeners reacting to the same events.
+   */
   _bindEvents() {
     window.addEventListener(
       'powerup:collected',
