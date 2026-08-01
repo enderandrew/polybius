@@ -151,6 +151,18 @@ export default class Game {
       }
     };
 
+    // None of the window.addEventListener calls in this constructor (this one
+    // and the 8 more below — beforeunload, the juice:* events, powerup:*
+    // events, resize) have a matching removeEventListener anywhere in the
+    // class. That's deliberate, not an oversight: Game is constructed exactly
+    // once per page load in main.js and is never torn down while the tab is
+    // open, so these listeners live exactly as long as the thing they're
+    // listening on (window) does. If Game ever becomes something that gets
+    // constructed more than once in the same page (tests, hot module reload,
+    // a "new game" flow that doesn't just reload the page), all 9 would need
+    // pairing with removeEventListener in dispose() — see that method for
+    // where the interval-based version of this same problem is already
+    // handled.
     window.addEventListener(
       'keydown',
       (e) => {
@@ -633,7 +645,21 @@ export default class Game {
     // Persist accumulated playtime periodically and on unload, so scene 3's
     // "total time on file" survives a browser crash rather than only a clean
     // exit.
-    setInterval(() => this.auditorProgress.flush(), 30000);
+    //
+    // The interval ID is kept and cleared from dispose() below rather than
+    // fired-and-forgotten. Nothing calls Game.dispose() today — there is
+    // exactly one Game per page load and it's never torn down — so this
+    // interval is harmless in practice. It's handled properly anyway because
+    // "Game is never recreated" is a property of how the app is currently
+    // wired, not a guarantee the class itself makes; if that ever changes
+    // (hot module reload during development, a future "return to main menu
+    // and start fresh" flow, tests that construct several Games in one
+    // process) an interval with no way to stop it would keep firing against
+    // a Game instance nothing else can reach anymore.
+    this._auditorFlushIntervalId = setInterval(
+      () => this.auditorProgress.flush(),
+      30000,
+    );
     window.addEventListener('beforeunload', () =>
       this.auditorProgress.flush(),
     );
@@ -960,6 +986,21 @@ export default class Game {
       localStorage.setItem('polybius_reduce_motion', String(value));
     } catch {
       // Non-fatal — the setting just won't persist.
+    }
+  }
+
+  /**
+   * Not called anywhere today — there is exactly one Game per page load and
+   * it lives for the lifetime of the tab. Exists so the class has a real
+   * cleanup path rather than none, should that ever stop being true. If you
+   * add more page-lifetime timers/intervals to the constructor, clear them
+   * here too rather than leaving them to whichever future refactor needs
+   * this method and has to go hunting for what else was never stopped.
+   */
+  dispose() {
+    if (this._auditorFlushIntervalId !== undefined) {
+      clearInterval(this._auditorFlushIntervalId);
+      this._auditorFlushIntervalId = undefined;
     }
   }
 
